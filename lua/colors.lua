@@ -8,6 +8,7 @@ M.palette = {
 	tab_bg = "#24283b",
 	tab_bar_bg = "#15161e",
 	selection_bg = "#283457",
+	dim = "#565f89",
 	ansi = {
 		"#15161e",
 		"#f7768e",
@@ -40,12 +41,14 @@ function M.apply(config)
 		cursor_border = p.accent,
 		selection_bg = p.selection_bg,
 		selection_fg = p.fg,
+		split = p.accent,
+		scrollbar_thumb = p.tab_bg,
 		ansi = p.ansi,
 		brights = p.brights,
 		tab_bar = {
 			background = p.tab_bar_bg,
 			active_tab = { bg_color = p.accent, fg_color = p.bg, intensity = "Bold" },
-			inactive_tab = { bg_color = p.tab_bg, fg_color = p.fg },
+			inactive_tab = { bg_color = p.tab_bg, fg_color = p.dim },
 			inactive_tab_hover = { bg_color = p.accent2, fg_color = p.bg, italic = true },
 			new_tab = { bg_color = p.tab_bg, fg_color = p.fg },
 			new_tab_hover = { bg_color = p.accent, fg_color = p.bg },
