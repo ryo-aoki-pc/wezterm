@@ -18,7 +18,15 @@ local function first_existing(paths)
 	return nil
 end
 
-function M.apply(config)
+-- シェル一覧を一度だけ探索してキャッシュする。
+-- 各エントリは launch_menu / SpawnCommand 兼用の形（label + args/domain + env）。
+local cache
+
+local function discover()
+	if cache then
+		return cache
+	end
+
 	local home = os.getenv("USERPROFILE")
 	local git_bash = home .. "/scoop/apps/git/current/bin/bash.exe"
 	local git_bash_args = { git_bash, "-i", "-l" }
@@ -29,12 +37,6 @@ function M.apply(config)
 		home .. "/scoop/apps/pwsh/current/pwsh.exe",
 	})
 
-	if exists(git_bash) then
-		config.default_prog = git_bash_args
-	end
-
-	config.wsl_domains = wezterm.default_wsl_domains()
-
 	local candidates = {
 		{ ok = exists(git_bash),    label = "  Git Bash",            args = git_bash_args },
 		{ ok = pwsh ~= nil,         label = "  PowerShell 7",        args = { pwsh, "-NoLogo" } },
@@ -44,10 +46,10 @@ function M.apply(config)
 		{ ok = exists(qmk_bash),    label = "  QMK MSYS",            args = { qmk_bash, "-l", "-i" }, env = { MSYSTEM = "MINGW64", MSYS2_PATH_TYPE = "inherit" } },
 	}
 
-	local launch_menu = {}
+	local list = {}
 	for _, c in ipairs(candidates) do
 		if c.ok then
-			table.insert(launch_menu, {
+			table.insert(list, {
 				label = c.label,
 				args = c.args,
 				set_environment_variables = c.env,
@@ -55,15 +57,36 @@ function M.apply(config)
 		end
 	end
 
-	for _, dom in ipairs(config.wsl_domains) do
+	for _, dom in ipairs(wezterm.default_wsl_domains()) do
 		local display = dom.name:gsub("^WSL:", "")
-		table.insert(launch_menu, {
+		table.insert(list, {
 			label = "  " .. display,
 			domain = { DomainName = dom.name },
 		})
 	end
 
-	config.launch_menu = launch_menu
+	cache = {
+		default_prog = exists(git_bash) and git_bash_args or nil,
+		list = list,
+	}
+	return cache
+end
+
+-- 起動可能なシェル一覧（SpawnCommand 互換のエントリ配列）を返す。
+-- launch_menu と「分割して起動」の両方から再利用する。
+function M.list()
+	return discover().list
+end
+
+function M.apply(config)
+	local d = discover()
+
+	if d.default_prog then
+		config.default_prog = d.default_prog
+	end
+
+	config.wsl_domains = wezterm.default_wsl_domains()
+	config.launch_menu = d.list
 end
 
 return M

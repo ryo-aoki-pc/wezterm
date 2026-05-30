@@ -4,6 +4,8 @@
 --  ▼ カスタム（この設定で定義）
 --    Ctrl+Shift+D        ペインを左右分割
 --    Ctrl+Shift+E        ペインを上下分割
+--    Ctrl+Shift+Alt+D    シェルを選んで左右分割（一覧から選択）
+--    Ctrl+Shift+Alt+E    シェルを選んで上下分割（一覧から選択）
 --    Ctrl+Shift+H/J/K/L  ペイン移動（左/下/上/右, vim風）
 --    Ctrl+Shift+Q        ペインを閉じる（確認あり）
 --    Ctrl+Shift+M        起動メニュー（Git Bash/PowerShell/MSYS2/WSL）
@@ -35,10 +37,36 @@
 -- ============================================================
 
 local wezterm = require("wezterm")
+local shells = require("shells")
 local M = {}
 
 function M.apply(config)
 	local act = wezterm.action
+
+	-- シェルを選んで分割する。shells.list() の定義（args/domain/env）を
+	-- そのまま SplitPane の command に渡して再利用する。
+	local shell_list = shells.list()
+	local shell_choices = {}
+	for i, s in ipairs(shell_list) do
+		shell_choices[i] = { id = tostring(i), label = s.label }
+	end
+
+	local function split_with_shell(direction)
+		return act.InputSelector({
+			title = "分割するシェルを選択",
+			fuzzy = true,
+			choices = shell_choices,
+			action = wezterm.action_callback(function(window, pane, id)
+				if not id then
+					return -- Esc でキャンセル
+				end
+				window:perform_action(
+					act.SplitPane({ direction = direction, command = shell_list[tonumber(id)] }),
+					pane
+				)
+			end),
+		})
+	end
 
 	config.mouse_bindings = {
 		{
@@ -56,9 +84,13 @@ function M.apply(config)
 	}
 
 	config.keys = {
-		-- ペイン分割
+		-- ペイン分割（現在と同じシェル）
 		{ key = "d", mods = "CTRL|SHIFT", action = act.SplitHorizontal({ domain = "CurrentPaneDomain" }) },
 		{ key = "e", mods = "CTRL|SHIFT", action = act.SplitVertical({ domain = "CurrentPaneDomain" }) },
+
+		-- ペイン分割（シェルを一覧から選んで起動）
+		{ key = "d", mods = "CTRL|SHIFT|ALT", action = split_with_shell("Right") },
+		{ key = "e", mods = "CTRL|SHIFT|ALT", action = split_with_shell("Down") },
 
 		-- ペイン移動 (vim-like)
 		{ key = "h", mods = "CTRL|SHIFT", action = act.ActivatePaneDirection("Left") },
