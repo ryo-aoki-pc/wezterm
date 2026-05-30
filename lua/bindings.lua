@@ -6,10 +6,10 @@ function M.apply(config)
 
 	config.mouse_bindings = {
 		{
-			-- 選択したテキストをコピー
+			-- 選択したテキストをコピー（リンク上ならURLを開く）
 			event = { Up = { streak = 1, button = "Left" } },
 			mods = "NONE",
-			action = act.CopyTo("ClipboardAndPrimarySelection"),
+			action = act.CompleteSelectionOrOpenLinkAtMouseCursor("ClipboardAndPrimarySelection"),
 		},
 		{
 			-- 右クリックでペースト
@@ -30,8 +30,11 @@ function M.apply(config)
 		{ key = "k", mods = "CTRL|SHIFT", action = act.ActivatePaneDirection("Up") },
 		{ key = "l", mods = "CTRL|SHIFT", action = act.ActivatePaneDirection("Right") },
 
-		-- ズーム ON/OFF
-		{ key = "z", mods = "CTRL|SHIFT", action = act.TogglePaneZoomState },
+		-- ペインを閉じる (Q = Quit)
+		{ key = "q", mods = "CTRL|SHIFT", action = act.CloseCurrentPane({ confirm = true }) },
+
+		-- 起動メニュー (M = Menu): Git Bash / PowerShell / MSYS2 / WSL …
+		{ key = "m", mods = "CTRL|SHIFT", action = act.ShowLauncherArgs({ flags = "FUZZY|TABS|LAUNCH_MENU_ITEMS" }) },
 
 		-- リサイズモード突入 (S = Size)
 		{
