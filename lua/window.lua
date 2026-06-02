@@ -4,7 +4,7 @@ function M.apply(config)
 	config.window_decorations = "RESIZE"
 	config.window_padding = { left = 16, right = 16, top = 12, bottom = 10 }
 
-	config.default_cursor_style = "BlinkingBar"
+	config.default_cursor_style = "BlinkingUnderline"
 	config.cursor_blink_rate = 500
 	config.cursor_blink_ease_in = "Constant"
 	config.cursor_blink_ease_out = "Constant"
