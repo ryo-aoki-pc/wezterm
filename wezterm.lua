@@ -7,6 +7,7 @@ require("general").apply(config)
 require("colors").apply(config)
 require("window").apply(config)
 require("tabs").apply(config)
+require("statusbar").apply(config)
 require("shells").apply(config)
 require("bindings").apply(config)
 

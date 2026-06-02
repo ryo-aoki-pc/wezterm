@@ -9,6 +9,8 @@ M.palette = {
 	tab_bar_bg = "#15161e",
 	selection_bg = "#283457",
 	dim = "#565f89",
+	warn = "#e0af68", -- リサイズモード表示などの強調色（黄）
+	ok = "#9ece6a", -- バッテリー良好などの正常色（緑）
 	ansi = {
 		"#15161e",
 		"#f7768e",
@@ -47,11 +49,16 @@ function M.apply(config)
 		brights = p.brights,
 		tab_bar = {
 			background = p.tab_bar_bg,
+			-- ファンシータブバーではタブの見た目は format-tab-title のピルが描画するため、
+			-- ここはピルの最初のセルに背景色が無い場合のフォールバックとして機能する
 			active_tab = { bg_color = p.accent, fg_color = p.bg, intensity = "Bold" },
 			inactive_tab = { bg_color = p.tab_bg, fg_color = p.dim },
 			inactive_tab_hover = { bg_color = p.accent2, fg_color = p.bg, italic = true },
-			new_tab = { bg_color = p.tab_bg, fg_color = p.fg },
-			new_tab_hover = { bg_color = p.accent, fg_color = p.bg },
+			-- タブ間の縦線（境界）を背景に同化させて消す
+			inactive_tab_edge = p.tab_bar_bg,
+			-- 新規タブ(+)ボタンは控えめに、ホバーでアクセント色
+			new_tab = { bg_color = p.tab_bar_bg, fg_color = p.dim },
+			new_tab_hover = { bg_color = p.tab_bar_bg, fg_color = p.accent },
 		},
 	}
 end
