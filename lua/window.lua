@@ -12,6 +12,7 @@ function M.apply(config)
 	-- 半透明 + ブラー（すりガラス風）
 	-- ※ 文字セル(text_background_opacity)とタブバー背景は不透明のままにして、
 	--    RESIZE 装飾 + Acrylic 併用時の幽霊ウィンドウボタン (wezterm #5348) を避ける
+	-- ※ ファンシータブバー(tabs.lua)の window_frame 背景も同様に不透明を維持すること
 	config.window_background_opacity = 0.9 -- 小さくすると Acrylic のブラーがより強く透ける
 	config.text_background_opacity = 1.0 -- 文字セルは不透明にして可読性を確保
 	config.win32_system_backdrop = "Acrylic" -- Windows 11: アクリル（すりガラス）
