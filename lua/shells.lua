@@ -19,18 +19,19 @@ local function first_existing(paths)
 end
 
 -- Visual Studio の Developer PowerShell 用スクリプト（Launch-VsDevShell.ps1）を
--- 標準インストールパスから探す。年度 × エディションを総当りし最初の一つを返す。
+-- 標準インストールパスから探す。バージョン × エディションを総当りし最初の一つを返す。
 local function find_vsdevshell()
 	local bases = {
-		"C:/Program Files/Microsoft Visual Studio",        -- 2022 / 2026（64bit 既定）
-		"C:/Program Files (x86)/Microsoft Visual Studio",  -- 2019 以前
+		"C:/Program Files/Microsoft Visual Studio",        -- 2022（64bit）
+		"C:/Program Files (x86)/Microsoft Visual Studio",  -- 2026(=18) / 2019 以前
 	}
-	local years = { "2026", "2022", "2019" } -- 新しい順。複数導入時は最新を優先
+	-- フォルダ名は年（2022 等）またはメジャーバージョン（VS2026 = 18）。新しい順で探索。
+	local versions = { "18", "2026", "2022", "2019" }
 	local editions = { "Community", "Professional", "Enterprise", "Preview", "BuildTools" }
 	for _, base in ipairs(bases) do
-		for _, year in ipairs(years) do
+		for _, ver in ipairs(versions) do
 			for _, ed in ipairs(editions) do
-				local p = base .. "/" .. year .. "/" .. ed .. "/Common7/Tools/Launch-VsDevShell.ps1"
+				local p = base .. "/" .. ver .. "/" .. ed .. "/Common7/Tools/Launch-VsDevShell.ps1"
 				if exists(p) then
 					return p
 				end
