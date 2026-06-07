@@ -18,6 +18,32 @@ local function first_existing(paths)
 	return nil
 end
 
+-- Visual Studio の Developer PowerShell 用スクリプト（Launch-VsDevShell.ps1）を
+-- 標準インストールパスから探す。バージョン × エディションを総当りし、最初に
+-- 見つかったスクリプトのパスと、表示用の VS バージョン（年）を返す。
+local function find_vsdevshell()
+	local bases = {
+		"C:/Program Files/Microsoft Visual Studio",        -- 2022（64bit）
+		"C:/Program Files (x86)/Microsoft Visual Studio",  -- 2026(=18) / 2019 以前
+	}
+	-- フォルダ名は年（2022 等）またはメジャーバージョン（VS2026 = 18）。新しい順で探索。
+	local versions = { "18", "2026", "2022", "2019" }
+	-- メジャーバージョン → VS の年（年フォルダはそのまま表示する）
+	local year_of = { ["18"] = "2026", ["17"] = "2022", ["16"] = "2019", ["15"] = "2017" }
+	local editions = { "Community", "Professional", "Enterprise", "Preview", "BuildTools" }
+	for _, base in ipairs(bases) do
+		for _, ver in ipairs(versions) do
+			for _, ed in ipairs(editions) do
+				local p = base .. "/" .. ver .. "/" .. ed .. "/Common7/Tools/Launch-VsDevShell.ps1"
+				if exists(p) then
+					return p, (year_of[ver] or ver)
+				end
+			end
+		end
+	end
+	return nil
+end
+
 -- シェル一覧を一度だけ探索してキャッシュする。
 -- 各エントリは launch_menu / SpawnCommand 兼用の形（label + args/domain + env）。
 local cache
@@ -36,11 +62,22 @@ local function discover()
 		"C:/Program Files/PowerShell/7/pwsh.exe",
 		home .. "/scoop/apps/pwsh/current/pwsh.exe",
 	})
+	-- Visual Studio の Developer PowerShell。Launch-VsDevShell.ps1 を
+	-- Windows PowerShell から呼び、-NoExit でセッションを維持する。
+	local vsdevshell, vsversion = find_vsdevshell()
+	local vsdevshell_args = vsdevshell and {
+		"powershell.exe", "-NoLogo", "-ExecutionPolicy", "Bypass", "-NoExit",
+		"-Command", "& '" .. vsdevshell .. "' -Arch amd64 -HostArch amd64 -SkipAutomaticLocation",
+	} or nil
+	-- メニュー表示名に VS のバージョン（年）を付ける（例: "Developer PowerShell (2026)"）
+	local vsdevshell_label = vsdevshell and ("  Developer PowerShell (" .. vsversion .. ")")
+		or "  Developer PowerShell"
 
 	local candidates = {
 		{ ok = exists(git_bash),    label = "  Git Bash",            args = git_bash_args },
 		{ ok = pwsh ~= nil,         label = "  PowerShell 7",        args = { pwsh, "-NoLogo" } },
 		{ ok = true,                label = "  Windows PowerShell",  args = { "powershell.exe", "-NoLogo" } },
+		{ ok = vsdevshell ~= nil,   label = vsdevshell_label,        args = vsdevshell_args },
 		{ ok = exists(msys2_shell), label = "  MSYS2 UCRT64",        args = { msys2_shell, "-defterm", "-here", "-no-start", "-ucrt64" } },
 		{ ok = exists(msys2_shell), label = "  MSYS2 MSYS",          args = { msys2_shell, "-defterm", "-here", "-no-start", "-msys" } },
 		{ ok = exists(qmk_bash),    label = "  QMK MSYS",            args = { qmk_bash, "-l", "-i" }, env = { MSYSTEM = "MINGW64", MSYS2_PATH_TYPE = "inherit" } },
