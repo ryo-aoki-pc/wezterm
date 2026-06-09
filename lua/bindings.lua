@@ -11,6 +11,7 @@
 --    Ctrl+Shift+M        起動メニュー（Git Bash/PowerShell/MSYS2/WSL）
 --    Ctrl+Shift+S        リサイズモード開始 → h/j/k/l または矢印で調整
 --                        （Esc または Enter で終了 / 2秒で自動終了）
+--    Ctrl+Shift+I        IME 有効の専用ウィンドウを開く（一時的に日本語入力）
 --    左クリック          選択をコピー（リンク上ならURLを開く）
 --    右クリック          クリップボードから貼り付け
 --
@@ -114,6 +115,25 @@ function M.apply(config)
 				timeout_milliseconds = 2000,
 				until_unknown = true,
 			}),
+		},
+
+		-- IME 一時有効化 (I = IME): use_ime=true の専用ウィンドウを別プロセスで開く。
+		-- メインのウィンドウは use_ime=false のままなのでクラッシュしない（wezterm #7632 回避）。
+		-- ※ wezterm-gui(.exe) は PATH 上にある前提。無ければフルパスへ変更。
+		{
+			key = "i",
+			mods = "CTRL|SHIFT",
+			action = wezterm.action_callback(function(window, _pane)
+				local ok, err = pcall(wezterm.background_child_process,
+					{ "wezterm-gui.exe", "--config", "use_ime=true", "start" })
+				if ok then
+					window:toast_notification("WezTerm",
+						"IME 有効の新規ウィンドウを開きました（このウィンドウは無効のまま）", nil, 4000)
+				else
+					window:toast_notification("WezTerm",
+						"IME ウィンドウを開けませんでした: " .. tostring(err), nil, 6000)
+				end
+			end),
 		},
 	}
 

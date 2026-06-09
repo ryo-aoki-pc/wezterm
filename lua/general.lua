@@ -16,10 +16,10 @@ function M.apply(config)
 	--   得たアダプタを config.webgpu_preferred_adapter に明示する（#3229 の回避策）。
 	config.front_end = "OpenGL"
 
-	-- IME 切替（Ctrl+Space / 半角全角）でクラッシュする場合: WezTerm 本体の既知バグ
-	-- (wezterm #7632, 修正 PR #7529 が 2026-06-07 マージ)。2026-06-08 以降の nightly へ
-	-- 更新すれば解消する。更新できない場合のみ下を有効化（日本語入力が使えなくなる点に注意）。
-	-- config.use_ime = false
+	-- IME は既定で無効（wezterm #7632 の IME 切替クラッシュ回避。Ctrl+Space 等で落ちる問題）。
+	-- 一時的に日本語入力したいときは Ctrl+Shift+I で IME 有効の専用ウィンドウを開く（bindings.lua）。
+	-- 恒久対策は 2026-06-08 以降の nightly へ更新すること。
+	config.use_ime = false
 
 	-- 滑らかな描画・アニメーション
 	config.max_fps = 120
