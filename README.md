@@ -4,6 +4,22 @@
 
 ## トラブルシューティング
 
+### Ctrl+Space や 半角/全角 で IME を切り替えた瞬間に落ちる【最有力】
+
+WezTerm 本体の既知バグ。Windows で IME を切り替えると（**特にペイン分割の後**）、
+ウィンドウイベント処理の RefCell 二重借用で `RefCell already borrowed` パニックが
+発生し、無言でウィンドウが消える（wezterm
+[#7632](https://github.com/wezterm/wezterm/issues/7632) /
+修正 PR [#7529](https://github.com/wezterm/wezterm/pull/7529)）。
+「分割・リサイズ操作の後に落ちる」ように見える症状もこれが原因のことが多い。
+
+- **修正は 2026-06-07 に upstream へマージ済み**。ただし安定版 20240203 には未収録のため、
+  **2026-06-08 以降の nightly ビルドへ更新する**のが正攻法:
+  - <https://github.com/wezterm/wezterm/releases/tag/nightly> から `WezTerm-*-setup.exe` を入れる
+  - scoop 利用なら: `scoop bucket add versions` → `scoop install versions/wezterm-nightly`
+- nightly に上げられない場合の暫定回避は `config.use_ime = false`（`lua/general.lua` 参照）。
+  ただし **WezTerm 内での日本語入力が使えなくなる**ため最終手段。
+
 ### 操作中（ペイン分割・リサイズ等）に無言でウィンドウが消える
 
 Windows 11 では既定の GPU バックエンド **WebGpu** が、分割/リサイズ時のスワップチェーン
