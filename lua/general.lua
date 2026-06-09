@@ -9,6 +9,13 @@ function M.apply(config)
 	config.harfbuzz_features = { "calt=1", "clig=1", "liga=1" }
 	config.inactive_pane_hsb = { saturation = 0.85, brightness = 0.75 }
 
+	-- GPU バックエンド: Windows 11 では既定の WebGpu が、ペイン分割/リサイズ時の
+	-- スワップチェーン再生成で無言クラッシュする報告が多い
+	-- (wezterm #4279 / #3229 / #2881)。OpenGL に固定して回避する（体感性能差はわずか）。
+	-- ※ WebGpu の性能を残したい場合は "WebGpu" に戻し、wezterm.gui.enumerate_gpus() で
+	--   得たアダプタを config.webgpu_preferred_adapter に明示する（#3229 の回避策）。
+	config.front_end = "OpenGL"
+
 	-- 滑らかな描画・アニメーション
 	config.max_fps = 120
 	config.animation_fps = 60

@@ -97,10 +97,12 @@ function M.apply(config)
 			bg, fg = palette.tab_bg, palette.dim
 		end
 
-		local icon = process_icon(tab.active_pane)
-		local title = tab.active_pane.title or ""
+		-- 再レイアウト中など active_pane が一時的に nil になる場合に備えてガード
+		local pane = tab.active_pane
+		local icon = process_icon(pane)
+		local title = (pane and pane.title) or ""
 		-- ズーム中のペインは虫眼鏡を表示
-		local zoom = tab.active_pane.is_zoomed and (" " .. ZOOM_ICON) or ""
+		local zoom = (pane and pane.is_zoomed) and (" " .. ZOOM_ICON) or ""
 		-- ファンシータブバーでは max_width が実質無制限のため、固定幅で切り詰める
 		title = wezterm.truncate_right(title, 24)
 		local label = string.format(" %d %s  %s%s ", tab.tab_index + 1, icon, title, zoom)

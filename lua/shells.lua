@@ -53,7 +53,8 @@ local function discover()
 		return cache
 	end
 
-	local home = os.getenv("USERPROFILE")
+	-- Windows は USERPROFILE、それ以外は HOME。未設定でも nil 連結で落ちないよう "" にフォールバック
+	local home = os.getenv("USERPROFILE") or os.getenv("HOME") or ""
 	local git_bash = home .. "/scoop/apps/git/current/bin/bash.exe"
 	local git_bash_args = { git_bash, "-i", "-l" }
 	local msys2_shell = "C:/msys64/msys2_shell.cmd"
