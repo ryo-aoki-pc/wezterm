@@ -17,6 +17,10 @@ function M.apply(config)
 	config.text_background_opacity = 1.0 -- 文字セルは不透明にして可読性を確保
 	config.win32_system_backdrop = "Acrylic" -- Windows 11: アクリル（すりガラス）
 	config.macos_window_background_blur = 24 -- macOS でも近い見た目に（Windows では無害）
+
+	-- ウィンドウサイズがセルの整数倍でないときの端数余白を上下左右に均等配分する ※nightly 限定
+	-- RESIZE 装飾での自由リサイズ時に内容が左上に張り付かず、padding が対称に見える
+	config.window_content_alignment = { horizontal = "Center", vertical = "Center" }
 end
 
 return M
