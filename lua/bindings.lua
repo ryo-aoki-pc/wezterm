@@ -9,6 +9,7 @@
 --    Ctrl+Shift+H/J/K/L  ペイン移動（左/下/上/右, vim風）
 --    Ctrl+Shift+Q        ペインを閉じる（確認あり）
 --    Ctrl+Shift+M        起動メニュー（Git Bash/PowerShell/MSYS2/WSL）
+--    Ctrl+Shift+Alt+T    タブ名を変更（現在の名前を編集。空欄でデフォルトに戻す）
 --    Ctrl+Shift+S        リサイズモード開始 → h/j/k/l または矢印で調整
 --                        （Esc または Enter で終了 / 2秒で自動終了）
 --    左クリック          選択をコピー（リンク上ならURLを開く）
@@ -103,6 +104,30 @@ function M.apply(config)
 
 		-- 起動メニュー (M = Menu): Git Bash / PowerShell / MSYS2 / WSL …
 		{ key = "m", mods = "CTRL|SHIFT", action = act.ShowLauncherArgs({ flags = "FUZZY|TABS|LAUNCH_MENU_ITEMS" }) },
+
+		-- タブ名を変更 (T = Tab の Alt 付き変種): 現在の名前を初期値にして編集する。
+		-- prompt / initial_value は nightly 限定のため、押した時点のタブ名を
+		-- 初期値に入れられるようコールバック内でアクションを組み立てる
+		{
+			key = "t",
+			mods = "CTRL|SHIFT|ALT",
+			action = wezterm.action_callback(function(window, pane)
+				window:perform_action(
+					act.PromptInputLine({
+						description = "タブ名を入力（空欄で確定するとデフォルト名に戻る）",
+						prompt = (wezterm.nerdfonts.md_pencil or ">") .. " ",
+						initial_value = window:active_tab():get_title(),
+						action = wezterm.action_callback(function(win, _, line)
+							-- Esc でキャンセルすると line は nil
+							if line then
+								win:active_tab():set_title(line)
+							end
+						end),
+					}),
+					pane
+				)
+			end),
+		},
 
 		-- リサイズモード突入 (S = Size)
 		{

@@ -45,6 +45,12 @@ function M.apply(config)
 		selection_fg = p.fg,
 		split = p.accent,
 		scrollbar_thumb = p.tab_bg,
+		-- シェルピッカー(InputSelector)と起動メニュー(Launcher)の項目ラベル配色 ※nightly 限定
+		-- 値は { Color = "#…" } のオブジェクト形式（文字列だけでは受け付けない）
+		input_selector_label_bg = { Color = p.tab_bg },
+		input_selector_label_fg = { Color = p.fg },
+		launcher_label_bg = { Color = p.tab_bg },
+		launcher_label_fg = { Color = p.fg },
 		ansi = p.ansi,
 		brights = p.brights,
 		tab_bar = {
