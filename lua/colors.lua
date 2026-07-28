@@ -67,6 +67,16 @@ function M.apply(config)
 			new_tab_hover = { bg_color = p.tab_bar_bg, fg_color = p.accent },
 		},
 	}
+
+	-- コマンドパレット (Ctrl+Shift+P) と文字選択 (Ctrl+Shift+U) のオーバーレイ配色。
+	-- デフォルトの灰色 (#333333) を Tokyo Night に揃える
+	-- ※ これらは config.colors の中ではなくトップレベルのオプション
+	config.command_palette_bg_color = p.tab_bg
+	config.command_palette_fg_color = p.fg
+	config.command_palette_font_size = 12.0 -- デフォルト 14 は本文(12)より大きく浮くため合わせる
+	config.char_select_bg_color = p.tab_bg
+	config.char_select_fg_color = p.fg
+	config.char_select_font_size = 12.0
 end
 
 return M

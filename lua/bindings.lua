@@ -12,6 +12,12 @@
 --    Ctrl+Shift+Alt+T    タブ名を変更（現在の名前を編集。空欄でデフォルトに戻す）
 --    Ctrl+Shift+S        リサイズモード開始 → h/j/k/l または矢印で調整
 --                        （Esc または Enter で終了 / 2秒で自動終了）
+--    Ctrl+Shift+O        ペイン選択（各ペインのラベルを打ってジャンプ）
+--    Ctrl+Shift+Alt+O    ペイン選択（選んだペインと現在のペインの位置を入替）
+--    Ctrl+Shift+Alt+W    ワークスペース切替（一覧から選択 / 新規作成）
+--    Ctrl+Shift+Alt+B    背景の半透明 ⇔ 不透明を切替（読みにくいとき用）
+--    Ctrl+Shift+Alt+←/→  タブを左 / 右へ移動
+--    Alt+1〜9 / Alt+0    タブ番号で切替（Alt+0 は最後のタブ）
 --    左クリック          選択をコピー（リンク上ならURLを開く）
 --    右クリック          クリップボードから貼り付け
 --
@@ -35,6 +41,8 @@
 --    Alt+Enter                フルスクリーン切替
 --  ※ 標準の Ctrl+Shift+K(ClearScrollback) / Ctrl+Shift+L(ShowDebugOverlay)
 --    は上のペイン移動に再割当のため無効。
+--  ※ 標準の Ctrl+Shift+Alt+←/→(AdjustPaneSize) は上のタブ移動に再割当のため無効
+--    （ペインのリサイズは Ctrl+Shift+S のリサイズモードで代替）。
 -- ============================================================
 
 local wezterm = require("wezterm")
@@ -69,6 +77,54 @@ function M.apply(config)
 		})
 	end
 
+	-- ワークスペース切替 (W = Workspace): 既存一覧から選択、または新規作成。
+	-- 新規作成エントリの番兵 ID は、実在のワークスペース名と衝突しないよう制御文字入りにする
+	local NEW_WORKSPACE_ID = "\x00new"
+	local switch_workspace = wezterm.action_callback(function(window, pane)
+		local current = window:active_workspace()
+		local choices = {}
+		for _, name in ipairs(wezterm.mux.get_workspace_names()) do
+			table.insert(choices, {
+				id = name,
+				label = (name == current) and (name .. "（現在）") or name,
+			})
+		end
+		table.insert(choices, {
+			id = NEW_WORKSPACE_ID,
+			label = (wezterm.nerdfonts.md_plus or "+") .. " 新しいワークスペースを作成",
+		})
+		window:perform_action(
+			act.InputSelector({
+				title = "ワークスペースを切替",
+				fuzzy = true,
+				choices = choices,
+				action = wezterm.action_callback(function(win, p, id)
+					if not id then
+						return -- Esc でキャンセル
+					end
+					if id == NEW_WORKSPACE_ID then
+						win:perform_action(
+							act.PromptInputLine({
+								description = "新しいワークスペース名を入力",
+								prompt = (wezterm.nerdfonts.md_pencil or ">") .. " ", -- ※nightly 限定
+								action = wezterm.action_callback(function(w2, p2, line)
+									-- Esc でキャンセルすると line は nil
+									if line and #line > 0 then
+										w2:perform_action(act.SwitchToWorkspace({ name = line }), p2)
+									end
+								end),
+							}),
+							p
+						)
+					else
+						win:perform_action(act.SwitchToWorkspace({ name = id }), p)
+					end
+				end),
+			}),
+			pane
+		)
+	end)
+
 	config.mouse_bindings = {
 		{
 			-- 選択したテキストをコピー（リンク上ならURLを開く）
@@ -98,6 +154,11 @@ function M.apply(config)
 		{ key = "j", mods = "CTRL|SHIFT", action = act.ActivatePaneDirection("Down") },
 		{ key = "k", mods = "CTRL|SHIFT", action = act.ActivatePaneDirection("Up") },
 		{ key = "l", mods = "CTRL|SHIFT", action = act.ActivatePaneDirection("Right") },
+
+		-- ペイン選択 (O = Overview): 各ペインにラベルを重ね、打ったペインへジャンプ。
+		-- Alt 付きは選んだペインと現在のペインの位置を入れ替える
+		{ key = "o", mods = "CTRL|SHIFT", action = act.PaneSelect({ alphabet = "asdfghjkl" }) },
+		{ key = "o", mods = "CTRL|SHIFT|ALT", action = act.PaneSelect({ mode = "SwapWithActive" }) },
 
 		-- ペインを閉じる (Q = Quit)
 		{ key = "q", mods = "CTRL|SHIFT", action = act.CloseCurrentPane({ confirm = true }) },
@@ -129,6 +190,31 @@ function M.apply(config)
 			end),
 		},
 
+		-- タブを左右へ移動（標準の Ctrl+Shift+PageUp/Down と同じ動作を矢印でも）
+		-- ※ 標準の Ctrl+Shift+Alt+矢印 (AdjustPaneSize) を上書きする。
+		--    ペインのリサイズは Ctrl+Shift+S のリサイズモードで代替
+		{ key = "LeftArrow", mods = "CTRL|SHIFT|ALT", action = act.MoveTabRelative(-1) },
+		{ key = "RightArrow", mods = "CTRL|SHIFT|ALT", action = act.MoveTabRelative(1) },
+
+		-- ワークスペース切替 (W = Workspace): 上のヘルパーで一覧選択 / 新規作成
+		{ key = "w", mods = "CTRL|SHIFT|ALT", action = switch_workspace },
+
+		-- 背景透過トグル (B = Background): 半透明で読みにくいときに一時的に不透明へ。
+		-- override を消せば window.lua の基準値 (0.9) に戻るため、ここに 0.9 は書かない
+		{
+			key = "b",
+			mods = "CTRL|SHIFT|ALT",
+			action = wezterm.action_callback(function(window, _)
+				local overrides = window:get_config_overrides() or {}
+				if overrides.window_background_opacity == nil then
+					overrides.window_background_opacity = 1.0 -- 不透明にして可読性を優先
+				else
+					overrides.window_background_opacity = nil -- 半透明 + Acrylic に戻す
+				end
+				window:set_config_overrides(overrides)
+			end),
+		},
+
 		-- リサイズモード突入 (S = Size)
 		{
 			key = "s",
@@ -141,6 +227,13 @@ function M.apply(config)
 			}),
 		},
 	}
+
+	-- タブ番号で直接切替（Alt+1〜9。Alt+0 は最後のタブ）
+	-- ※ Git Bash (readline) の Alt+数字 (digit-argument) はこの割当てで無効になる
+	for i = 1, 9 do
+		table.insert(config.keys, { key = tostring(i), mods = "ALT", action = act.ActivateTab(i - 1) })
+	end
+	table.insert(config.keys, { key = "0", mods = "ALT", action = act.ActivateTab(-1) })
 
 	config.key_tables = {
 		resize_pane = {
