@@ -115,6 +115,10 @@ function M.apply(config)
 	config.show_new_tab_button_in_tab_bar = true
 	-- タブ内の×ボタンを消してピルの見た目を保つ（閉じるのは Ctrl+Shift+W）※nightly 限定
 	config.show_close_tab_button_in_tabs = false
+	-- タブを閉じたとき、左隣ではなく直前にアクティブだったタブへ戻る
+	config.switch_to_last_active_tab_when_closing_tab = true
+	-- タブバー上でマウスホイールを回すとタブを切替（デフォルト true だが明示しておく）
+	config.mouse_wheel_scrolls_tabs = true
 
 	-- タブバー（タイトルバー）のフォントと背景
 	-- ※ フォント指定は必須: デフォルトの Roboto は Nerd Font / Powerline / 日本語
