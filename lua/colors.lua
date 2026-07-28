@@ -1,3 +1,4 @@
+local wezterm = require("wezterm")
 local M = {}
 
 M.palette = {
@@ -67,6 +68,21 @@ function M.apply(config)
 			new_tab_hover = { bg_color = p.tab_bar_bg, fg_color = p.accent },
 		},
 	}
+
+	-- コマンドパレット (Ctrl+Shift+P) / 文字選択 (Ctrl+Shift+U) の外観
+	-- ※ デフォルトはフォントが Roboto（日本語グリフ無しで豆腐になる）・
+	--   背景 #333333 で Tokyo Night と不釣り合いのため、本文フォントと
+	--   パレット色に揃える
+	config.command_palette_font = wezterm.font("HackGen Console NF")
+	config.command_palette_font_size = 12.0
+	config.command_palette_bg_color = p.tab_bg
+	config.command_palette_fg_color = p.fg
+	config.char_select_font = wezterm.font("HackGen Console NF")
+	config.char_select_font_size = 12.0
+	config.char_select_bg_color = p.tab_bg
+	config.char_select_fg_color = p.fg
+	-- ペイン選択 (Ctrl+Shift+A) のラベルフォント ※nightly 限定
+	config.pane_select_font = wezterm.font("HackGen Console NF")
 end
 
 return M
