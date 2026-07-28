@@ -12,12 +12,21 @@
 --    Ctrl+Shift+Alt+T    タブ名を変更（現在の名前を編集。空欄でデフォルトに戻す）
 --    Ctrl+Shift+S        リサイズモード開始 → h/j/k/l または矢印で調整
 --                        （Esc または Enter で終了 / 2秒で自動終了）
+--    Ctrl+Shift+F        検索（大文字小文字を区別しない。標準は区別あり）
+--    Ctrl+Shift+A        ペイン選択（ラベルを打って移動）
+--    Ctrl+Shift+Alt+A    ペイン選択（選んだペインと現在ペインを入替え）
+--    Ctrl+Shift+B        直前にアクティブだったタブへ戻る（タブバーの ↩ 印）
+--    Ctrl+Shift+Alt+B    背景透過のトグル（0.9 ⇔ 1.0 一時切替）
+--    Ctrl+Shift+Alt+W    ワークスペース一覧（fuzzy 選択で切替）
+--    Ctrl+Shift+Alt+N    新しいワークスペースを作成して切替
+--    Ctrl+Shift+Alt+R    ワークスペース名を変更（現在の名前を編集）
+--    Ctrl+Shift+Alt+K    スクロールバック消去（標準 Ctrl+Shift+K の移設先）
+--    Ctrl+Shift+Alt+L    デバッグオーバーレイ（標準 Ctrl+Shift+L の移設先）
 --    左クリック          選択をコピー（リンク上ならURLを開く）
 --    右クリック          クリップボードから貼り付け
 --
 --  ▼ 主要デフォルト（WezTerm 標準。この設定でも有効）
 --    Ctrl+Shift+C / V         コピー / 貼り付け
---    Ctrl+Shift+F             検索
 --    Ctrl+Shift+X             コピーモード（vim風カーソル選択）
 --    Ctrl+Shift+Space         QuickSelect（URL等を素早く選択）
 --    Ctrl+Shift+P             コマンドパレット
@@ -34,7 +43,7 @@
 --    Ctrl + +/-/0             フォント拡大 / 縮小 / リセット
 --    Alt+Enter                フルスクリーン切替
 --  ※ 標準の Ctrl+Shift+K(ClearScrollback) / Ctrl+Shift+L(ShowDebugOverlay)
---    は上のペイン移動に再割当のため無効。
+--    はペイン移動に再割当。元の機能は Ctrl+Shift+Alt+K / L に移設済み。
 -- ============================================================
 
 local wezterm = require("wezterm")
@@ -140,6 +149,81 @@ function M.apply(config)
 				until_unknown = true,
 			}),
 		},
+
+		-- 検索: 標準の「大文字小文字を区別」を「区別なし」に上書き
+		-- （検索オーバーレイ内でのモード切替は引き続き可能）
+		{ key = "f", mods = "CTRL|SHIFT", action = act.Search({ CaseInSensitiveString = "" }) },
+
+		-- ペイン選択 (A = Activate): 各ペインにラベルが出て、打った文字のペインへ移動。
+		-- Alt 付きは選んだペインと現在ペインの位置を入替える
+		{ key = "a", mods = "CTRL|SHIFT", action = act.PaneSelect({ mode = "Activate" }) },
+		{ key = "a", mods = "CTRL|SHIFT|ALT", action = act.PaneSelect({ mode = "SwapWithActive" }) },
+
+		-- 直前にアクティブだったタブへ戻る (B = Back)。タブバーの ↩ 印が戻り先
+		{ key = "b", mods = "CTRL|SHIFT", action = act.ActivateLastTab },
+
+		-- 背景透過を一時トグル（1.0=不透明 ⇔ override 解除=window.lua の 0.9）
+		-- 値を nil に戻すことで基準値を二重管理しない
+		{
+			key = "b",
+			mods = "CTRL|SHIFT|ALT",
+			action = wezterm.action_callback(function(window, _)
+				local overrides = window:get_config_overrides() or {}
+				if overrides.window_background_opacity == nil then
+					overrides.window_background_opacity = 1.0
+				else
+					overrides.window_background_opacity = nil
+				end
+				window:set_config_overrides(overrides)
+			end),
+		},
+
+		-- ワークスペース一覧から fuzzy 選択で切替 (W = Workspace)
+		{ key = "w", mods = "CTRL|SHIFT|ALT", action = act.ShowLauncherArgs({ flags = "FUZZY|WORKSPACES" }) },
+
+		-- 新しいワークスペースを名前を付けて作成・切替 (N = New)
+		{
+			key = "n",
+			mods = "CTRL|SHIFT|ALT",
+			action = act.PromptInputLine({
+				description = "新しいワークスペース名を入力",
+				prompt = (wezterm.nerdfonts.cod_window or ">") .. " ",
+				action = wezterm.action_callback(function(win, pane, line)
+					-- Esc でキャンセルすると line は nil。空欄も何もしない
+					if line and #line > 0 then
+						win:perform_action(act.SwitchToWorkspace({ name = line }), pane)
+					end
+				end),
+			}),
+		},
+
+		-- ワークスペース名を変更 (R = Rename): 現在の名前を初期値にして編集。
+		-- initial_value は nightly 限定のため、押した時点の名前を取り込めるよう
+		-- コールバック内でアクションを組み立てる（タブ名変更と同じパターン）
+		{
+			key = "r",
+			mods = "CTRL|SHIFT|ALT",
+			action = wezterm.action_callback(function(window, pane)
+				local current = window:active_workspace()
+				window:perform_action(
+					act.PromptInputLine({
+						description = "ワークスペース名を入力",
+						prompt = (wezterm.nerdfonts.md_pencil or ">") .. " ",
+						initial_value = current,
+						action = wezterm.action_callback(function(_, _, line)
+							if line and #line > 0 and line ~= current then
+								wezterm.mux.rename_workspace(current, line)
+							end
+						end),
+					}),
+					pane
+				)
+			end),
+		},
+
+		-- ペイン移動 (Ctrl+Shift+K/L) に潰された標準機能の移設先
+		{ key = "k", mods = "CTRL|SHIFT|ALT", action = act.ClearScrollback("ScrollbackOnly") },
+		{ key = "l", mods = "CTRL|SHIFT|ALT", action = act.ShowDebugOverlay },
 	}
 
 	config.key_tables = {

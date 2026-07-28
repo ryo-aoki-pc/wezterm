@@ -9,6 +9,7 @@ require("window").apply(config)
 require("tabs").apply(config)
 require("statusbar").apply(config)
 require("shells").apply(config)
+require("links").apply(config)
 require("bindings").apply(config)
 
 return config

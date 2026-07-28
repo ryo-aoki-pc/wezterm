@@ -12,6 +12,8 @@ local nf = wezterm.nerdfonts
 local LEFT_CAP = utf8.char(0xe0b6)
 local RIGHT_CAP = utf8.char(0xe0b4)
 local ZOOM_ICON = nf.md_magnify or ""
+-- 直前にアクティブだったタブの目印（Ctrl+Shift+B で戻れることを示す）
+local LAST_ICON = nf.md_undo_variant or ""
 
 -- 汎用端末アイコン（未知のプロセス・プロセス名が取れない場合のフォールバック）
 local GENERIC_ICON = nf.cod_terminal or nf.md_console or utf8.char(0xe795)
@@ -145,9 +147,12 @@ function M.apply(config)
 		end
 		-- ズーム中のペインは虫眼鏡を表示
 		local zoom = tab.active_pane.is_zoomed and (" " .. ZOOM_ICON) or ""
+		-- 直前にアクティブだったタブに控えめな目印（Ctrl+Shift+B の戻り先）
+		-- ※ is_last_active は nightly 限定フィールド。無い版では nil → 非表示で安全
+		local last = tab.is_last_active and (" " .. LAST_ICON) or ""
 		-- ファンシータブバーでは max_width が実質無制限のため、固定幅で切り詰める
 		title = wezterm.truncate_right(title, 24)
-		local label = string.format(" %d %s  %s%s ", tab.tab_index + 1, icon, title, zoom)
+		local label = string.format(" %d %s  %s%s%s ", tab.tab_index + 1, icon, title, zoom, last)
 
 		local elements = {
 			-- 左の丸キャップ
