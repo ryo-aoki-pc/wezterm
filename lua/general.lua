@@ -21,6 +21,20 @@ function M.apply(config)
 	-- QuickSelect (Ctrl+Shift+Space) 中は画面の色装飾を外してラベルを見やすくする ※nightly 限定
 	config.quick_select_remove_styling = true
 
+	-- nightly 利用中でも安定版リリースを検知して更新通知が出てしまうため無効化
+	config.check_for_updates = false
+
+	-- タブを閉じたら直前に使っていたタブへ戻る（Ctrl+Shift+B の「戻る」と挙動を統一。
+	-- 標準は「左隣のタブ」に移る）
+	config.switch_to_last_active_tab_when_closing_tab = true
+
+	-- Ctrl +/- のフォントサイズ変更でウィンドウの大きさを変えない（セル数の方を増減）
+	config.adjust_window_size_when_changing_font_size = false
+
+	-- フォーカス中のペインが出す通知トーストは表示しない（見えている画面の分は不要。
+	-- 非フォーカスのペイン・ウィンドウからの通知は従来どおり表示される）
+	config.notification_handling = "SuppressFromFocusedPane"
+
 	-- 視覚ベル（音は鳴らさず、ベル時にカーソル色が一瞬フェードする上品な演出）
 	config.visual_bell = {
 		fade_in_duration_ms = 75,
