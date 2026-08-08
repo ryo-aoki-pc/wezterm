@@ -12,13 +12,13 @@
 --    Ctrl+Shift+Alt+T    タブ名を変更（現在の名前を編集。空欄でデフォルトに戻す）
 --    Ctrl+Shift+S        リサイズモード開始 → h/j/k/l または矢印で調整
 --                        （Esc または Enter で終了 / 2秒で自動終了）
+--    Ctrl+Shift+X        コピーモード（vim風カーソル選択。標準にもあるが明示定義）
 --    左クリック          選択をコピー（リンク上ならURLを開く）
 --    右クリック          クリップボードから貼り付け
 --
 --  ▼ 主要デフォルト（WezTerm 標準。この設定でも有効）
 --    Ctrl+Shift+C / V         コピー / 貼り付け
 --    Ctrl+Shift+F             検索
---    Ctrl+Shift+X             コピーモード（vim風カーソル選択）
 --    Ctrl+Shift+Space         QuickSelect（URL等を素早く選択）
 --    Ctrl+Shift+P             コマンドパレット
 --    Ctrl+Shift+U             文字（絵文字）選択
@@ -128,6 +128,10 @@ function M.apply(config)
 				)
 			end),
 		},
+
+		-- コピーモード (X): 標準デフォルトと同じ割り当てだが、デフォルト依存だと
+		-- 環境差で効かなくなった際に追えないため明示的にバインドしておく
+		{ key = "x", mods = "CTRL|SHIFT", action = act.ActivateCopyMode },
 
 		-- リサイズモード突入 (S = Size)
 		{
