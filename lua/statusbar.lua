@@ -12,10 +12,18 @@ local RIGHT_CAP = utf8.char(0xe0b4)
 local WDAYS = { "日", "月", "火", "水", "木", "金", "土" }
 
 -- 各セグメントのアイコン
-local ICON_RESIZE = nf.md_arrow_expand_all or nf.cod_move or ""
 local ICON_WORKSPACE = nf.cod_window or ""
 local ICON_DATE = nf.md_calendar or ""
 local ICON_TIME = nf.md_clock_outline or ""
+
+-- アクティブなキーテーブル → ピル型バッジの表示定義
+-- copy_mode / search_mode は WezTerm 組み込みのキーテーブル名
+-- （Ctrl+Shift+X / Ctrl+Shift+F で突入。バッジが出れば確実にモードに入っている）
+local MODE_BADGES = {
+	resize_pane = { icon = nf.md_arrow_expand_all or nf.cod_move or "", label = "リサイズ", color = "warn" },
+	copy_mode = { icon = nf.md_content_copy or "", label = "コピーモード", color = "accent" },
+	search_mode = { icon = nf.md_magnify or "", label = "検索", color = "accent2" },
+}
 
 -- バッテリー残量アイコン（10%刻み。インデックス = 残量を10%単位に四捨五入した値）
 local BATTERY_ICONS = {
@@ -57,17 +65,19 @@ function M.apply(config)
 			table.insert(segs, { Text = text .. "  " })
 		end
 
-		-- 1) リサイズモード中はピル型バッジで強調（Ctrl+Shift+S → h/j/k/l）
-		if window:active_key_table() == "resize_pane" then
+		-- 1) モード（リサイズ/コピーモード/検索）中はピル型バッジで強調
+		local badge = MODE_BADGES[window:active_key_table() or ""]
+		if badge then
+			local color = p[badge.color]
 			table.insert(segs, { Background = { Color = p.tab_bar_bg } })
-			table.insert(segs, { Foreground = { Color = p.warn } })
+			table.insert(segs, { Foreground = { Color = color } })
 			table.insert(segs, { Text = LEFT_CAP })
-			table.insert(segs, { Background = { Color = p.warn } })
+			table.insert(segs, { Background = { Color = color } })
 			table.insert(segs, { Foreground = { Color = p.bg } })
 			table.insert(segs, { Attribute = { Intensity = "Bold" } })
-			table.insert(segs, { Text = ICON_RESIZE .. " リサイズ" })
+			table.insert(segs, { Text = badge.icon .. " " .. badge.label })
 			table.insert(segs, { Background = { Color = p.tab_bar_bg } })
-			table.insert(segs, { Foreground = { Color = p.warn } })
+			table.insert(segs, { Foreground = { Color = color } })
 			table.insert(segs, { Text = RIGHT_CAP .. "  " })
 		end
 
