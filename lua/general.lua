@@ -13,6 +13,12 @@ function M.apply(config)
 	config.max_fps = 120
 	config.animation_fps = 60
 
+	-- キーが効かないときの診断用。コメントを外してリロード → 対象キーを押す →
+	-- コマンドパレット(Ctrl+Shift+P)から "Show Debug Overlay" でログを確認する。
+	-- キーイベントが記録されていなければ、そのキーは WezTerm に届いていない
+	-- （IME・常駐アプリ・OS のグローバルホットキーによる横取り）
+	-- config.debug_key_events = true
+
 	-- コントラスト比が低すぎる文字色を自動補正（WCAG AA 相当の 4.5:1 を確保）※nightly 限定
 	-- 例: `ls` の濃紺ディレクトリ名 × 黒背景など。ペイン内のセルのみが対象で、
 	-- タブバーやステータスバーのピル配色には影響しない

@@ -130,8 +130,11 @@ function M.apply(config)
 		},
 
 		-- コピーモード (X): 標準デフォルトと同じ割り当てだが、デフォルト依存だと
-		-- 環境差で効かなくなった際に追えないため明示的にバインドしておく
+		-- 環境差で効かなくなった際に追えないため明示的にバインドしておく。
+		-- phys:X は物理キー位置での照合。IME やキーボードレイアウト起因で
+		-- マップ後の文字が "x" にならないケースでも拾えるよう両方定義する
 		{ key = "x", mods = "CTRL|SHIFT", action = act.ActivateCopyMode },
+		{ key = "phys:X", mods = "CTRL|SHIFT", action = act.ActivateCopyMode },
 
 		-- リサイズモード突入 (S = Size)
 		{
