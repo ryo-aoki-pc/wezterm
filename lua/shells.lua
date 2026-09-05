@@ -54,8 +54,14 @@ local function discover()
 	end
 
 	local home = os.getenv("USERPROFILE")
-	local git_bash = home .. "/scoop/apps/git/current/bin/bash.exe"
-	local git_bash_args = { git_bash, "-i", "-l" }
+	-- Git for Windows の bash。bin/bash.exe は MSYSTEM=MINGW64 を設定する
+	-- ラッパーなので、usr/bin/bash.exe ではなくこちらを使う
+	local git_bash = first_existing({
+		"C:/Program Files/Git/bin/bash.exe",                -- 公式インストーラ（全ユーザー）
+		home .. "/AppData/Local/Programs/Git/bin/bash.exe", -- 公式インストーラ（現在のユーザーのみ）
+		home .. "/scoop/apps/git/current/bin/bash.exe",     -- scoop
+	})
+	local git_bash_args = git_bash and { git_bash, "-i", "-l" } or nil
 	local msys2_shell = "C:/msys64/msys2_shell.cmd"
 	local qmk_bash = "C:/QMK_MSYS/usr/bin/bash.exe"
 	local pwsh = first_existing({
@@ -74,7 +80,7 @@ local function discover()
 		or "  Developer PowerShell"
 
 	local candidates = {
-		{ ok = exists(git_bash),    label = "  Git Bash",            args = git_bash_args },
+		{ ok = git_bash ~= nil,     label = "  Git Bash",            args = git_bash_args },
 		{ ok = pwsh ~= nil,         label = "  PowerShell 7",        args = { pwsh, "-NoLogo" } },
 		{ ok = true,                label = "  Windows PowerShell",  args = { "powershell.exe", "-NoLogo" } },
 		{ ok = vsdevshell ~= nil,   label = vsdevshell_label,        args = vsdevshell_args },
@@ -103,7 +109,7 @@ local function discover()
 	end
 
 	cache = {
-		default_prog = exists(git_bash) and git_bash_args or nil,
+		default_prog = git_bash_args,
 		list = list,
 	}
 	return cache
