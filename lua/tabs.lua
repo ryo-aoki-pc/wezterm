@@ -144,10 +144,10 @@ function M.apply(config)
 	-- タブ内の×ボタンを消してピルの見た目を保つ（閉じるのは Ctrl+Shift+W）※nightly 限定
 	config.show_close_tab_button_in_tabs = false
 
-	-- タブバー（タイトルバー）のフォントと背景
+	-- タブバーのフォントと背景
 	-- ※ フォント指定は必須: デフォルトの Roboto は Nerd Font / Powerline / 日本語
 	--   グリフを持たないため、ピルの丸キャップやアイコンが豆腐になる
-	-- ※ 背景は不透明のまま（window.lua の #5348 幽霊ボタン対策を維持）
+	-- ※ 背景は不透明のまま（window.lua の可読性方針と #5348 の回避策を維持）
 	config.window_frame = {
 		font = wezterm.font_with_fallback(ui.font_family),
 		font_size = 11.0, -- 本文(12)より少し小さめ。タブバーの高さもこれで決まる
