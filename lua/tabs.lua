@@ -1,16 +1,13 @@
 local wezterm = require("wezterm")
 local palette = require("colors").palette
+local ui = require("ui")
 local M = {}
 
 local nf = wezterm.nerdfonts
 
--- 丸型のパワーライン区切り（ピル状タブ）
--- U+E0B6 = 左半円, U+E0B4 = 右半円（Nerd Font / Powerline Extra）
--- もしタブ端が □（豆腐）で表示される場合はハード区切りに変更:
---   local LEFT_CAP  = wezterm.nerdfonts.pl_left_hard_divider
---   local RIGHT_CAP = wezterm.nerdfonts.pl_right_hard_divider
-local LEFT_CAP = utf8.char(0xe0b6)
-local RIGHT_CAP = utf8.char(0xe0b4)
+-- 丸型のパワーライン区切り（ピル状タブ）※定義は ui.lua
+local LEFT_CAP = ui.LEFT_CAP
+local RIGHT_CAP = ui.RIGHT_CAP
 local ZOOM_ICON = nf.md_magnify or ""
 
 -- 汎用端末アイコン（未知のプロセス・プロセス名が取れない場合のフォールバック）
@@ -121,7 +118,7 @@ function M.apply(config)
 	--   グリフを持たないため、ピルの丸キャップやアイコンが豆腐になる
 	-- ※ 背景は不透明のまま（window.lua の #5348 幽霊ボタン対策を維持）
 	config.window_frame = {
-		font = wezterm.font("HackGen Console NF"),
+		font = wezterm.font_with_fallback(ui.font_family),
 		font_size = 11.0, -- 本文(12)より少し小さめ。タブバーの高さもこれで決まる
 		active_titlebar_bg = palette.tab_bar_bg,
 		inactive_titlebar_bg = palette.tab_bar_bg,

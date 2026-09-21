@@ -8,17 +8,21 @@
 --    Ctrl+Shift+Alt+E    シェルを選んで上下分割（一覧から選択）
 --    Ctrl+Shift+H/J/K/L  ペイン移動（左/下/上/右, vim風）
 --    Ctrl+Shift+Q        ペインを閉じる（確認あり）
---    Ctrl+Shift+M        起動メニュー（Git Bash/PowerShell/MSYS2/WSL）
+--    Ctrl+Shift+M        起動メニュー（Git Bash/PowerShell/MSYS2/WSL/ワークスペース）
 --    Ctrl+Shift+Alt+T    タブ名を変更（現在の名前を編集。空欄でデフォルトに戻す）
+--    Ctrl+Shift+Alt+W    ワークスペースを選んで切替（一覧から選択）
+--    Ctrl+Shift+Alt+N    ワークスペースを作成 / 既存へ移動（名前を入力）
+--    Ctrl+Shift+Alt+H/L  前 / 次のワークスペースへ
 --    Ctrl+Shift+S        リサイズモード開始 → h/j/k/l または矢印で調整
 --                        （Esc または Enter で終了 / 2秒で自動終了）
---    左クリック          選択をコピー（リンク上ならURLを開く）
 --    右クリック          クリップボードから貼り付け
 --
 --  ▼ 主要デフォルト（WezTerm 標準。この設定でも有効）
 --    Ctrl+Shift+C / V         コピー / 貼り付け
 --    Ctrl+Shift+F             検索
 --    Ctrl+Shift+X             コピーモード（vim風カーソル選択）
+--    Ctrl+Shift+Z             ペインのズーム切替（タブの虫眼鏡アイコンはこの状態）
+--    Ctrl+Shift+矢印          ペイン移動（Ctrl+Shift+H/J/K/L と同じ）
 --    Ctrl+Shift+Space         QuickSelect（URL等を素早く選択）
 --    Ctrl+Shift+P             コマンドパレット
 --    Ctrl+Shift+U             文字（絵文字）選択
@@ -33,6 +37,7 @@
 --    Shift+PageUp / PageDown          1ページ スクロール
 --    Ctrl + +/-/0             フォント拡大 / 縮小 / リセット
 --    Alt+Enter                フルスクリーン切替
+--    左クリック               選択をコピー（リンク上ならURLを開く）
 --  ※ 標準の Ctrl+Shift+K(ClearScrollback) / Ctrl+Shift+L(ShowDebugOverlay)
 --    は上のペイン移動に再割当のため無効。
 -- ============================================================
@@ -69,13 +74,9 @@ function M.apply(config)
 		})
 	end
 
+	-- ※ 左クリックでのコピー / リンクオープンは WezTerm のデフォルトと同一のため
+	--   ここでは定義しない（mouse_bindings はデフォルトを置き換えず追記される）
 	config.mouse_bindings = {
-		{
-			-- 選択したテキストをコピー（リンク上ならURLを開く）
-			event = { Up = { streak = 1, button = "Left" } },
-			mods = "NONE",
-			action = act.CompleteSelectionOrOpenLinkAtMouseCursor("ClipboardAndPrimarySelection"),
-		},
 		{
 			-- 右クリックでペースト
 			event = { Down = { streak = 1, button = "Right" } },
@@ -102,8 +103,14 @@ function M.apply(config)
 		-- ペインを閉じる (Q = Quit)
 		{ key = "q", mods = "CTRL|SHIFT", action = act.CloseCurrentPane({ confirm = true }) },
 
-		-- 起動メニュー (M = Menu): Git Bash / PowerShell / MSYS2 / WSL …
-		{ key = "m", mods = "CTRL|SHIFT", action = act.ShowLauncherArgs({ flags = "FUZZY|TABS|LAUNCH_MENU_ITEMS" }) },
+		-- 起動メニュー (M = Menu): Git Bash / PowerShell / MSYS2 / WSL / ワークスペース …
+		-- ※ DOMAINS は付けない: WSL ドメインは shells.lua が launch_menu に展開済みで、
+		--   付けると同じ項目が二重に並ぶ
+		{
+			key = "m",
+			mods = "CTRL|SHIFT",
+			action = act.ShowLauncherArgs({ flags = "FUZZY|TABS|LAUNCH_MENU_ITEMS|WORKSPACES" }),
+		},
 
 		-- タブ名を変更 (T = Tab の Alt 付き変種): 現在の名前を初期値にして編集する。
 		-- prompt / initial_value は nightly 限定のため、押した時点のタブ名を
@@ -128,6 +135,30 @@ function M.apply(config)
 				)
 			end),
 		},
+
+		-- ワークスペース切替 (W = Workspace): 一覧から選んで移動
+		{ key = "w", mods = "CTRL|SHIFT|ALT", action = act.ShowLauncherArgs({ flags = "FUZZY|WORKSPACES" }) },
+
+		-- ワークスペースを作成 / 既存へ移動 (N = New): 名前を入力する。
+		-- タブ名変更と同じ PromptInputLine パターン（Esc でキャンセルすると line は nil）
+		{
+			key = "n",
+			mods = "CTRL|SHIFT|ALT",
+			action = act.PromptInputLine({
+				description = "ワークスペース名を入力（既存の名前ならそこへ移動）",
+				prompt = (wezterm.nerdfonts.cod_window or ">") .. " ",
+				action = wezterm.action_callback(function(win, pane, line)
+					if line and line ~= "" then
+						win:perform_action(act.SwitchToWorkspace({ name = line }), pane)
+					end
+				end),
+			}),
+		},
+
+		-- 前 / 次のワークスペースへ（ペイン移動の H/L に Alt を足した形）
+		-- ※ 記号キー（[ / ]）はキーボードレイアウトで位置も Shift 後の文字も変わるため避ける
+		{ key = "h", mods = "CTRL|SHIFT|ALT", action = act.SwitchWorkspaceRelative(-1) },
+		{ key = "l", mods = "CTRL|SHIFT|ALT", action = act.SwitchWorkspaceRelative(1) },
 
 		-- リサイズモード突入 (S = Size)
 		{

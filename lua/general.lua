@@ -1,8 +1,9 @@
 local wezterm = require("wezterm")
+local ui = require("ui")
 local M = {}
 
 function M.apply(config)
-	config.font = wezterm.font("HackGen Console NF")
+	config.font = wezterm.font_with_fallback(ui.font_family)
 	config.font_size = 12
 	config.audible_bell = "Disabled"
 	config.scrollback_lines = 100000
