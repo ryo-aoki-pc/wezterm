@@ -43,6 +43,9 @@ function M.apply(config)
 		cursor_border = p.accent,
 		selection_bg = p.selection_bg,
 		selection_fg = p.fg,
+		-- IME 変換中（未確定）のカーソル色。確定すると cursor_bg の青に戻るため、
+		-- 日本語入力で「今は未確定」が一目で分かる
+		compose_cursor = p.warn,
 		split = p.accent,
 		scrollbar_thumb = p.tab_bg,
 		-- シェルピッカー(InputSelector)と起動メニュー(Launcher)の項目ラベル配色 ※nightly 限定

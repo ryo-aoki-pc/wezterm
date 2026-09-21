@@ -10,6 +10,32 @@ function M.apply(config)
 	config.harfbuzz_features = { "calt=1", "clig=1", "liga=1" }
 	config.inactive_pane_hsb = { saturation = 0.85, brightness = 0.75 }
 
+	-- スクロールバー（つまみの色は colors.lua の scrollbar_thumb）。
+	-- window.lua の右パディング(16px)の中に描画されるので内容は狭くならない
+	config.enable_scroll_bar = true
+
+	-- Ctrl + +/- のフォント拡縮でウィンドウサイズを追従させない。
+	-- window_decorations = "RESIZE" の自由リサイズ中にウィンドウが跳ねるのを防ぐ
+	config.adjust_window_size_when_changing_font_size = false
+
+	-- コマンドパレット(Ctrl+Shift+P)と文字選択(Ctrl+Shift+U)のフォント。
+	-- tabs.lua の window_frame と同じ理由: 既定の Roboto は Nerd Font / 日本語
+	-- グリフを持たないため、指定しないとアイコンや日本語が豆腐になる
+	config.command_palette_font = wezterm.font_with_fallback(ui.font_family)
+	config.command_palette_font_size = 12
+	config.char_select_font_size = 12
+
+	-- QuickSelect (Ctrl+Shift+Space): 既定パターン（URL 等）に追加される。
+	-- ラベルは bindings.lua の PaneSelect と同じホームポジションに揃える
+	config.quick_select_alphabet = "asdfghjkl"
+	-- ※ 正規表現はバックスラッシュを含むため長括弧文字列 [[ ]] で書く
+	--   （Lua 5.4 は "\s" のような未知のエスケープを構文エラーにする）
+	config.quick_select_patterns = {
+		[[[0-9a-f]{7,40}]],                                  -- git のコミットハッシュ
+		[[[A-Za-z]:[\\/](?:[^\s:*?"<>|]+[\\/])*[^\s:*?"<>|]*]], -- Windows の絶対パス
+		[[[^\s]+:\d+(?::\d+)?]],                            -- file:line / file:line:col
+	}
+
 	-- 滑らかな描画・アニメーション
 	config.max_fps = 120
 	config.animation_fps = 60

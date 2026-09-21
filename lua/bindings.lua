@@ -8,6 +8,12 @@
 --    Ctrl+Shift+Alt+E    シェルを選んで上下分割（一覧から選択）
 --    Ctrl+Shift+H/J/K/L  ペイン移動（左/下/上/右, vim風）
 --    Ctrl+Shift+Q        ペインを閉じる（確認あり）
+--    Ctrl+Shift+Alt+P    ペインをラベルで選んで移動
+--    Ctrl+Shift+Alt+S    ペインをラベルで選んで現在のペインと入れ替え
+--    Ctrl+Shift+Alt+R    ペインの中身を時計回りに回す
+--    Ctrl+Shift+Alt+B    直前に見ていたタブへ戻る
+--    Ctrl+Shift+Alt+K    スクロールバックと画面を消去
+--    Ctrl+Shift+Alt+↑/↓  前 / 次のプロンプトへスクロール（要シェル統合）
 --    Ctrl+Shift+M        起動メニュー（Git Bash/PowerShell/MSYS2/WSL/ワークスペース）
 --    Ctrl+Shift+Alt+T    タブ名を変更（現在の名前を編集。空欄でデフォルトに戻す）
 --    Ctrl+Shift+Alt+W    ワークスペースを選んで切替（一覧から選択）
@@ -39,7 +45,8 @@
 --    Alt+Enter                フルスクリーン切替
 --    左クリック               選択をコピー（リンク上ならURLを開く）
 --  ※ 標準の Ctrl+Shift+K(ClearScrollback) / Ctrl+Shift+L(ShowDebugOverlay)
---    は上のペイン移動に再割当のため無効。
+--    は上のペイン移動に再割当のため無効。ClearScrollback は
+--    Ctrl+Shift+Alt+K で使える（ShowDebugOverlay はコマンドパレットから）。
 -- ============================================================
 
 local wezterm = require("wezterm")
@@ -159,6 +166,29 @@ function M.apply(config)
 		-- ※ 記号キー（[ / ]）はキーボードレイアウトで位置も Shift 後の文字も変わるため避ける
 		{ key = "h", mods = "CTRL|SHIFT|ALT", action = act.SwitchWorkspaceRelative(-1) },
 		{ key = "l", mods = "CTRL|SHIFT|ALT", action = act.SwitchWorkspaceRelative(1) },
+
+		-- ペインをラベルで選ぶ (P = Pane): 3 ペイン以上で方向キー移動より速い。
+		-- ラベルは general.lua の quick_select_alphabet と同じホームポジション
+		{ key = "p", mods = "CTRL|SHIFT|ALT", action = act.PaneSelect({ alphabet = "asdfghjkl" }) },
+
+		-- 選んだペインと現在のペインを入れ替える (S = Swap)
+		{ key = "s", mods = "CTRL|SHIFT|ALT", action = act.PaneSelect({ alphabet = "asdfghjkl", mode = "SwapWithActive" }) },
+
+		-- レイアウトは変えずにペインの中身を時計回りに回す (R = Rotate)
+		{ key = "r", mods = "CTRL|SHIFT|ALT", action = act.RotatePanes("Clockwise") },
+
+		-- 直前に見ていたタブへ戻る (B = Back)。2 枚のタブを行き来するのに使う
+		-- ※ Ctrl+Alt+Tab は Windows のタスクスイッチャに取られるため使わない
+		{ key = "b", mods = "CTRL|SHIFT|ALT", action = act.ActivateLastTab },
+
+		-- スクロールバックを消す (K)。標準の Ctrl+Shift+K はペイン移動に使ったため、
+		-- 同じ K に Alt を足した形で復活させる（H/L の「ワークスペース前後」とは無関係）
+		{ key = "k", mods = "CTRL|SHIFT|ALT", action = act.ClearScrollback("ScrollbackAndViewport") },
+
+		-- 前 / 次のプロンプトへスクロール（Ctrl+Shift+矢印 = ペイン移動の Alt 変種）。
+		-- ※ シェル統合 (shell/wezterm.sh / .ps1) が OSC 133 を送っている必要がある
+		{ key = "UpArrow", mods = "CTRL|SHIFT|ALT", action = act.ScrollToPrompt(-1) },
+		{ key = "DownArrow", mods = "CTRL|SHIFT|ALT", action = act.ScrollToPrompt(1) },
 
 		-- リサイズモード突入 (S = Size)
 		{

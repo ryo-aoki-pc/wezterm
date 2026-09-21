@@ -9,6 +9,9 @@ local nf = wezterm.nerdfonts
 local LEFT_CAP = ui.LEFT_CAP
 local RIGHT_CAP = ui.RIGHT_CAP
 local ZOOM_ICON = nf.md_magnify or ""
+-- 見ていない間に出力があったタブに付ける印（非アクティブタブのみ）
+-- U+25CF = 黒丸。Nerd Font が無い環境でも出るようフォールバックに使う
+local UNSEEN_ICON = nf.md_circle_medium or utf8.char(0x25cf)
 
 -- 汎用端末アイコン（未知のプロセス・プロセス名が取れない場合のフォールバック）
 local GENERIC_ICON = nf.cod_terminal or nf.md_console or utf8.char(0xe795)
@@ -88,6 +91,34 @@ local function progress_cell(pane)
 	return nil
 end
 
+-- ペインが OSC 7 で報告したカレントディレクトリを短い表示名にする。
+-- 例: "C:/Users/foo/dev/myapp" -> "myapp"、ホームそのものなら "~"。
+-- 報告が無いシェル（シェル統合を入れていない / WSL など）では nil を返し、
+-- 呼び出し側が従来どおりペインのタイトルへフォールバックする
+local function cwd_label(pane)
+	local cwd = pane and pane.current_working_dir
+	if not cwd then
+		return nil
+	end
+	-- current_working_dir は Url オブジェクト。file_path が OS ネイティブ形式のパス
+	local path = cwd.file_path
+	if not path or path == "" then
+		return nil
+	end
+	-- 末尾の区切りを落としてから比較・切り出しする（Windows は \ と / が混在しうる）
+	path = (path:gsub("[/\\]$", ""))
+	local home = os.getenv("USERPROFILE") or os.getenv("HOME")
+	if home then
+		local function norm(v)
+			return (v:gsub("\\", "/"):gsub("/$", "")):lower()
+		end
+		if norm(path) == norm(home) then
+			return "~"
+		end
+	end
+	return path:match("([^/\\]+)$")
+end
+
 -- ペインのフォアグラウンドプロセスからアイコンを決定する。
 -- 例: "C:\\Program Files\\PowerShell\\7\\pwsh.exe" → "pwsh" → PowerShell アイコン
 local function process_icon(pane)
@@ -135,10 +166,12 @@ function M.apply(config)
 		end
 
 		local icon = process_icon(tab.active_pane)
-		-- 明示的に付けたタブ名 (Ctrl+Shift+Alt+T) があれば優先、無ければペインのタイトル
+		-- タイトルは 1) 明示的に付けたタブ名 (Ctrl+Shift+Alt+T)
+		--            2) カレントディレクトリ名（シェル統合が OSC 7 を送っている場合）
+		--            3) ペインのタイトル の順で採用する
 		local title = tab.tab_title
 		if not title or #title == 0 then
-			title = tab.active_pane.title or ""
+			title = cwd_label(tab.active_pane) or tab.active_pane.title or ""
 		end
 		-- ズーム中のペインは虫眼鏡を表示
 		local zoom = tab.active_pane.is_zoomed and (" " .. ZOOM_ICON) or ""
@@ -164,6 +197,11 @@ function M.apply(config)
 			-- アクティブタブはピル背景が明るいため、文字色は他と同じ暗色に倒して馴染ませる
 			table.insert(elements, { Foreground = { Color = tab.is_active and palette.bg or pcolor } })
 			table.insert(elements, { Text = ptext .. " " })
+		elseif not tab.is_active and tab.active_pane.has_unseen_output then
+			-- 進捗を報告しないコマンド（ビルド・テスト等）でも、見ていない間に出力が
+			-- あればドットで知らせる。そのタブに切り替えると自動的に消える
+			table.insert(elements, { Foreground = { Color = palette.warn } })
+			table.insert(elements, { Text = UNSEEN_ICON .. " " })
 		end
 
 		-- 右の丸キャップ
