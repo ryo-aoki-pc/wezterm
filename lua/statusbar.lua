@@ -1,12 +1,13 @@
 local wezterm = require("wezterm")
 local palette = require("colors").palette
+local ui = require("ui")
 local M = {}
 
 local nf = wezterm.nerdfonts
 
--- ピル型バッジ用の丸キャップ（tabs.lua と同じ U+E0B6 / U+E0B4）
-local LEFT_CAP = utf8.char(0xe0b6)
-local RIGHT_CAP = utf8.char(0xe0b4)
+-- ピル型バッジ用の丸キャップ（tabs.lua と共通。定義は ui.lua）
+local LEFT_CAP = ui.LEFT_CAP
+local RIGHT_CAP = ui.RIGHT_CAP
 
 -- 日本語曜日（strftime の %a は英語表記のため手動でマッピング）
 local WDAYS = { "日", "月", "火", "水", "木", "金", "土" }
@@ -49,7 +50,10 @@ function M.apply(config)
 		local segs = {}
 
 		-- 「アイコン + テキスト」のセグメントを追加（アイコンだけ色を付ける）
+		-- ※ wezterm.format の属性は次の指定まで持続する。リサイズバッジ(下記1)の
+		--   太字を引きずらないよう、セグメントごとに Intensity をリセットする
 		local function push(icon, icon_color, text)
+			table.insert(segs, { Attribute = { Intensity = "Normal" } })
 			table.insert(segs, { Background = { Color = p.tab_bar_bg } })
 			table.insert(segs, { Foreground = { Color = icon_color } })
 			table.insert(segs, { Text = icon .. " " })

@@ -128,7 +128,10 @@ local function discover()
 		end
 	end
 
-	for _, dom in ipairs(wezterm.default_wsl_domains()) do
+	-- default_wsl_domains() は内部で wsl.exe を起動するため、ここで一度だけ呼んで
+	-- 結果を使い回す（launch_menu への展開と config.wsl_domains の両方で使う）
+	local wsl_domains = wezterm.default_wsl_domains()
+	for _, dom in ipairs(wsl_domains) do
 		local display = dom.name:gsub("^WSL:", "")
 		table.insert(list, {
 			label = "  " .. display,
@@ -139,6 +142,7 @@ local function discover()
 	cache = {
 		default_prog = git_bash_args,
 		list = list,
+		wsl_domains = wsl_domains,
 	}
 	return cache
 end
@@ -156,8 +160,8 @@ function M.apply(config)
 		config.default_prog = d.default_prog
 	end
 
-	if is_windows then
-		config.wsl_domains = wezterm.default_wsl_domains()
+	if d.wsl_domains then
+		config.wsl_domains = d.wsl_domains
 	end
 	config.launch_menu = d.list
 end
