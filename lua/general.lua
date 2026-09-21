@@ -15,7 +15,7 @@ function M.apply(config)
 	config.enable_scroll_bar = true
 
 	-- Ctrl + +/- のフォント拡縮でウィンドウサイズを追従させない。
-	-- window_decorations = "RESIZE" の自由リサイズ中にウィンドウが跳ねるのを防ぐ
+	-- 自由リサイズ中にウィンドウが跳ねるのを防ぐ
 	config.adjust_window_size_when_changing_font_size = false
 
 	-- コマンドパレット(Ctrl+Shift+P)と文字選択(Ctrl+Shift+U)のフォント。

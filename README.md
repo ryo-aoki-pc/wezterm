@@ -25,6 +25,18 @@
 git clone <this-repo> ~/.config/wezterm
 ```
 
+## ウィンドウのタイトルバー
+
+全プラットフォームでネイティブのタイトルバー（`window_decorations = "TITLE|RESIZE"`）を表示します。
+
+Linux の Wayland セッションだけは例外です。GNOME (mutter) は xdg-decoration に対応しておらず、
+WezTerm はサーバー側装飾が無いとフレームを描かず、タブバーのドラッグ移動も Wayland では
+未実装のため、マウスで移動・リサイズできなくなります。このため `WAYLAND_DISPLAY` が
+ある場合は自動的に `"TITLE"` に切り替え、WezTerm 自前の簡素なタイトルバー
+（ダークグレーの帯 + 3 ボタン）を表示します。帯をドラッグで移動、縁（4px）を
+ドラッグでリサイズできます。キーボードでは `Alt+F7`（移動）/ `Alt+F8`（リサイズ）。
+GNOME 標準のタイトルバーが良い場合は `enable_wayland = false`（XWayland）にしてください。
+
 ## ファイル構成
 
 `wezterm.lua` が `lua/` 配下の各モジュールの `apply(config)` を順に呼び出します。
