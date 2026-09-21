@@ -44,12 +44,40 @@ local function find_vsdevshell()
 	return nil
 end
 
+-- Windows 以外（Linux / macOS）かどうか。Windows 用の探索は USERPROFILE や
+-- C:/ 配下のパスに依存するので、他 OS ではこの判定で丸ごとスキップする
+local is_windows = wezterm.target_triple:find("windows") ~= nil
+
+-- Linux / macOS: PATH 上の代表的なシェルを探す。default_prog は設定せず、
+-- WezTerm の既定（$SHELL）に任せる
+local function discover_unix()
+	local list = {}
+	local candidates = {
+		{ label = "  bash", names = { "/bin/bash", "/usr/bin/bash" } },
+		{ label = "  zsh",  names = { "/bin/zsh", "/usr/bin/zsh", "/usr/local/bin/zsh", "/opt/homebrew/bin/zsh" } },
+		{ label = "  fish", names = { "/usr/bin/fish", "/usr/local/bin/fish", "/opt/homebrew/bin/fish" } },
+		{ label = "  nu",   names = { "/usr/bin/nu", "/usr/local/bin/nu", "/opt/homebrew/bin/nu" } },
+	}
+	for _, c in ipairs(candidates) do
+		local path = first_existing(c.names)
+		if path then
+			table.insert(list, { label = c.label, args = { path, "-l" } })
+		end
+	end
+	return { default_prog = nil, list = list }
+end
+
 -- シェル一覧を一度だけ探索してキャッシュする。
 -- 各エントリは launch_menu / SpawnCommand 兼用の形（label + args/domain + env）。
 local cache
 
 local function discover()
 	if cache then
+		return cache
+	end
+
+	if not is_windows then
+		cache = discover_unix()
 		return cache
 	end
 
@@ -128,7 +156,9 @@ function M.apply(config)
 		config.default_prog = d.default_prog
 	end
 
-	config.wsl_domains = wezterm.default_wsl_domains()
+	if is_windows then
+		config.wsl_domains = wezterm.default_wsl_domains()
+	end
 	config.launch_menu = d.list
 end
 
