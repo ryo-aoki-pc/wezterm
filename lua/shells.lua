@@ -1,6 +1,29 @@
 local wezterm = require("wezterm")
 local M = {}
 
+-- シェル統合スクリプト（OSC 7 でカレントディレクトリ、OSC 133 でプロンプト位置を通知）。
+-- bash 系は環境変数 WEZTERM_SHELL_INTEGRATION でパスを渡し、~/.bashrc の 1 行に
+-- 読み込ませる。PowerShell 系は起動引数でドットソースするので追記は不要。
+-- 詳細は shell/wezterm.sh / shell/wezterm.ps1 と README を参照
+local INTEGRATION_SH = wezterm.config_dir .. "/shell/wezterm.sh"
+local INTEGRATION_PS1 = wezterm.config_dir .. "/shell/wezterm.ps1"
+
+-- PowerShell 起動引数に足す統合読み込み。-Command はプロファイルを抑止しない
+-- （抑止するのは -NoProfile）が、-NoExit が無いと実行後に閉じてしまう
+local PS_INTEGRATION_ARGS = { "-NoExit", "-Command", ". '" .. INTEGRATION_PS1 .. "'" }
+
+-- 配列を連結した新しい配列を返す（元の配列は変更しない）
+local function concat_args(base, extra)
+	local out = {}
+	for _, v in ipairs(base) do
+		table.insert(out, v)
+	end
+	for _, v in ipairs(extra) do
+		table.insert(out, v)
+	end
+	return out
+end
+
 local function exists(path)
 	local f = io.open(path, "r")
 	if f then
@@ -99,9 +122,12 @@ local function discover()
 	-- Visual Studio の Developer PowerShell。Launch-VsDevShell.ps1 を
 	-- Windows PowerShell から呼び、-NoExit でセッションを維持する。
 	local vsdevshell, vsversion = find_vsdevshell()
+	-- ※ 既に -Command を持つので PS_INTEGRATION_ARGS は足さず、コマンド文字列の
+	--   末尾に統合の読み込みを繋げる（-Command は 1 回しか指定できない）
 	local vsdevshell_args = vsdevshell and {
 		"powershell.exe", "-NoLogo", "-ExecutionPolicy", "Bypass", "-NoExit",
-		"-Command", "& '" .. vsdevshell .. "' -Arch amd64 -HostArch amd64 -SkipAutomaticLocation",
+		"-Command", "& '" .. vsdevshell .. "' -Arch amd64 -HostArch amd64 -SkipAutomaticLocation"
+			.. "; . '" .. INTEGRATION_PS1 .. "'",
 	} or nil
 	-- メニュー表示名に VS のバージョン（年）を付ける（例: "Developer PowerShell (2026)"）
 	local vsdevshell_label = vsdevshell and ("  Developer PowerShell (" .. vsversion .. ")")
@@ -109,12 +135,14 @@ local function discover()
 
 	local candidates = {
 		{ ok = git_bash ~= nil,     label = "  Git Bash",            args = git_bash_args },
-		{ ok = pwsh ~= nil,         label = "  PowerShell 7",        args = { pwsh, "-NoLogo" } },
-		{ ok = true,                label = "  Windows PowerShell",  args = { "powershell.exe", "-NoLogo" } },
+		{ ok = pwsh ~= nil,         label = "  PowerShell 7",        args = pwsh and concat_args({ pwsh, "-NoLogo" }, PS_INTEGRATION_ARGS) },
+		{ ok = true,                label = "  Windows PowerShell",  args = concat_args({ "powershell.exe", "-NoLogo" }, PS_INTEGRATION_ARGS) },
 		{ ok = vsdevshell ~= nil,   label = vsdevshell_label,        args = vsdevshell_args },
 		{ ok = exists(msys2_shell), label = "  MSYS2 UCRT64",        args = { msys2_shell, "-defterm", "-here", "-no-start", "-ucrt64" } },
 		{ ok = exists(msys2_shell), label = "  MSYS2 MSYS",          args = { msys2_shell, "-defterm", "-here", "-no-start", "-msys" } },
-		{ ok = exists(qmk_bash),    label = "  QMK MSYS",            args = { qmk_bash, "-l", "-i" }, env = { MSYSTEM = "MINGW64", MSYS2_PATH_TYPE = "inherit" } },
+		-- ※ env を指定するエントリでは、全体設定 (M.apply の set_environment_variables) に
+		--   頼らず WEZTERM_SHELL_INTEGRATION を明示的に含めておく
+		{ ok = exists(qmk_bash),    label = "  QMK MSYS",            args = { qmk_bash, "-l", "-i" }, env = { MSYSTEM = "MINGW64", MSYS2_PATH_TYPE = "inherit", WEZTERM_SHELL_INTEGRATION = INTEGRATION_SH } },
 	}
 
 	local list = {}
@@ -155,6 +183,11 @@ end
 
 function M.apply(config)
 	local d = discover()
+
+	-- bash 系シェルへ統合スクリプトのパスを渡す。ここで全体に設定しておくことで、
+	-- launch_menu の項目だけでなく default_prog（起動直後のタブ）や
+	-- Ctrl+Shift+D/E で分割したペインにも同じように行き渡る
+	config.set_environment_variables = { WEZTERM_SHELL_INTEGRATION = INTEGRATION_SH }
 
 	if d.default_prog then
 		config.default_prog = d.default_prog

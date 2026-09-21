@@ -40,6 +40,8 @@ git clone <this-repo> ~/.config/wezterm
 | `lua/shells.lua` | シェル探索と `launch_menu` / `default_prog` / WSL ドメイン |
 | `lua/bindings.lua` | キーバインドとマウスバインド |
 | `lua/ui.lua` | 共有定数（パワーライン区切り・フォント候補）。`apply` は持たない |
+| `shell/wezterm.sh` | シェル統合（bash / zsh）。OSC 7 / OSC 133 を送る |
+| `shell/wezterm.ps1` | シェル統合（PowerShell）。同上 |
 
 ## キーバインド
 
@@ -51,6 +53,12 @@ git clone <this-repo> ~/.config/wezterm
 | `Ctrl+Shift+Alt+D` / `E` | シェルを選んで左右 / 上下に分割 |
 | `Ctrl+Shift+H/J/K/L` | ペイン移動（左/下/上/右, vim 風） |
 | `Ctrl+Shift+Q` | ペインを閉じる（確認あり） |
+| `Ctrl+Shift+Alt+P` | ペインをラベルで選んで移動（3 ペイン以上で便利） |
+| `Ctrl+Shift+Alt+S` | ペインをラベルで選んで現在のペインと入れ替え |
+| `Ctrl+Shift+Alt+R` | ペインの中身を時計回りに回す（レイアウトは変えない） |
+| `Ctrl+Shift+Alt+B` | 直前に見ていたタブへ戻る |
+| `Ctrl+Shift+Alt+K` | スクロールバックと画面を消去 |
+| `Ctrl+Shift+Alt+↑` / `↓` | 前 / 次のプロンプトへスクロール（[シェル統合](#シェル統合)が必要） |
 | `Ctrl+Shift+M` | 起動メニュー（Git Bash / PowerShell / MSYS2 / WSL / ワークスペース） |
 | `Ctrl+Shift+Alt+T` | タブ名を変更（空欄で確定するとデフォルト名に戻る） |
 | `Ctrl+Shift+Alt+W` | ワークスペースを選んで切替 |
@@ -81,7 +89,61 @@ git clone <this-repo> ~/.config/wezterm
 | 左クリック | 選択をコピー（リンク上なら URL を開く） |
 
 標準の `Ctrl+Shift+K`(ClearScrollback) / `Ctrl+Shift+L`(ShowDebugOverlay) は
-上記のペイン移動へ再割当のため無効です。
+上記のペイン移動へ再割当のため無効です。ClearScrollback は `Ctrl+Shift+Alt+K` で
+使えます。ShowDebugOverlay はコマンドパレット（`Ctrl+Shift+P`）から開けます。
+
+## シェル統合
+
+`shell/wezterm.sh` / `shell/wezterm.ps1` がシェルから端末へ次の 2 つを通知します。
+
+| 通知 | 得られる動作 |
+| --- | --- |
+| OSC 7（カレントディレクトリ） | 新しいタブ・分割ペインが「今いるディレクトリ」で開く / タブ名がディレクトリ名になる |
+| OSC 133（プロンプト位置） | `Ctrl+Shift+Alt+↑` / `↓` で前後のプロンプトへジャンプできる |
+
+WezTerm 以外の端末で読み込まれた場合は何もしません（`$TERM_PROGRAM` で判定）。
+
+### PowerShell
+
+追加の設定は不要です。`lua/shells.lua` が起動引数で自動的に読み込みます
+（`-Command` はプロファイルを抑止しないため、既存のプロファイルはそのまま動きます）。
+
+`shell/wezterm.ps1` は **UTF-8 BOM 付き**で保存してください。Windows PowerShell 5.1 は
+BOM の無い `.ps1` を ANSI として読むため、日本語コメントが化けて構文エラーになります。
+
+### bash（Git Bash / MSYS2 / QMK MSYS）
+
+`lua/shells.lua` が環境変数 `WEZTERM_SHELL_INTEGRATION` にパスを渡すので、
+`~/.bashrc` に次の 1 行を追記します。
+
+```sh
+[ -n "$WEZTERM_SHELL_INTEGRATION" ] && . "$WEZTERM_SHELL_INTEGRATION"
+```
+
+ログインシェル（`bash -i -l`）では `--rcfile` が無視されるため、この 1 行だけは
+手で入れる必要があります。ホームディレクトリはシェルごとに異なる点に注意してください。
+
+| シェル | `~/.bashrc` の場所 |
+| --- | --- |
+| Git Bash | `%USERPROFILE%\.bashrc` |
+| MSYS2 | `C:\msys64\home\<ユーザー名>\.bashrc` |
+| QMK MSYS | `C:\QMK_MSYS\home\<ユーザー名>\.bashrc` |
+
+既存の `PS1` は置き換えず前後に印を足すだけなので、Git Bash の
+`git-prompt.sh` によるブランチ表示はそのまま残ります。
+
+### WSL
+
+WSL ドメインは起動引数を渡せないため、WSL 側の `~/.bashrc` に直接書きます。
+
+```sh
+. /mnt/c/Users/<ユーザー名>/.config/wezterm/shell/wezterm.sh
+```
+
+### 導入しない場合
+
+統合を入れなくても設定は問題なく動きます。タブ名は従来どおりプロセス名になり、
+`Ctrl+Shift+Alt+↑` / `↓` が効かないだけです。
 
 ## 使用している nightly 限定機能
 
@@ -102,9 +164,16 @@ stable ではこれらが未知オプションとして設定エラーになり�
 設定を反映せずに読み込みだけ検証できます。
 
 ```sh
-# キー割り当てのダンプ（設定エラーがあればここで出る）
-wezterm --config-file "$PWD/wezterm.lua" show-keys
-
-# フォントがどのファイルで解決されるか確認
+# 設定エラーの検出。エラー行が出なければ読み込めている
+# （ついでにフォントがどのファイルで解決されるかも分かる）
 wezterm --config-file "$PWD/wezterm.lua" ls-fonts --text 'あ'
+
+# キー割り当てのダンプ
+wezterm --config-file "$PWD/wezterm.lua" show-keys
 ```
+
+**注意**: `show-keys` は設定の読み込みに失敗しても何も言わずデフォルト設定の
+一覧を表示し、終了コードも 0 のままです。設定エラーの有無は上の `ls-fonts` で
+確認してください（こちらは `ERROR ... runtime error:` を stderr に出します）。
+`show-keys` の出力を見る場合は、自分で定義したキー（`PaneSelect` など）が
+実際に載っているかどうかで読み込み成否を判断します。
