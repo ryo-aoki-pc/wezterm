@@ -39,9 +39,20 @@ WezTerm 自前のタイトルバー（`"TITLE"`）は使いません。最大化
 同じ大きさにしたうえでフレームを外側に足すため、ウィンドウが画面より一回り大きくなり
 **下端と右端が見切れる**ためです。
 
-移動・リサイズは GNOME 標準の `Super`+ドラッグ / `Super`+中ドラッグ、キーボードでは
-`Alt+F7`（移動）/ `Alt+F8`（リサイズ）が使えます。
-GNOME 標準のタイトルバーが良い場合は `enable_wayland = false`（XWayland）にしてください。
+### Wayland でのウィンドウ移動
+
+移動は `Super`+左ドラッグ、リサイズは `Super`+中ドラッグ（GNOME 標準。キーボードなら
+`Alt+F7` / `Alt+F8`）。
+
+素のドラッグでは移動できません。WezTerm の Wayland バックエンドには
+`start_window_drag` の実装が無く（`window/src/os/wayland/window.rs` の `WindowOps`）、
+`StartWindowDrag` を好きなマウスバインドに割り当てても無効だからです。既定の
+`Super`+ドラッグ / `Ctrl+Shift`+ドラッグも Wayland では効きません。WezTerm 自前の
+ヘッダ帯（`"TITLE"`）だけは移動できますが、上記の見切れと引き換えになります。
+
+GNOME 純正のタイトルバーでドラッグ移動したい場合は `enable_wayland = false`（XWayland）
+にしてください。最大化サイズも正しくなりますが、X11 描画になるため分数スケールの
+ディスプレイでは文字がにじみます。
 
 ## ファイル構成
 
