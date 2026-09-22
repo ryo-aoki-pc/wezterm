@@ -15,7 +15,7 @@ function M.apply(config)
 	-- （mutter も "Client provided invalid window geometry" を警告する）。
 	-- INTEGRATED_BUTTONS ならフレームを持たず、タブバーの右端に 最小化/最大化/閉じる が載るので、
 	-- 最大化サイズが正しいままマウスでのウィンドウ操作も残る。
-	-- 移動・リサイズは GNOME 標準の Super+ドラッグ / Super+中ドラッグでも行える
+	-- 移動・リサイズは GNOME 標準の Win+ドラッグ / Win+中ドラッグでも行える
 	local is_linux = wezterm.target_triple:find("linux") ~= nil
 	if is_linux and os.getenv("WAYLAND_DISPLAY") then
 		config.window_decorations = "INTEGRATED_BUTTONS|RESIZE"
