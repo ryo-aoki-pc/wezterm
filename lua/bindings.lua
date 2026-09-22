@@ -14,7 +14,8 @@
 --    Ctrl+Shift+Alt+B    直前に見ていたタブへ戻る
 --    Ctrl+Shift+Alt+K    スクロールバックと画面を消去
 --    Ctrl+Shift+Alt+↑/↓  前 / 次のプロンプトへスクロール（要シェル統合）
---    Ctrl+Shift+M        起動メニュー（Git Bash/PowerShell/MSYS2/WSL/ワークスペース）
+--    Ctrl+Shift+M        起動メニュー（Git Bash/PowerShell/コマンドプロンプト/
+--                        MSYS2/WSL/ワークスペース）
 --    Ctrl+Shift+Alt+T    タブ名を変更（現在の名前を編集。空欄でデフォルトに戻す）
 --    Ctrl+Shift+Alt+W    ワークスペースを選んで切替（一覧から選択）
 --    Ctrl+Shift+Alt+N    ワークスペースを作成 / 既存へ移動（名前を入力）
@@ -110,7 +111,8 @@ function M.apply(config)
 		-- ペインを閉じる (Q = Quit)
 		{ key = "q", mods = "CTRL|SHIFT", action = act.CloseCurrentPane({ confirm = true }) },
 
-		-- 起動メニュー (M = Menu): Git Bash / PowerShell / MSYS2 / WSL / ワークスペース …
+		-- 起動メニュー (M = Menu): Git Bash / PowerShell / コマンドプロンプト /
+		--   MSYS2 / WSL / ワークスペース …
 		-- ※ DOMAINS は付けない: WSL ドメインは shells.lua が launch_menu に展開済みで、
 		--   付けると同じ項目が二重に並ぶ
 		{

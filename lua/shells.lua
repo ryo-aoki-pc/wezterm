@@ -24,12 +24,26 @@ local function concat_args(base, extra)
 	return out
 end
 
+-- ファイルの有無を調べる。
+-- ※ Microsoft Store 版 PowerShell 7 などの「アプリ実行エイリアス」は 0 バイトの
+--   再解析ポイントで、io.open は「システムはファイルにアクセスできません」で失敗する。
+--   一方 CreateProcess からは普通に起動できるので、存在扱いにしたい。
+--   os.rename(path, path) は同名へのリネーム＝中身を変えない操作で、無いときだけ
+--   ENOENT(2) を返すため、これを保険の判定に使う
+-- ※ wezterm.glob / wezterm.read_dir は非同期で、設定評価中に呼ぶと
+--   "attempt to yield from outside a coroutine" になり設定ごと落ちるため使えない
 local function exists(path)
 	local f = io.open(path, "r")
 	if f then
 		f:close()
+		return true
 	end
-	return f ~= nil
+	local ok, _, errno = os.rename(path, path)
+	if ok then
+		return true
+	end
+	-- アクセス拒否(13)等は「有る」扱い。errno が取れないときも「無い」とは断定しない
+	return errno ~= nil and errno ~= 2
 end
 
 local function first_existing(paths)
@@ -41,10 +55,12 @@ local function first_existing(paths)
 	return nil
 end
 
--- Visual Studio の Developer PowerShell 用スクリプト（Launch-VsDevShell.ps1）を
--- 標準インストールパスから探す。バージョン × エディションを総当りし、最初に
--- 見つかったスクリプトのパスと、表示用の VS バージョン（年）を返す。
-local function find_vsdevshell()
+-- Visual Studio の開発者向けシェル用スクリプトが入ったディレクトリ（Common7/Tools）を
+-- 標準インストールパスから探す。バージョン × エディションを総当りし、最初に見つかった
+-- ディレクトリ（末尾 / 付き）と、表示用の VS バージョン（年）を返す。
+-- ※ PowerShell 版 (Launch-VsDevShell.ps1) と cmd 版 (VsDevCmd.bat) は同じディレクトリに
+--   入っているので、総当りは 1 回だけ行い、呼び出し側でファイル名を足す
+local function find_vs_tools()
 	local bases = {
 		"C:/Program Files/Microsoft Visual Studio",        -- 2022（64bit）
 		"C:/Program Files (x86)/Microsoft Visual Studio",  -- 2026(=18) / 2019 以前
@@ -57,9 +73,9 @@ local function find_vsdevshell()
 	for _, base in ipairs(bases) do
 		for _, ver in ipairs(versions) do
 			for _, ed in ipairs(editions) do
-				local p = base .. "/" .. ver .. "/" .. ed .. "/Common7/Tools/Launch-VsDevShell.ps1"
-				if exists(p) then
-					return p, (year_of[ver] or ver)
+				local dir = base .. "/" .. ver .. "/" .. ed .. "/Common7/Tools/"
+				if exists(dir .. "Launch-VsDevShell.ps1") then
+					return dir, (year_of[ver] or ver)
 				end
 			end
 		end
@@ -115,13 +131,20 @@ local function discover()
 	local git_bash_args = git_bash and { git_bash, "-i", "-l" } or nil
 	local msys2_shell = "C:/msys64/msys2_shell.cmd"
 	local qmk_bash = "C:/QMK_MSYS/usr/bin/bash.exe"
+	-- PowerShell 7。Microsoft Store 版は実体が
+	-- C:/Program Files/WindowsApps/Microsoft.PowerShell_<版>_x64__.../pwsh.exe と
+	-- バージョン番号入りで、しかも親フォルダが ACL で列挙できないため直接は書けない。
+	-- 代わりに安定した入口であるアプリ実行エイリアスを候補に入れる
 	local pwsh = first_existing({
-		"C:/Program Files/PowerShell/7/pwsh.exe",
-		home .. "/scoop/apps/pwsh/current/pwsh.exe",
+		"C:/Program Files/PowerShell/7/pwsh.exe",                -- 公式インストーラ（MSI）
+		home .. "/scoop/apps/pwsh/current/pwsh.exe",             -- scoop
+		home .. "/AppData/Local/Microsoft/WindowsApps/pwsh.exe", -- Microsoft Store 版（アプリ実行エイリアス）
 	})
-	-- Visual Studio の Developer PowerShell。Launch-VsDevShell.ps1 を
-	-- Windows PowerShell から呼び、-NoExit でセッションを維持する。
-	local vsdevshell, vsversion = find_vsdevshell()
+	-- Visual Studio の開発者向けシェル。PowerShell 版と cmd 版を同じ Common7/Tools から作る
+	local vs_tools, vsversion = find_vs_tools()
+	local vsdevshell = vs_tools and (vs_tools .. "Launch-VsDevShell.ps1") or nil
+	-- Developer PowerShell。Launch-VsDevShell.ps1 を Windows PowerShell から呼び、
+	-- -NoExit でセッションを維持する。
 	-- ※ 既に -Command を持つので PS_INTEGRATION_ARGS は足さず、コマンド文字列の
 	--   末尾に統合の読み込みを繋げる（-Command は 1 回しか指定できない）
 	local vsdevshell_args = vsdevshell and {
@@ -133,11 +156,29 @@ local function discover()
 	local vsdevshell_label = vsdevshell and ("  Developer PowerShell (" .. vsversion .. ")")
 		or "  Developer PowerShell"
 
+	-- Developer Command Prompt（Developer PowerShell の cmd 版）。VsDevCmd.bat は
+	-- Launch-VsDevShell.ps1 と同じディレクトリにあるが、BuildTools 等で欠けることも
+	-- あり得るので個別に存在を確かめる。
+	-- ※ バッチのパスと引数は argv を分けて渡す。cmd /k は引用符の扱いが特殊なので、
+	--   " を自前で組み立てず WezTerm のコマンドライン組み立てに任せる
+	-- ※ cmd 向けのシェル統合スクリプトは無いため、統合の読み込みは足さない
+	local vsdevcmd = vs_tools and exists(vs_tools .. "VsDevCmd.bat") and (vs_tools .. "VsDevCmd.bat")
+		or nil
+	local vsdevcmd_args = vsdevcmd and {
+		"cmd.exe", "/k", vsdevcmd, "-arch=amd64", "-host_arch=amd64", "-no_logo",
+	} or nil
+	local vsdevcmd_label = vsdevcmd and ("  Developer Command Prompt (" .. vsversion .. ")")
+		or "  Developer Command Prompt"
+
 	local candidates = {
 		{ ok = git_bash ~= nil,     label = "  Git Bash",            args = git_bash_args },
 		{ ok = pwsh ~= nil,         label = "  PowerShell 7",        args = pwsh and concat_args({ pwsh, "-NoLogo" }, PS_INTEGRATION_ARGS) },
 		{ ok = true,                label = "  Windows PowerShell",  args = concat_args({ "powershell.exe", "-NoLogo" }, PS_INTEGRATION_ARGS) },
+		-- ※ cmd.exe は Windows なら必ずあるので、powershell.exe と同じく実体パスを
+		--   探さず名前解決に任せる（シェル統合は cmd 向けが無いので付けない）
+		{ ok = true,                label = "  Command Prompt",      args = { "cmd.exe" } },
 		{ ok = vsdevshell ~= nil,   label = vsdevshell_label,        args = vsdevshell_args },
+		{ ok = vsdevcmd ~= nil,     label = vsdevcmd_label,          args = vsdevcmd_args },
 		{ ok = exists(msys2_shell), label = "  MSYS2 UCRT64",        args = { msys2_shell, "-defterm", "-here", "-no-start", "-ucrt64" } },
 		{ ok = exists(msys2_shell), label = "  MSYS2 MSYS",          args = { msys2_shell, "-defterm", "-here", "-no-start", "-msys" } },
 		-- ※ env を指定するエントリでは、全体設定 (M.apply の set_environment_variables) に

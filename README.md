@@ -96,7 +96,7 @@ GNOME 純正のタイトルバーでドラッグ移動したい場合は `enable
 | `Ctrl+Shift+Alt+B` | 直前に見ていたタブへ戻る |
 | `Ctrl+Shift+Alt+K` | スクロールバックと画面を消去 |
 | `Ctrl+Shift+Alt+↑` / `↓` | 前 / 次のプロンプトへスクロール（[シェル統合](#シェル統合)が必要） |
-| `Ctrl+Shift+M` | 起動メニュー（Git Bash / PowerShell / MSYS2 / WSL / ワークスペース） |
+| `Ctrl+Shift+M` | 起動メニュー（Git Bash / PowerShell / コマンドプロンプト / MSYS2 / WSL / ワークスペース） |
 | `Ctrl+Shift+Alt+T` | タブ名を変更（空欄で確定するとデフォルト名に戻る） |
 | `Ctrl+Shift+Alt+W` | ワークスペースを選んで切替 |
 | `Ctrl+Shift+Alt+N` | ワークスペースを作成 / 既存へ移動 |
@@ -147,6 +147,24 @@ WezTerm 以外の端末で読み込まれた場合は何もしません（`$TERM
 
 `shell/wezterm.ps1` は **UTF-8 BOM 付き**で保存してください。Windows PowerShell 5.1 は
 BOM の無い `.ps1` を ANSI として読むため、日本語コメントが化けて構文エラーになります。
+
+PowerShell 7 は公式インストーラ（MSI）・scoop・Microsoft Store 版のいずれでも検出します。
+Store 版は実体パス（`C:\Program Files\WindowsApps\Microsoft.PowerShell_<版>_...`）に
+バージョン番号が入り、親フォルダも列挙できないため、アプリ実行エイリアス
+`%LOCALAPPDATA%\Microsoft\WindowsApps\pwsh.exe` を使います。これは 0 バイトの
+再解析ポイントで `io.open` では開けないので、`lua/shells.lua` の `exists()` は
+`os.rename` による追加判定を持っています。
+
+### コマンドプロンプト（cmd）
+
+`Command Prompt` と `Developer Command Prompt` には**シェル統合がありません**
+（cmd 向けの OSC 7 / OSC 133 スクリプトを用意していないため）。次の 2 つは効きません。
+
+- `Ctrl+Shift+Alt+↑` / `↓` による前後のプロンプトへのジャンプ
+- 新しいタブ・分割ペインが「今いるディレクトリ」で開く動作
+
+`Developer Command Prompt` は Visual Studio の `VsDevCmd.bat` を読み込んだ状態で開くので、
+`cl.exe` などのビルドツールがそのまま使えます（`Developer PowerShell` の cmd 版）。
 
 ### bash（Git Bash / MSYS2 / QMK MSYS）
 
