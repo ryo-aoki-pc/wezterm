@@ -27,19 +27,28 @@ git clone <this-repo> ~/.config/wezterm
 
 ## ウィンドウのタイトルバー
 
-全プラットフォームでネイティブのタイトルバー（`window_decorations = "TITLE|RESIZE"`）を表示します。
+タイトルバーは出さず、`window_decorations = "INTEGRATED_BUTTONS|RESIZE"` で
+タブバーの右端に 最小化 / 最大化 / 閉じる を並べます（Windows と Linux の Wayland）。
+端末の表示領域が縦に一段広がり、マウス操作は残ります。
 
-Linux の Wayland セッションだけは例外です。GNOME (mutter) は xdg-decoration に対応しておらず、
-WezTerm はサーバー側装飾が無いとフレームを描かず、タブバーのドラッグ移動も Wayland では
-未実装のため、マウス操作の取っかかりが無くなります。このため `WAYLAND_DISPLAY` が
-ある場合は自動的に `"INTEGRATED_BUTTONS|RESIZE"` に切り替え、タブバーの右端に
-最小化 / 最大化 / 閉じる ボタンを表示します。
+- 移動: タブバーの空き（タブや ＋ の無い帯）を左ドラッグ ※Wayland を除く
+- リサイズ: ウィンドウの縁をドラッグ ※Wayland を除く
+- 最大化/元に戻す: タブバーの空き帯をダブルクリック
 
-WezTerm 自前のタイトルバー（`"TITLE"`）は使いません。最大化・タイル時に本文をモニタ全面と
-同じ大きさにしたうえでフレームを外側に足すため、ウィンドウが画面より一回り大きくなり
-**下端と右端が見切れる**ためです。
+macOS と Linux の X11 はネイティブのタイトルバーが問題なく出るため
+`"TITLE|RESIZE"` のままです。
 
-### Wayland でのウィンドウ移動
+ボタンはファンシータブバーの一部として描かれるので、`use_fancy_tab_bar = true` と
+`hide_tab_bar_if_only_one_tab = false`（どちらも `lua/tabs.lua`）を変えないでください。
+タブバーを消すとボタンとドラッグ用の帯ごと消えます。
+
+### Wayland の事情
+
+GNOME (mutter) は xdg-decoration に対応しておらず、WezTerm はサーバー側装飾が無いと
+フレームを描きません。タブバーのドラッグ移動も Wayland では未実装のため、
+マウス操作の取っかかりが無くなります。WezTerm 自前のタイトルバー（`"TITLE"`）は
+最大化・タイル時に本文をモニタ全面と同じ大きさにしたうえでフレームを外側に足すため、
+ウィンドウが画面より一回り大きくなり**下端と右端が見切れる**ので使いません。
 
 移動は `Win`+左ドラッグ、リサイズは `Win`+中ドラッグ（GNOME 標準。キーボードなら
 `Alt+F7` / `Alt+F8`）。
@@ -47,8 +56,7 @@ WezTerm 自前のタイトルバー（`"TITLE"`）は使いません。最大化
 素のドラッグでは移動できません。WezTerm の Wayland バックエンドには
 `start_window_drag` の実装が無く（`window/src/os/wayland/window.rs` の `WindowOps`）、
 `StartWindowDrag` を好きなマウスバインドに割り当てても無効だからです。既定の
-`Win`+ドラッグ / `Ctrl+Shift`+ドラッグも Wayland では効きません。WezTerm 自前の
-ヘッダ帯（`"TITLE"`）だけは移動できますが、上記の見切れと引き換えになります。
+`Win`+ドラッグ / `Ctrl+Shift`+ドラッグも Wayland では効きません。
 
 GNOME 純正のタイトルバーでドラッグ移動したい場合は `enable_wayland = false`（XWayland）
 にしてください。最大化サイズも正しくなりますが、X11 描画になるため分数スケールの
