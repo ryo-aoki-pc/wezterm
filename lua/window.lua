@@ -6,14 +6,19 @@ function M.apply(config)
 	config.window_decorations = "TITLE|RESIZE"
 
 	-- Linux の Wayland セッション（GNOME/mutter 等 xdg-decoration 非対応コンポジタ）では
-	-- サーバー側装飾が出ず、"RESIZE" や既定の "TITLE|RESIZE" だと WezTerm がフレームを
-	-- 一切描かない。タブバーのドラッグ移動も Wayland では未実装のため、マウスで移動も
-	-- リサイズもできなくなる（wezterm #7155）。TITLE を含み、かつ既定値以外の値にすると
-	-- WezTerm 自前の簡素な CSD フレーム（ヘッダ + 4px の縁 + 3 ボタン）が出て、
-	-- 移動・リサイズ・閉じる/最大化/最小化が効く
+	-- サーバー側装飾が出ず、既定の "TITLE|RESIZE" だと WezTerm がフレームを一切描かない。
+	-- タブバーのドラッグ移動も Wayland では未実装のため、ウィンドウ操作の取っかかりが無くなる
+	-- （wezterm #7155）。
+	-- ただし "TITLE"（= WezTerm 自前の CSD フレーム: ヘッダ + 4px の縁 + 3 ボタン）にすると、
+	-- 最大化・タイル時に本文をモニタ全面と同じ大きさにしたうえでフレームを外側に足すため、
+	-- ウィンドウが画面より一回り大きくなり下端と右端が見切れる
+	-- （mutter も "Client provided invalid window geometry" を警告する）。
+	-- INTEGRATED_BUTTONS ならフレームを持たず、タブバーの右端に 最小化/最大化/閉じる が載るので、
+	-- 最大化サイズが正しいままマウスでのウィンドウ操作も残る。
+	-- 移動・リサイズは GNOME 標準の Win+ドラッグ / Win+中ドラッグでも行える
 	local is_linux = wezterm.target_triple:find("linux") ~= nil
 	if is_linux and os.getenv("WAYLAND_DISPLAY") then
-		config.window_decorations = "TITLE"
+		config.window_decorations = "INTEGRATED_BUTTONS|RESIZE"
 	end
 	config.window_padding = { left = 16, right = 16, top = 12, bottom = 10 }
 

@@ -31,11 +31,28 @@ git clone <this-repo> ~/.config/wezterm
 
 Linux の Wayland セッションだけは例外です。GNOME (mutter) は xdg-decoration に対応しておらず、
 WezTerm はサーバー側装飾が無いとフレームを描かず、タブバーのドラッグ移動も Wayland では
-未実装のため、マウスで移動・リサイズできなくなります。このため `WAYLAND_DISPLAY` が
-ある場合は自動的に `"TITLE"` に切り替え、WezTerm 自前の簡素なタイトルバー
-（ダークグレーの帯 + 3 ボタン）を表示します。帯をドラッグで移動、縁（4px）を
-ドラッグでリサイズできます。キーボードでは `Alt+F7`（移動）/ `Alt+F8`（リサイズ）。
-GNOME 標準のタイトルバーが良い場合は `enable_wayland = false`（XWayland）にしてください。
+未実装のため、マウス操作の取っかかりが無くなります。このため `WAYLAND_DISPLAY` が
+ある場合は自動的に `"INTEGRATED_BUTTONS|RESIZE"` に切り替え、タブバーの右端に
+最小化 / 最大化 / 閉じる ボタンを表示します。
+
+WezTerm 自前のタイトルバー（`"TITLE"`）は使いません。最大化・タイル時に本文をモニタ全面と
+同じ大きさにしたうえでフレームを外側に足すため、ウィンドウが画面より一回り大きくなり
+**下端と右端が見切れる**ためです。
+
+### Wayland でのウィンドウ移動
+
+移動は `Win`+左ドラッグ、リサイズは `Win`+中ドラッグ（GNOME 標準。キーボードなら
+`Alt+F7` / `Alt+F8`）。
+
+素のドラッグでは移動できません。WezTerm の Wayland バックエンドには
+`start_window_drag` の実装が無く（`window/src/os/wayland/window.rs` の `WindowOps`）、
+`StartWindowDrag` を好きなマウスバインドに割り当てても無効だからです。既定の
+`Win`+ドラッグ / `Ctrl+Shift`+ドラッグも Wayland では効きません。WezTerm 自前の
+ヘッダ帯（`"TITLE"`）だけは移動できますが、上記の見切れと引き換えになります。
+
+GNOME 純正のタイトルバーでドラッグ移動したい場合は `enable_wayland = false`（XWayland）
+にしてください。最大化サイズも正しくなりますが、X11 描画になるため分数スケールの
+ディスプレイでは文字がにじみます。
 
 ## ファイル構成
 
