@@ -77,7 +77,7 @@ GNOME 純正のタイトルバーでドラッグ移動したい場合は `enable
 | `lua/shells.lua` | シェル探索と `launch_menu` / `default_prog` / WSL ドメイン |
 | `lua/bindings.lua` | キーバインドとマウスバインド |
 | `lua/ui.lua` | 共有定数（パワーライン区切り・フォント候補）。`apply` は持たない |
-| `shell/wezterm.sh` | シェル統合（bash / zsh）。OSC 7 / OSC 133 を送る |
+| `shell/wezterm.sh` | シェル統合（bash / zsh）。OSC 7 / OSC 133 を送る / 迷子のマウス報告よけ |
 | `shell/wezterm.ps1` | シェル統合（PowerShell）。同上 |
 
 ## キーバインド
@@ -138,7 +138,44 @@ GNOME 純正のタイトルバーでドラッグ移動したい場合は `enable
 | OSC 7（カレントディレクトリ） | 新しいタブ・分割ペインが「今いるディレクトリ」で開く / タブ名がディレクトリ名になる |
 | OSC 133（プロンプト位置） | `Ctrl+Shift+Alt+↑` / `↓` で前後のプロンプトへジャンプできる |
 
-WezTerm 以外の端末で読み込まれた場合は何もしません（`$TERM_PROGRAM` で判定）。
+WezTerm 以外の端末で読み込まれた場合、この 2 つは何もしません（`$TERM_PROGRAM` で判定）。
+次の「迷子のマウス報告よけ」だけは判定より手前にあり、端末を問わず働きます。
+
+Linux 版 WezTerm のパッケージは公式のシェル統合を `/etc/profile.d/wezterm.sh` に置きます。
+それが読み込まれている環境では OSC 7 / OSC 133 は公式側に任せ、`shell/wezterm.sh` は
+マウス報告よけだけを残して抜けます（同名の `__wezterm_osc7` を上書きして公式側のフックを
+壊さないため）。
+
+### 迷子のマウス報告よけ
+
+lazygit や yazi のような TUI は起動時にマウス報告（DECSET 1003 = 移動も含む全イベント /
+1006 = SGR 形式）を有効にし、終了時に解除します。ところが解除が端末へ届く前に端末が
+出してしまった報告は行き場を失い、戻ってきたシェルにこう現れます。
+
+```
+[almalinux@abiko-pi setup-notes]$ lazygit
+^[[<35;33;72M[almalinux@abiko-pi setup-notes]$
+```
+
+届くタイミングで見え方が変わります。プロンプト表示前なら端末がそのまま echo するだけ
+（表示が汚れる）ですが、readline の起動後に届くと `35: command not found` のように
+コマンド行が壊れます。WezTerm 固有の問題ではなく、tmux や ssh を挟んでも起きます。
+
+`shell/wezterm.sh` は対策を 2 つ入れています。
+
+- プロンプトごとにマウス報告を解除する（解除され損ねて残っている場合の回復）
+- readline に `\e[<` を食わせ、終端の `M` / `m` まで読み捨てる（コマンド行への混入防止）
+
+ただしプロンプト表示前に届いた分の echo までは消せません。lazygit については
+`~/.config/lazygit/config.yml` に次を書き、発生源ごと止めるのが確実です
+（代わりに lazygit 内でマウスが使えなくなります）。
+
+```yaml
+gui:
+  mouseEvents: false
+```
+
+手で復旧したいときは `printf '\033[?1003l\033[?1006l'` を実行します。
 
 ### PowerShell
 
@@ -172,8 +209,13 @@ Store 版は実体パス（`C:\Program Files\WindowsApps\Microsoft.PowerShell_<�
 `~/.bashrc` に次の 1 行を追記します。
 
 ```sh
-[ -n "$WEZTERM_SHELL_INTEGRATION" ] && . "$WEZTERM_SHELL_INTEGRATION"
+[ -r "${WEZTERM_SHELL_INTEGRATION:=$HOME/.config/wezterm/shell/wezterm.sh}" ] && . "$WEZTERM_SHELL_INTEGRATION"
 ```
+
+環境変数が無いときのフォールバックを付けてあるのは、tmux や ssh を挟むとこの変数が
+届かないためです（tmux サーバは起動時の環境を子プロセスへ配るので、WezTerm が渡した
+変数は後から作ったペインに入りません）。パスは「[配置](#配置)」の表どおり全 OS で
+`$HOME/.config/wezterm` なので、フォールバックだけでも読み込めます。
 
 ログインシェル（`bash -i -l`）では `--rcfile` が無視されるため、この 1 行だけは
 手で入れる必要があります。ホームディレクトリはシェルごとに異なる点に注意してください。
