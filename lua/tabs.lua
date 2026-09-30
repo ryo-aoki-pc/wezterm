@@ -200,16 +200,13 @@ function M.apply(config)
 		inactive_titlebar_bg = palette.tab_bar_bg,
 	}
 
+	-- アクティブなタブだけを暗い面のピルにし、番号とアイコンを青で示す。
+	-- 非アクティブなタブは面を付けず、色も指定しない（colors.lua の inactive_tab /
+	-- inactive_tab_hover の灰色 / 白になる）。
+	-- ※ 引数の hover は使わない。レトロタブバーの桁で判定されるため、ファンシータブバーでは
+	--   マウスの位置とずれる。ホバーは inactive_tab_hover に任せる（WezTerm がピクセル単位で判定する）
+	-- ※ タブバーは 1 つのフォントで描かれ、太字（Intensity）などの属性は効かない
 	wezterm.on("format-tab-title", function(tab, tabs, panes, conf, hover, max_width)
-		local bg, fg
-		if tab.is_active then
-			bg, fg = palette.accent, palette.bg
-		elseif hover then
-			bg, fg = palette.accent2, palette.bg
-		else
-			bg, fg = palette.tab_bg, palette.dim
-		end
-
 		local name = program_name(tab.active_pane)
 		local icon = process_icon(name)
 		-- タイトルは明示的に付けたタブ名 (Ctrl+Shift+Alt+T) を最優先し、
@@ -220,27 +217,38 @@ function M.apply(config)
 		end
 		-- ズーム中のペインは虫眼鏡を表示
 		local zoom = tab.active_pane.is_zoomed and (" " .. ZOOM_ICON) or ""
-		-- ファンシータブバーでは max_width が実質無制限のため、固定幅で切り詰める
+		-- WezTerm はファンシータブバーのタイトルを tab_max_width で切り詰めない
+		-- （上限はウィンドウ幅をタブの数で割った幅だけ）ので、ここで切り詰める
 		title = wezterm.truncate_right(title, 24)
-		local label = string.format(" %d %s  %s%s ", tab.tab_index + 1, icon, title, zoom)
+		local head = string.format(" %d %s  ", tab.tab_index + 1, icon) -- 番号 + プロセスアイコン
+		local body = title .. zoom .. " "
 
-		local elements = {
-			-- 左の丸キャップ
-			{ Background = { Color = palette.tab_bar_bg } },
-			{ Foreground = { Color = bg } },
-			{ Text = LEFT_CAP },
-			-- 本体（番号 + プロセスアイコン + タイトル）
-			{ Background = { Color = bg } },
-			{ Foreground = { Color = fg } },
-			{ Attribute = { Intensity = tab.is_active and "Bold" or "Normal" } },
-			{ Text = label },
-		}
+		local elements
+		if tab.is_active then
+			elements = {
+				-- 左の丸キャップ
+				{ Background = { Color = palette.tab_bar_bg } },
+				{ Foreground = { Color = palette.surface } },
+				{ Text = LEFT_CAP },
+				-- 本体（番号とアイコンは青、タイトルは白）
+				{ Background = { Color = palette.surface } },
+				{ Foreground = { Color = palette.accent } },
+				{ Text = head },
+				{ Foreground = { Color = palette.fg } },
+				{ Text = body },
+			}
+		else
+			-- 丸キャップの代わりに空白を置き、アクティブと同じ幅にする（切り替えても並びがずれない）。
+			-- 最初のセルに色が無いので、タブの箱と文字が inactive_tab(_hover) の色になる
+			elements = {
+				{ Text = " " .. head .. body },
+			}
+		end
 
-		-- 実行中コマンドの進捗（報告があるときだけピル本体の右側に差し込む）
+		-- 実行中コマンドの進捗（報告があるときだけ本体の右側に差し込む）
 		local ptext, pcolor = progress_cell(tab.active_pane)
 		if ptext then
-			-- アクティブタブはピル背景が明るいため、文字色は他と同じ暗色に倒して馴染ませる
-			table.insert(elements, { Foreground = { Color = tab.is_active and palette.bg or pcolor } })
+			table.insert(elements, { Foreground = { Color = pcolor } })
 			table.insert(elements, { Text = ptext .. " " })
 		elseif not tab.is_active and tab.active_pane.has_unseen_output then
 			-- 進捗を報告しないコマンド（ビルド・テスト等）でも、見ていない間に出力が
@@ -249,10 +257,14 @@ function M.apply(config)
 			table.insert(elements, { Text = UNSEEN_ICON .. " " })
 		end
 
-		-- 右の丸キャップ
-		table.insert(elements, { Background = { Color = palette.tab_bar_bg } })
-		table.insert(elements, { Foreground = { Color = bg } })
-		table.insert(elements, { Text = RIGHT_CAP })
+		-- 右の丸キャップ（非アクティブは空白）
+		if tab.is_active then
+			table.insert(elements, { Background = { Color = palette.tab_bar_bg } })
+			table.insert(elements, { Foreground = { Color = palette.surface } })
+			table.insert(elements, { Text = RIGHT_CAP })
+		else
+			table.insert(elements, { Text = " " })
+		end
 
 		return elements
 	end)

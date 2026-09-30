@@ -9,7 +9,8 @@ function M.apply(config)
 	-- INTEGRATED_BUTTONS はファンシータブバー前提なので、tabs.lua の
 	-- use_fancy_tab_bar = true / hide_tab_bar_if_only_one_tab = false を変えないこと
 	-- （タブバーが消えるとボタンとドラッグ帯ごと消える）。
-	-- ボタンの見た目は integrated_title_button_style の既定（macOS 以外は "Windows"）に任せる。
+	-- ボタンの形は integrated_title_button_style の既定（macOS 以外は "Windows"）に任せる。
+	-- 線の色は colors.lua の integrated_title_button_color。閉じるボタンに乗せたときの赤は WezTerm の固定。
 	local target = wezterm.target_triple
 	local is_windows = target:find("windows") ~= nil
 	local is_linux = target:find("linux") ~= nil

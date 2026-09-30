@@ -1,8 +1,8 @@
 -- 見た目まわりの共有定数（apply は持たないデータモジュール）。
--- tabs.lua / statusbar.lua / general.lua から直接 require する。
+-- tabs.lua / general.lua から直接 require する。
 local M = {}
 
--- 丸型のパワーライン区切り（ピル状タブ・バッジ）
+-- 丸型のパワーライン区切り（ピル状タブ）
 -- U+E0B6 = 左半円, U+E0B4 = 右半円（Nerd Font / Powerline Extra）
 -- もし端が □（豆腐）で表示される場合はハード区切りに変更:
 --   local wezterm = require("wezterm")
