@@ -142,6 +142,7 @@
    - `WEZTERM_SHELL_INTEGRATION` を含む行が出たら、もう足してある。手順 6・7 は飛ばす
    - `starship init` を含む行だけが出たら、手順 6 は飛ばす
    - Git Bash で `~/.bashrc` がまだ無ければ、`No such file or directory` と出る。手順 7 は飛ばす（手順 6 で作られる）
+   - 自分用の bash の設定（`ryo-aoki-pc/bash`）を入れたホストでは、手順 6・7 は飛ばす（その設定が、starship・zoxide と合わせた順番でシェル統合を読む）
 
    <details>
    <summary>補足: starship の行より前に置く理由</summary>
@@ -502,6 +503,7 @@
 - **`~/.wezterm.lua` があると、`~/.config/wezterm` は読まれない**（手順 1 の補足）
   - Windows では、`wezterm.exe` と同じフォルダーの `wezterm.lua` も探される（公式の [Configuration Files](https://wezterm.org/config/files.html)。試していない）
 - **starship と一緒に使うとき**: starship を後ろに置くと、`PS1` の OSC 133 の印は消える（手順 5 の補足の実測）。画面でのプロンプトへのジャンプへの影響は確かめていない
+  - 手順 7 の並び（この 1 行 → starship）では、コマンドの終了コード（OSC 133 の `D`）がいつも 0 で送られる。starship → この 1 行 → zoxide の並びなら正しく送られる（自分用の bash の設定 `ryo-aoki-pc/bash` の検証コンテナでの実測。手順 7 はまだこの並びに直していない）
 - **Git Bash の `~/.bash_profile`**（試していない）
   - WezTerm は Git Bash をログインシェル（`-l`）で起動するので、`~/.bashrc` は `~/.bash_profile` から読まれる必要がある
   - Git for Windows は、`~/.bashrc` があって `~/.bash_profile` などが無いと、`~/.bashrc` を読む `~/.bash_profile` を作り、`WARNING: Found ~/.bashrc but no ~/.bash_profile` と表示する

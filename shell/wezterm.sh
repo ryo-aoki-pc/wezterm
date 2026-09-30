@@ -338,10 +338,13 @@ esac
 # 続く __wz_ps0_prog は WEZTERM_PROG の送出（__wz_send_prog のときだけ）。bash 5.3 の
 # ${ …; } は今のシェルで動くが、$? / $_ / PIPESTATUS は bash が元に戻すので、
 # これから実行するコマンドには影響しない
+# C の印は BEL（\007）で終える。ESC \ で終えると、後ろに続く元の PS0 の先頭の $ が
+# その \ でエスケープされ、starship の ${STARSHIP_START_TIME:…} などが文字のまま画面に出る
+# （bash は PS0 の \\ を \ にしてから $ の展開をする）
 # PS0・PS1 とも、印が既にあれば足さない（何度読まれても重ねない）
 case ${PS0-} in
 *'133;C'*) ;;
-*) PS0='${PS1:0:$((__wz_cmd_start=SECONDS,0))}'"${__wz_send_prog:+$__wz_ps0_prog}"'\033]133;C\033\\'"${PS0-}" ;;
+*) PS0='${PS1:0:$((__wz_cmd_start=SECONDS,0))}'"${__wz_send_prog:+$__wz_ps0_prog}"'\033]133;C\007'"${PS0-}" ;;
 esac
 unset __wz_ps0_prog
 
