@@ -278,18 +278,11 @@ function M.apply(config)
 	-- Ctrl+Shift+D/E で分割したペインにも同じように行き渡る
 	config.set_environment_variables = { WEZTERM_SHELL_INTEGRATION = INTEGRATION_SH }
 
-	-- 閉じるとき（Ctrl+Shift+W / Ctrl+Shift+Q）に確認を出さないプロセス。
-	-- WezTerm はペイン内の全プロセスの実行ファイル名がこの一覧に含まれるときだけ確認を省く。
-	-- 既定値（先頭 9 件）は bash 等を拡張子無しで持つが、Windows の実行ファイル名は
-	-- bash.exe なので一致せず、Git Bash / MSYS2 / QMK MSYS はプロンプトで待っているだけでも
-	-- 毎回確認が出ていた。Windows 名を足す（vim などが動いていれば従来どおり確認が出る）。
-	-- ※ ssh.exe / wsl.exe は入れない: その先で何が動いているかを WezTerm から見られない
-	config.skip_close_confirmation_for_processes_named = {
-		-- WezTerm の既定値
-		"bash", "sh", "zsh", "fish", "tmux", "nu", "cmd.exe", "pwsh.exe", "powershell.exe",
-		-- Windows 版のシェル（Git Bash / MSYS2 / QMK MSYS など）
-		"bash.exe", "sh.exe", "zsh.exe", "fish.exe", "nu.exe",
-	}
+	-- 閉じるとき（Ctrl+Shift+W / Ctrl+Shift+Q）の確認は WezTerm の既定のまま
+	-- （skip_close_confirmation_for_processes_named は設定しない）。
+	-- ※ "bash.exe" を足さないこと: Git Bash / MSYS2 から起動したプログラムは Windows 上で
+	--   親プロセスが消えるため WezTerm からは bash.exe しか見えず、vim の編集中でも確認なしで
+	--   閉じてしまう。PowerShell / cmd は既定の一覧にあり、待機中なら確認なしで閉じる
 
 	if d.default_prog then
 		config.default_prog = d.default_prog

@@ -3,6 +3,7 @@
 -- 入口が 2 つあるものはここに置き、挙動を 1 か所で管理する
 local wezterm = require("wezterm")
 local statusbar = require("statusbar")
+local procs = require("procs")
 local M = {}
 
 local act = wezterm.action
@@ -65,13 +66,12 @@ M.rename_workspace = wezterm.action_callback(function(window, pane)
 	)
 end)
 
--- ssh 等（フォアグラウンドにいる間、画面の中身が別のマシンになるプロセス）の実行中か
-local REMOTE_PROCS = { ["ssh"] = true, ["mosh"] = true, ["mosh-client"] = true }
-
+-- ssh 等（フォアグラウンドにいる間、画面の中身が別のマシンになるプロセス）の実行中か。
+-- フォアグラウンドのプロセスで見る。Git Bash の中で起動した ssh は WezTerm から見えないので、
+-- シェル統合が送る WEZTERM_PROG（実行中のコマンド行）で補う（lua/procs.lua）
 local function in_remote_session(pane)
-	local name = pane:get_foreground_process_name() or ""
-	name = (name:match("([^/\\]+)$") or ""):gsub("%.exe$", ""):lower()
-	return REMOTE_PROCS[name] == true
+	local vars = pane:get_user_vars() or {}
+	return procs.REMOTE[procs.running(pane:get_foreground_process_name(), vars.WEZTERM_PROG)] == true
 end
 
 -- 直前に実行したコマンドの出力を探す。
@@ -79,6 +79,8 @@ end
 -- 最後に Enter で確定した「入力」範囲の直後の「出力」範囲を取る。
 -- 戻り値: 出力のテキスト（無ければ nil）, 無い理由
 --   "empty"  直前のコマンドは何も出力しなかった（cd など）/ 実行中でまだ出力が無い
+--   "nocmd"  シェル統合は動いているが、画面に実行したコマンドが無い
+--            （開いた直後・clear・Ctrl+Shift+Alt+K の後）
 --   "none"   区切りが見つからない（シェル統合が無い）
 --   "remote" ssh 中で、ssh 先のシェルが区切りを送っていない
 local function find_last_output(pane)
@@ -107,6 +109,12 @@ local function find_last_output(pane)
 		end
 	end
 	if not k then
+		-- プロンプトや入力の範囲（入力途中のものも含む）があれば、シェル統合は動いている
+		for _, z in ipairs(zones) do
+			if z.semantic_type ~= "Output" then
+				return nil, "nocmd"
+			end
+		end
 		-- 起動メニューから直接 ssh を開いた場合も、手元のシェルが無いのでここに来る
 		return nil, in_remote_session(pane) and "remote" or "none"
 	end
@@ -122,15 +130,14 @@ local function find_last_output(pane)
 		table.insert(parts, text_of(zones[i]))
 	end
 
-	-- ssh 中で、ssh コマンドの後ろにプロンプトが一度も来ていない = ssh 先のシェルが区切りを
-	-- 送っていない。このとき出力範囲は ssh のセッション全体なので、丸ごとは返さない
-	-- ※ コマンドの先頭とは限らない（TERM_PROGRAM= ssh … / sudo ssh … / exec ssh …）ので、
-	--   ssh / mosh が単語として含まれるかで見る
-	if not prompt_after and in_remote_session(pane) then
-		local cmd = text_of(zones[k])
-		if cmd:find("%f[%w_%-]ssh%f[^%w_%-]") or cmd:find("%f[%w_%-]mosh%f[^%w_%-]") then
-			return nil, "remote"
-		end
+	-- 入力の後ろにプロンプトが一度も来ていない = そのコマンドはまだ実行中。それが ssh / mosh なら
+	-- ssh 先のシェルが区切りを送っていないので、出力範囲は ssh のセッション全体。丸ごとは返さない
+	-- ssh 中かどうかは次のどちらかで見る
+	--   コマンド行  cd dir && ssh host なども拾う（lua/procs.lua の main_program）。
+	--               Git Bash から起動した ssh はプロセスが見えないので、こちらが頼り
+	--   プロセス    エイリアスやスクリプトから起動した ssh も拾う（Linux・PowerShell など）
+	if not prompt_after and (procs.REMOTE[procs.main_program(text_of(zones[k]))] or in_remote_session(pane)) then
+		return nil, "remote"
 	end
 
 	-- 出力の後ろに付く空行・空白は落とす
@@ -141,10 +148,13 @@ local function find_last_output(pane)
 	return text
 end
 
+-- ※ 狭いウィンドウでもステータスバーに収まるよう短くする（詳しい説明は README の
+--   トラブルシューティング）
 local NO_OUTPUT_MESSAGES = {
 	empty = "直前の出力は空です",
-	none = "コピーできる出力がありません（要シェル統合）",
-	remote = "ssh 先の出力は区切れません（ssh 先でシェル統合が必要）",
+	nocmd = "コピーできる出力がありません",
+	none = "コピーできません（要シェル統合）",
+	remote = "ssh 先の出力は区切れません",
 }
 
 -- 直前のコマンドの出力だけをクリップボードへコピーする（Ctrl+Shift+Alt+C）
@@ -184,7 +194,7 @@ M.open_scrollback = wezterm.action_callback(function(window, pane)
 	f:close()
 	wezterm.open_with(path)
 	local _, newlines = text:gsub("\n", "")
-	statusbar.flash(window, string.format("スクロールバック %d 行をエディタで開きます", newlines + 1), "ok")
+	statusbar.flash(window, string.format("%d 行をエディタで開きます", newlines + 1), "ok")
 end)
 
 -- 画面上の URL にラベルを付け、選んだものをブラウザで開く（QuickSelect の変種）。

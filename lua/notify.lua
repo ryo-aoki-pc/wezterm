@@ -4,7 +4,8 @@ local M = {}
 -- 長いコマンドの完了通知。
 -- シェル統合 (shell/wezterm.sh / .ps1) が、一定時間（既定 10 秒、環境変数
 -- WEZTERM_NOTIFY_AFTER で変更）以上かかったコマンドの終了時にユーザー変数を送る。
--- 値は WezTerm が base64 を復号済みの "終了コード<TAB>経過秒<TAB>コマンド"
+-- 値は WezTerm が base64 を復号済みの "終了コード<TAB>経過秒<TAB>コマンド"。
+-- コマンドは空のことがある（bash で履歴に残らなかったコマンドは、どれだったか分からない）
 local VAR = "wezterm_cmd_done"
 
 -- 経過秒を「1分23秒」形式にする
@@ -39,7 +40,11 @@ function M.apply(_config)
 		end
 		local title = code == "0" and "✔ 完了" or ("✘ 失敗 (終了コード " .. code .. ")")
 		cmd = (cmd:gsub("^%s+", ""):gsub("%s+$", ""):gsub("%s+", " "))
-		local body = string.format("%s (%s)", wezterm.truncate_right(cmd, 60), duration(tonumber(secs)))
+		-- コマンドが分からないときは経過時間だけ
+		local body = duration(tonumber(secs))
+		if cmd ~= "" then
+			body = string.format("%s (%s)", wezterm.truncate_right(cmd, 60), body)
+		end
 		window:toast_notification(title, body)
 	end)
 end
