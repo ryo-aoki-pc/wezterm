@@ -232,12 +232,16 @@ local function discover()
 		{ ok = exists(qmk_bash),    label = "  QMK MSYS",            args = { qmk_bash, "-l", "-i" }, env = { MSYSTEM = "MINGW64", MSYS2_PATH_TYPE = "inherit", WEZTERM_SHELL_INTEGRATION = INTEGRATION_SH } },
 	}
 
+	-- ※ domain = "DefaultDomain": どれも Windows のプログラムなので、手元（ローカル）で起動する。
+	--   省くと既定の CurrentPaneDomain になり、WSL のペインから起動メニューや分割ピッカーで選ぶと
+	--   WSL の中で起動しようとして、タブ・ペインがすぐ閉じる
 	local list = {}
 	for _, c in ipairs(candidates) do
 		if c.ok then
 			table.insert(list, {
 				label = c.label,
 				args = c.args,
+				domain = "DefaultDomain",
 				set_environment_variables = c.env,
 			})
 		end

@@ -515,6 +515,7 @@ make build (1分23秒)          cargo test (12秒)
   - bash / zsh: `~/.bashrc` に `export WEZTERM_NOTIFY_AFTER=30`
   - PowerShell: プロファイルに `$env:WEZTERM_NOTIFY_AFTER = 30`
   - 全シェル共通: `lua/shells.lua` の `config.set_environment_variables` に `WEZTERM_NOTIFY_AFTER = "30"` を足す
+    （WSL の中には届かないので、WSL は WSL 側の `~/.bashrc` で `export` する）
 - 通知の見た目や条件は `lua/notify.lua` で変えられる
 
 仕組み: シェル統合がコマンドの開始時刻を覚えておき、次のプロンプトで経過時間を計算します。
@@ -559,6 +560,8 @@ make build (1分23秒)          cargo test (12秒)
 新しいタブ・ウィンドウの既定のシェル（`default_prog`）は、Git Bash が見つかれば Git Bash、
 無ければ WezTerm の既定です。
 
+- WSL のペインから起動メニューや分割の一覧で選んでも、Windows のシェルは Windows 側で起動する
+  （WSL の中では起動しない）
 - Developer PowerShell / Developer Command Prompt は Visual Studio の開発環境（`cl.exe` や MSBuild に
   PATH が通った状態）で開く。VS はバージョン × エディション（Community / Professional /
   Enterprise / Preview / BuildTools）を新しい順に探す
@@ -668,6 +671,8 @@ WezTerm 以外の端末で読み込まれた場合、「迷子のマウス報告
   失敗しても前の値が残る）ため、その行で新しく記録されたエラー（前のプロンプトのときと `$Error[0]` が
   入れ替わったか）で見分けます。成功は 0、コマンドレットのエラー・`throw` は 1、ネイティブコマンドは
   その終了コード（Windows PowerShell で `2>&1` を付けて stderr を受けた場合も、終了コード 0 なら成功）
+- 元の `prompt` 関数からは、直前のコマンドの成否（`$?`）がそのまま見えます
+  （`$?` で失敗を表示するテーマのため。oh-my-posh・starship そのものでは試していない）
 - プロファイルで `Set-StrictMode` を有効にしていても、プロンプトの中では切るので壊れません
 - `shell/wezterm.ps1` は **UTF-8 BOM 付き**で保存してください。Windows PowerShell 5.1 は
   BOM の無い `.ps1` を ANSI として読むため、日本語コメントが化けて構文エラーになります
@@ -715,6 +720,10 @@ WSL ドメインは起動引数を渡せないため、WSL 側の `~/.bashrc` �
 `/mnt/c/Users/<ユーザー名>/.config/wezterm/shell/wezterm.sh` を読み込む行を直接書きます。
 足し方は [docs/install.md の「WSL でもシェル統合を使う（任意）」](docs/install.md#wsl-でもシェル統合を使う任意) にあります。
 
+WezTerm が WSL の中へ渡す環境変数は `TERM`・`COLORTERM`・`TERM_PROGRAM`・`TERM_PROGRAM_VERSION` だけです
+（`WSLENV`）。`TERM_PROGRAM` は届くので統合は動きますが、`WEZTERM_SHELL_INTEGRATION` や
+`set_environment_variables` に足した値（`WEZTERM_NOTIFY_AFTER` など）は届きません。
+
 ### tmux の中
 
 tmux の中では `$TERM_PROGRAM` が `tmux` になるため、シェル統合は（マウス報告よけ以外）無効になります。
@@ -751,13 +760,13 @@ lazygit や yazi のような TUI は起動時にマウス報告（DECSET 1003 =
 ```
 
 届くタイミングで見え方が変わります。プロンプト表示前なら端末がそのまま echo するだけ
-（表示が汚れる）ですが、readline の起動後に届くと `35: command not found` のように
-コマンド行が壊れます。WezTerm 固有の問題ではなく、tmux や ssh を挟んでも起きます。
+（表示が汚れる）ですが、入力の受付（bash の readline・zsh の ZLE）が始まった後に届くと
+`35: command not found` のようにコマンド行が壊れます。WezTerm 固有の問題ではなく、tmux や ssh を挟んでも起きます。
 
 `shell/wezterm.sh` は対策を 2 つ入れています（この部分は WezTerm 以外・tmux の中でも働きます）。
 
 - プロンプトごとにマウス報告を解除する（解除され損ねて残っている場合の回復）
-- readline に `\e[<` を食わせ、終端の `M` / `m` まで読み捨てる（コマンド行への混入防止）
+- readline（zsh は ZLE）に `\e[<` を食わせ、終端の `M` / `m` まで読み捨てる（コマンド行への混入防止）
 
 ただしプロンプト表示前に届いた分の echo までは消せません。lazygit については
 `~/.config/lazygit/config.yml` に次を書き、発生源ごと止めるのが確実です
