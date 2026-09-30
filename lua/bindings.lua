@@ -14,8 +14,11 @@
 --    Ctrl+Shift+Alt+B    直前に見ていたタブへ戻る
 --    Ctrl+Shift+Alt+K    スクロールバックと画面を消去
 --    Ctrl+Shift+Alt+↑/↓  前 / 次のプロンプトへスクロール（要シェル統合）
+--    Ctrl+Shift+Alt+C    直前のコマンドの出力をコピー（要シェル統合）
+--    Ctrl+Shift+Alt+O    スクロールバックをエディタで開く
+--    Ctrl+Shift+O        画面上の URL を選んでブラウザで開く
 --    Ctrl+Shift+M        起動メニュー（Git Bash/PowerShell/コマンドプロンプト/
---                        MSYS2/WSL/ワークスペース）
+--                        MSYS2/WSL/ssh 接続先/ワークスペース）
 --    Ctrl+Shift+Alt+T    タブ名を変更（現在の名前を編集。空欄でデフォルトに戻す）
 --    Ctrl+Shift+Alt+W    ワークスペースを選んで切替（一覧から選択）
 --    Ctrl+Shift+Alt+N    ワークスペースを作成 / 既存へ移動（名前を入力）
@@ -23,6 +26,9 @@
 --    Ctrl+Shift+S        リサイズモード開始 → h/j/k/l または矢印で調整
 --                        （Esc または Enter で終了 / 2秒で自動終了）
 --    右クリック          クリップボードから貼り付け
+--    Ctrl+ホイール       フォント拡大 / 縮小
+--    ※ ワークスペース名変更・ペインを新しいタブ/ウィンドウへ・設定フォルダを開く
+--      などキーの無い操作はコマンドパレット（palette.lua）にある
 --
 --  ▼ 主要デフォルト（WezTerm 標準。この設定でも有効）
 --    Ctrl+Shift+C / V         コピー / 貼り付け
@@ -52,6 +58,7 @@
 
 local wezterm = require("wezterm")
 local shells = require("shells")
+local actions = require("actions")
 local M = {}
 
 function M.apply(config)
@@ -91,6 +98,17 @@ function M.apply(config)
 			mods = "NONE",
 			action = act.PasteFrom("Clipboard"),
 		},
+		-- Ctrl+ホイールでフォント拡大 / 縮小（ブラウザと同じ操作。Ctrl + +/- と同じ動作）
+		{
+			event = { Down = { streak = 1, button = { WheelUp = 1 } } },
+			mods = "CTRL",
+			action = act.IncreaseFontSize,
+		},
+		{
+			event = { Down = { streak = 1, button = { WheelDown = 1 } } },
+			mods = "CTRL",
+			action = act.DecreaseFontSize,
+		},
 	}
 
 	config.keys = {
@@ -112,7 +130,7 @@ function M.apply(config)
 		{ key = "q", mods = "CTRL|SHIFT", action = act.CloseCurrentPane({ confirm = true }) },
 
 		-- 起動メニュー (M = Menu): Git Bash / PowerShell / コマンドプロンプト /
-		--   MSYS2 / WSL / ワークスペース …
+		--   MSYS2 / WSL / ssh 接続先 / ワークスペース …
 		-- ※ DOMAINS は付けない: WSL ドメインは shells.lua が launch_menu に展開済みで、
 		--   付けると同じ項目が二重に並ぶ
 		{
@@ -121,48 +139,15 @@ function M.apply(config)
 			action = act.ShowLauncherArgs({ flags = "FUZZY|TABS|LAUNCH_MENU_ITEMS|WORKSPACES" }),
 		},
 
-		-- タブ名を変更 (T = Tab の Alt 付き変種): 現在の名前を初期値にして編集する。
-		-- prompt / initial_value は nightly 限定のため、押した時点のタブ名を
-		-- 初期値に入れられるようコールバック内でアクションを組み立てる
-		{
-			key = "t",
-			mods = "CTRL|SHIFT|ALT",
-			action = wezterm.action_callback(function(window, pane)
-				window:perform_action(
-					act.PromptInputLine({
-						description = "タブ名を入力（空欄で確定するとデフォルト名に戻る）",
-						prompt = (wezterm.nerdfonts.md_pencil or ">") .. " ",
-						initial_value = window:active_tab():get_title(),
-						action = wezterm.action_callback(function(win, _, line)
-							-- Esc でキャンセルすると line は nil
-							if line then
-								win:active_tab():set_title(line)
-							end
-						end),
-					}),
-					pane
-				)
-			end),
-		},
+		-- タブ名を変更 (T = Tab の Alt 付き変種): 現在の名前を初期値にして編集する
+		-- （定義は actions.lua。コマンドパレットからも使う）
+		{ key = "t", mods = "CTRL|SHIFT|ALT", action = actions.rename_tab },
 
 		-- ワークスペース切替 (W = Workspace): 一覧から選んで移動
 		{ key = "w", mods = "CTRL|SHIFT|ALT", action = act.ShowLauncherArgs({ flags = "FUZZY|WORKSPACES" }) },
 
-		-- ワークスペースを作成 / 既存へ移動 (N = New): 名前を入力する。
-		-- タブ名変更と同じ PromptInputLine パターン（Esc でキャンセルすると line は nil）
-		{
-			key = "n",
-			mods = "CTRL|SHIFT|ALT",
-			action = act.PromptInputLine({
-				description = "ワークスペース名を入力（既存の名前ならそこへ移動）",
-				prompt = (wezterm.nerdfonts.cod_window or ">") .. " ",
-				action = wezterm.action_callback(function(win, pane, line)
-					if line and line ~= "" then
-						win:perform_action(act.SwitchToWorkspace({ name = line }), pane)
-					end
-				end),
-			}),
-		},
+		-- ワークスペースを作成 / 既存へ移動 (N = New): 名前を入力する（定義は actions.lua）
+		{ key = "n", mods = "CTRL|SHIFT|ALT", action = actions.new_workspace },
 
 		-- 前 / 次のワークスペースへ（ペイン移動の H/L に Alt を足した形）
 		-- ※ 記号キー（[ / ]）はキーボードレイアウトで位置も Shift 後の文字も変わるため避ける
@@ -191,6 +176,17 @@ function M.apply(config)
 		-- ※ シェル統合 (shell/wezterm.sh / .ps1) が OSC 133 を送っている必要がある
 		{ key = "UpArrow", mods = "CTRL|SHIFT|ALT", action = act.ScrollToPrompt(-1) },
 		{ key = "DownArrow", mods = "CTRL|SHIFT|ALT", action = act.ScrollToPrompt(1) },
+
+		-- 直前のコマンドの出力だけをコピー (C = Copy)。ドラッグで範囲選択する手間を省く。
+		-- ※ プロンプトジャンプと同じく OSC 133 のシェル統合が必要
+		{ key = "c", mods = "CTRL|SHIFT|ALT", action = actions.copy_last_output },
+
+		-- スクロールバックを OS 既定のテキストエディタで開く (O = Open)
+		{ key = "o", mods = "CTRL|SHIFT|ALT", action = actions.open_scrollback },
+
+		-- 画面上の URL にラベルを付けて、選んだものをブラウザで開く (O = Open)。
+		-- マウスを使わずに gh や開発サーバが出した URL を開ける
+		{ key = "o", mods = "CTRL|SHIFT", action = actions.open_url },
 
 		-- リサイズモード突入 (S = Size)
 		{

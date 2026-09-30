@@ -3,8 +3,12 @@
 #   OSC 7   カレントディレクトリを端末に通知する。
 #           → 新しいタブ・分割ペインが「今いるディレクトリ」で開く
 #           → タブ名がディレクトリ名になる (lua/tabs.lua の cwd_label)
-#   OSC 133 プロンプトの位置を端末に通知する。
+#   OSC 133 プロンプトと出力の位置を端末に通知する。
 #           → Ctrl+Shift+Alt+↑/↓ で前後のプロンプトへジャンプできる
+#           → Ctrl+Shift+Alt+C で直前のコマンドの出力をコピーできる
+#   OSC 1337 SetUserVar
+#           長いコマンドが終わったことを端末に通知する。
+#           → 見ていないペインなら完了をトースト通知 (lua/notify.lua)
 #
 # あわせて、TUI の終了時に取りこぼされたマウス報告がシェルへ漏れるのを防ぐ
 # （下の「迷子のマウス報告よけ」。こちらは WezTerm 以外でも働く）
@@ -97,15 +101,37 @@ __wezterm_osc7() {
 	printf '\033]7;file://%s%s\033\\' "${HOSTNAME:-localhost}" "$__wz_dir"
 }
 
+# 長いコマンドの完了通知。
+# 実行に WEZTERM_NOTIFY_AFTER 秒（既定 10）以上かかったコマンドが終わったら、
+# 「終了コード<TAB>経過秒<TAB>コマンド」をユーザー変数 wezterm_cmd_done で端末へ送る。
+# 通知を出すかどうか（見ていないペインのときだけ出す）は lua/notify.lua が決める。
+# 引数: $1 = 終了コード, $2 = 経過秒, $3 = コマンド
+__wezterm_notify_done() {
+	[ "$2" -ge "${WEZTERM_NOTIFY_AFTER:-10}" ] 2>/dev/null || return 0
+	command -v base64 >/dev/null 2>&1 || return 0
+	# SetUserVar の値は base64 で送る決まり（WezTerm 側で復号される）
+	printf '\033]1337;SetUserVar=wezterm_cmd_done=%s\033\\' \
+		"$(printf '%s\t%s\t%s' "$1" "$2" "$3" | base64 | tr -d '\r\n')"
+}
+
 if [ -n "$ZSH_VERSION" ]; then
 	# zsh: precmd（プロンプト直前）と preexec（コマンド実行直前）のフックを使う
 	__wezterm_precmd() {
 		local __wz_status=$?
 		printf '\033]133;D;%s\033\\' "$__wz_status"
+		if [ -n "$__wz_cmd_start" ]; then
+			# typeset -F SECONDS で小数になっていても整数秒にそろえる
+			local -i __wz_elapsed=$((SECONDS - __wz_cmd_start))
+			__wezterm_notify_done "$__wz_status" "$__wz_elapsed" "$__wz_cmd"
+			unset __wz_cmd_start __wz_cmd
+		fi
 		__wezterm_osc7
 		printf '\033]133;A\033\\'
 	}
 	__wezterm_preexec() {
+		# 完了通知用に開始時刻とコマンド文字列を覚える（空行では preexec は呼ばれない）
+		__wz_cmd_start=$SECONDS
+		__wz_cmd=$1
 		printf '\033]133;C\033\\'
 	}
 	autoload -Uz add-zsh-hook
@@ -119,6 +145,18 @@ fi
 __wezterm_prompt_command() {
 	local __wz_status=$?
 	printf '\033]133;D;%s\033\\' "$__wz_status"
+	# __wz_cmd_start は下の PS0 がコマンド実行直前に入れる。空 Enter では PS0 が
+	# 展開されないので未設定のまま = 通知しない
+	if [ -n "$__wz_cmd_start" ]; then
+		# 実行したコマンドは履歴の最後の 1 件（"  123  sleep 20" の番号を外す）。
+		# ※ fc -ln -1 は使えない: PROMPT_COMMAND から呼ぶと「最後の履歴は fc 自身」と
+		#   みなして 1 件飛ばすため、1 つ前のコマンドが返る
+		local __wz_cmd=
+		[[ $(HISTTIMEFORMAT= builtin history 1) =~ ^[[:space:]]*[0-9]+[*[:space:]][[:space:]](.*)$ ]] &&
+			__wz_cmd=${BASH_REMATCH[1]}
+		__wezterm_notify_done "$__wz_status" "$((SECONDS - __wz_cmd_start))" "$__wz_cmd"
+		unset __wz_cmd_start
+	fi
 	__wezterm_osc7
 }
 
@@ -131,7 +169,10 @@ esac
 # PS0 はコマンドを読み取ってから実行する直前に展開される = 出力の開始位置 (C)
 # ※ PS1 と違い \[ \] で囲まない。あれは readline の幅計算用マーカーで、
 #    PS0 ではそのまま制御文字として出力されてしまう
-PS0='\033]133;C\033\\'"$PS0"
+# 先頭の ${PS1:0:$((…,0))} は完了通知用に開始時刻を __wz_cmd_start へ入れる。
+# 算術展開はこのシェル自身で評価されるので代入が残り、「PS1 の先頭 0 文字」= 空文字に
+# 展開されるので画面には何も出ない（$(...) はサブシェルになるため代入が残らず使えない）
+PS0='${PS1:0:$((__wz_cmd_start=SECONDS,0))}\033]133;C\033\\'"$PS0"
 
 # PS1 は置き換えず前後に印だけ足す。
 # Git Bash の /etc/profile.d/git-prompt.sh が組み立てたブランチ表示付き
