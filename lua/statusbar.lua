@@ -13,10 +13,29 @@ local RIGHT_CAP = ui.RIGHT_CAP
 local WDAYS = { "日", "月", "火", "水", "木", "金", "土" }
 
 -- 各セグメントのアイコン
-local ICON_RESIZE = nf.md_arrow_expand_all or nf.cod_move or ""
 local ICON_WORKSPACE = nf.cod_window or ""
 local ICON_DATE = nf.md_calendar or ""
 local ICON_TIME = nf.md_clock_outline or ""
+
+-- モード（キーテーブル）→ バッジ。キーは window:active_key_table() が返す名前。
+-- copy_mode / search_mode は WezTerm 組み込みのコピーモード・検索のオーバーレイが使う名前
+-- ※ タブ名は cwd 表示を優先する（tabs.lua）ため、標準の「Copy mode: …」というタブ
+--   タイトルは出ない。モードに入ったことはここで示す
+local MODE_BADGES = {
+	resize_pane = { icon = nf.md_arrow_expand_all or nf.cod_move or "", text = "リサイズ", color = palette.warn },
+	copy_mode = { icon = nf.md_content_copy or "", text = "コピー", color = palette.accent },
+	search_mode = { icon = nf.md_magnify or "", text = "検索", color = palette.accent2 },
+}
+
+-- 一時メッセージ（actions.lua の「直前の出力をコピー」などの結果）の見た目
+local FLASH_STYLES = {
+	ok = { icon = nf.md_check or "", color = palette.ok },
+	warn = { icon = nf.md_alert_circle_outline or "", color = palette.warn },
+}
+local FLASH_SECONDS = 3
+
+-- ウィンドウ ID → { text, style, expires }。期限切れは次の描画で消す
+local flashes = {}
 
 -- バッテリー残量アイコン（10%刻み。インデックス = 残量を10%単位に四捨五入した値）
 local BATTERY_ICONS = {
@@ -41,67 +60,100 @@ local function battery_icon(charge, charging)
 	return BATTERY_ICONS[idx] or ""
 end
 
+local function render(window)
+	local p = palette
+	local segs = {}
+
+	-- 「アイコン + テキスト」のセグメントを追加（アイコンだけ色を付ける）
+	-- ※ wezterm.format の属性は次の指定まで持続する。バッジの太字を
+	--   引きずらないよう、セグメントごとに Intensity をリセットする
+	local function push(icon, icon_color, text)
+		table.insert(segs, { Attribute = { Intensity = "Normal" } })
+		table.insert(segs, { Background = { Color = p.tab_bar_bg } })
+		table.insert(segs, { Foreground = { Color = icon_color } })
+		table.insert(segs, { Text = icon .. " " })
+		table.insert(segs, { Foreground = { Color = p.fg } })
+		table.insert(segs, { Text = text .. "  " })
+	end
+
+	-- ピル型のバッジ（背景色で塗って太字）
+	local function badge(icon, text, color)
+		table.insert(segs, { Background = { Color = p.tab_bar_bg } })
+		table.insert(segs, { Foreground = { Color = color } })
+		table.insert(segs, { Text = LEFT_CAP })
+		table.insert(segs, { Background = { Color = color } })
+		table.insert(segs, { Foreground = { Color = p.bg } })
+		table.insert(segs, { Attribute = { Intensity = "Bold" } })
+		table.insert(segs, { Text = icon .. " " .. text })
+		table.insert(segs, { Background = { Color = p.tab_bar_bg } })
+		table.insert(segs, { Foreground = { Color = color } })
+		table.insert(segs, { Text = RIGHT_CAP .. "  " })
+	end
+
+	-- 1) 一時メッセージ（M.flash。数秒で消える）
+	local id = window:window_id()
+	local f = flashes[id]
+	if f then
+		if os.time() < f.expires then
+			badge(f.style.icon, f.text, f.style.color)
+		else
+			flashes[id] = nil
+		end
+	end
+
+	-- 2) モード中はピル型バッジで強調
+	--    リサイズ (Ctrl+Shift+S) / コピーモード (Ctrl+Shift+X) / 検索 (Ctrl+Shift+F)
+	local mode = MODE_BADGES[window:active_key_table() or ""]
+	if mode then
+		badge(mode.icon, mode.text, mode.color)
+	end
+
+	-- 3) ワークスペース名（default 以外のときだけ表示）
+	local workspace = window:active_workspace()
+	if workspace and workspace ~= "default" then
+		push(ICON_WORKSPACE, p.accent2, workspace)
+	end
+
+	-- 4) 日付（日本語曜日）+ 5) 時刻
+	local wday = WDAYS[tonumber(wezterm.strftime("%w")) + 1]
+	push(ICON_DATE, p.accent, wezterm.strftime("%m/%d") .. " (" .. wday .. ")")
+	push(ICON_TIME, p.accent, wezterm.strftime("%H:%M"))
+
+	-- 6) バッテリー（ノートPCのみ。デスクトップでは battery_info が空）
+	for _, b in ipairs(wezterm.battery_info()) do
+		local charging = b.state == "Charging"
+		local color = p.ok
+		if not charging and b.state_of_charge <= 0.15 then
+			color = p.warn -- 残量わずかは警告色
+		end
+		push(
+			battery_icon(b.state_of_charge, charging),
+			color,
+			string.format("%.0f%%", b.state_of_charge * 100)
+		)
+		break -- 複数バッテリー搭載機でも先頭のみ表示
+	end
+
+	window:set_right_status(wezterm.format(segs))
+end
+
+-- ステータスバー（タブバーの右端）に一時メッセージを数秒出す。level は "ok"（緑）/ "warn"（黄）。
+-- トースト通知は Windows の通知センターに溜まるため、操作結果の軽い知らせはこちらを使う
+function M.flash(window, text, level)
+	flashes[window:window_id()] = {
+		text = text,
+		style = FLASH_STYLES[level] or FLASH_STYLES.ok,
+		expires = os.time() + FLASH_SECONDS,
+	}
+	render(window) -- 次の定期更新（最大 1 秒後）を待たずに出す
+end
+
 function M.apply(config)
-	-- 時計を毎秒更新
+	-- 時計を毎秒更新（モードバッジと一時メッセージの出し入れもこの間隔）
 	config.status_update_interval = 1000
 
-	wezterm.on("update-status", function(window, pane)
-		local p = palette
-		local segs = {}
-
-		-- 「アイコン + テキスト」のセグメントを追加（アイコンだけ色を付ける）
-		-- ※ wezterm.format の属性は次の指定まで持続する。リサイズバッジ(下記1)の
-		--   太字を引きずらないよう、セグメントごとに Intensity をリセットする
-		local function push(icon, icon_color, text)
-			table.insert(segs, { Attribute = { Intensity = "Normal" } })
-			table.insert(segs, { Background = { Color = p.tab_bar_bg } })
-			table.insert(segs, { Foreground = { Color = icon_color } })
-			table.insert(segs, { Text = icon .. " " })
-			table.insert(segs, { Foreground = { Color = p.fg } })
-			table.insert(segs, { Text = text .. "  " })
-		end
-
-		-- 1) リサイズモード中はピル型バッジで強調（Ctrl+Shift+S → h/j/k/l）
-		if window:active_key_table() == "resize_pane" then
-			table.insert(segs, { Background = { Color = p.tab_bar_bg } })
-			table.insert(segs, { Foreground = { Color = p.warn } })
-			table.insert(segs, { Text = LEFT_CAP })
-			table.insert(segs, { Background = { Color = p.warn } })
-			table.insert(segs, { Foreground = { Color = p.bg } })
-			table.insert(segs, { Attribute = { Intensity = "Bold" } })
-			table.insert(segs, { Text = ICON_RESIZE .. " リサイズ" })
-			table.insert(segs, { Background = { Color = p.tab_bar_bg } })
-			table.insert(segs, { Foreground = { Color = p.warn } })
-			table.insert(segs, { Text = RIGHT_CAP .. "  " })
-		end
-
-		-- 2) ワークスペース名（default 以外のときだけ表示）
-		local workspace = window:active_workspace()
-		if workspace and workspace ~= "default" then
-			push(ICON_WORKSPACE, p.accent2, workspace)
-		end
-
-		-- 3) 日付（日本語曜日）+ 4) 時刻
-		local wday = WDAYS[tonumber(wezterm.strftime("%w")) + 1]
-		push(ICON_DATE, p.accent, wezterm.strftime("%m/%d") .. " (" .. wday .. ")")
-		push(ICON_TIME, p.accent, wezterm.strftime("%H:%M"))
-
-		-- 5) バッテリー（ノートPCのみ。デスクトップでは battery_info が空）
-		for _, b in ipairs(wezterm.battery_info()) do
-			local charging = b.state == "Charging"
-			local color = p.ok
-			if not charging and b.state_of_charge <= 0.15 then
-				color = p.warn -- 残量わずかは警告色
-			end
-			push(
-				battery_icon(b.state_of_charge, charging),
-				color,
-				string.format("%.0f%%", b.state_of_charge * 100)
-			)
-			break -- 複数バッテリー搭載機でも先頭のみ表示
-		end
-
-		window:set_right_status(wezterm.format(segs))
+	wezterm.on("update-status", function(window, _pane)
+		render(window)
 	end)
 end
 

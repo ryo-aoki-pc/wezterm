@@ -106,6 +106,51 @@ local function discover_unix()
 	return { default_prog = nil, list = list }
 end
 
+-- ~/.ssh/config（Windows は %USERPROFILE%\.ssh\config）の Host を、起動メニューと
+-- 分割ピッカーに「ssh <ホスト>」として並べる。
+-- ※ wezterm.enumerate_ssh_hosts() は同期関数なので設定評価中に呼べる。
+--   ワイルドカードを含む Host（Host * など）は返らない
+-- ※ 接続は WezTerm 内蔵の SSH クライアントではなく OpenSSH の ssh コマンドで行う
+--   （ssh-agent・ProxyJump・ControlMaster など ~/.ssh/config の設定がそのまま効く）
+-- ※ domain = "DefaultDomain": WSL のペインから分割しても、WSL 側ではなくローカルの ssh を使う
+-- git ホスティングの Host はシェルに入れない（認証の挨拶を出して切れる）ので並べない
+local SSH_SKIP_HOSTS = {
+	["github.com"] = true,
+	["ssh.github.com"] = true,
+	["gitlab.com"] = true,
+	["bitbucket.org"] = true,
+}
+
+local function ssh_entries()
+	-- ssh の設定ファイルが壊れていても設定全体を落とさない
+	local ok, hosts = pcall(wezterm.enumerate_ssh_hosts)
+	if not ok or type(hosts) ~= "table" then
+		return {}
+	end
+	local names = {}
+	for host in pairs(hosts) do
+		if not SSH_SKIP_HOSTS[host:lower()] then
+			table.insert(names, host)
+		end
+	end
+	table.sort(names)
+	-- Windows は他のシェルと同じく拡張子付きで書く（標準の OpenSSH クライアントが PATH にある）
+	local ssh = is_windows and "ssh.exe" or "ssh"
+	local list = {}
+	for _, host in ipairs(names) do
+		table.insert(list, { label = "  ssh " .. host, args = { ssh, host }, domain = "DefaultDomain" })
+	end
+	return list
+end
+
+-- 配列 dst の末尾に src の要素を足す
+local function append(dst, src)
+	for _, v in ipairs(src) do
+		table.insert(dst, v)
+	end
+	return dst
+end
+
 -- シェル一覧を一度だけ探索してキャッシュする。
 -- 各エントリは launch_menu / SpawnCommand 兼用の形（label + args/domain + env）。
 local cache
@@ -117,6 +162,7 @@ local function discover()
 
 	if not is_windows then
 		cache = discover_unix()
+		append(cache.list, ssh_entries())
 		return cache
 	end
 
@@ -208,6 +254,8 @@ local function discover()
 		})
 	end
 
+	append(list, ssh_entries())
+
 	cache = {
 		default_prog = git_bash_args,
 		list = list,
@@ -229,6 +277,19 @@ function M.apply(config)
 	-- launch_menu の項目だけでなく default_prog（起動直後のタブ）や
 	-- Ctrl+Shift+D/E で分割したペインにも同じように行き渡る
 	config.set_environment_variables = { WEZTERM_SHELL_INTEGRATION = INTEGRATION_SH }
+
+	-- 閉じるとき（Ctrl+Shift+W / Ctrl+Shift+Q）に確認を出さないプロセス。
+	-- WezTerm はペイン内の全プロセスの実行ファイル名がこの一覧に含まれるときだけ確認を省く。
+	-- 既定値（先頭 9 件）は bash 等を拡張子無しで持つが、Windows の実行ファイル名は
+	-- bash.exe なので一致せず、Git Bash / MSYS2 / QMK MSYS はプロンプトで待っているだけでも
+	-- 毎回確認が出ていた。Windows 名を足す（vim などが動いていれば従来どおり確認が出る）。
+	-- ※ ssh.exe / wsl.exe は入れない: その先で何が動いているかを WezTerm から見られない
+	config.skip_close_confirmation_for_processes_named = {
+		-- WezTerm の既定値
+		"bash", "sh", "zsh", "fish", "tmux", "nu", "cmd.exe", "pwsh.exe", "powershell.exe",
+		-- Windows 版のシェル（Git Bash / MSYS2 / QMK MSYS など）
+		"bash.exe", "sh.exe", "zsh.exe", "fish.exe", "nu.exe",
+	}
 
 	if d.default_prog then
 		config.default_prog = d.default_prog

@@ -35,6 +35,15 @@ M.palette = {
 
 function M.apply(config)
 	local p = M.palette
+
+	-- コマンドパレット (Ctrl+Shift+P) と文字選択 (Ctrl+Shift+U) の配色。
+	-- 既定の背景 #333333（灰色）はこの配色から浮くので、タブと同じ色に揃える
+	-- （フォントは general.lua で指定済み）
+	config.command_palette_bg_color = p.tab_bg
+	config.command_palette_fg_color = p.fg
+	config.char_select_bg_color = p.tab_bg
+	config.char_select_fg_color = p.fg
+
 	config.colors = {
 		foreground = p.fg,
 		background = p.bg,
