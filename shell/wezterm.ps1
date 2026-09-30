@@ -28,6 +28,10 @@ $global:__WezTermOriginalPrompt = $function:prompt
 $__wz_h = Get-History -Count 1
 $global:__WezTermNotifiedId = if ($__wz_h) { $__wz_h.Id } else { 0 }
 
+# プロンプトを出した時点の $Error の先頭。次の行で新しいエラーが記録されたかを、
+# これと同じオブジェクトかどうかで見分ける（終了コードの判定に使う）
+$global:__WezTermLastError = if ($global:Error.Count -gt 0) { $global:Error[0] }
+
 # OSC 7 に載せるホスト名。WezTerm 側 (wezterm.hostname()) と同じ DNS ホスト名にそろえる。
 # lua/tabs.lua はこれが自分のホスト名と違うと ssh 先とみなして「ホスト:ディレクトリ」表示に
 # するため。$env:COMPUTERNAME は NetBIOS 名で 15 文字に切り詰められ、一致しないことがある
@@ -37,7 +41,41 @@ if (-not $global:__WezTermHostName) { $global:__WezTermHostName = 'localhost' }
 function global:prompt {
 	# $? は prompt の最初の文で取らないと、後続の処理で上書きされてしまう
 	$ok = $?
-	$code = if ($ok) { 0 } elseif ($null -ne $global:LASTEXITCODE) { $global:LASTEXITCODE } else { 1 }
+	# プロファイルで Set-StrictMode を有効にしていても落ちないよう、この関数（と中から呼ぶ
+	# 元の prompt）の中だけ切る。空の $Error の [0] や、ネイティブコマンドを一度も動かして
+	# いないときの $LASTEXITCODE（未定義）を読むと例外になり、プロンプトが「PS>」に化けるため
+	Set-StrictMode -Off
+	# 直前に実行した行（空 Enter では増えない）。完了通知で使う
+	$last = Get-History -Count 1
+
+	# 終了コード（Windows Terminal のシェル統合と同じ考え方）。$? は成否しか持たず、
+	# $LASTEXITCODE はネイティブコマンド（git など）が動いたときしか更新されない
+	# （コマンドレットが失敗しても前の値が残る）ので、この行で記録されたエラーで見分ける
+	#   成功                                        → 0
+	#   この行の PowerShell のエラー（コマンドレット・throw） → 1
+	#   この行のネイティブコマンドのエラー          → $LASTEXITCODE（0 もそのまま）
+	#     ※ Windows PowerShell は stderr を 2>&1 などで受けると、終了コード 0 でも $? が
+	#       偽になり NativeCommandError が記録される。PowerShell 7.3 以降の
+	#       $PSNativeCommandUseErrorActionPreference による失敗は NativeCommandExitException
+	#   この行のエラーが無い（ネイティブコマンドの失敗） → $LASTEXITCODE（0 や未設定なら 1）
+	# 「この行のエラーか」は、前のプロンプトのときの $Error の先頭と別物かで見る
+	# （エラーの InvocationInfo.HistoryId は Windows PowerShell のネイティブコマンドでは -1 で使えない。
+	#   $Error の件数も上限 256 件に達すると増えないので使えない）
+	$code = 0
+	if (-not $ok) {
+		$code = 1
+		$err = if ($global:Error.Count -gt 0) { $global:Error[0] }
+		if ($err -and -not [object]::ReferenceEquals($err, $global:__WezTermLastError)) {
+			# 型は名前で比べる（Windows PowerShell にはこの型が無く、[型] と書くとその場でエラーになる）
+			if ($err -is [System.Management.Automation.ErrorRecord] -and (
+					$err.FullyQualifiedErrorId -like 'NativeCommandError*' -or
+					$err.Exception.GetType().FullName -eq 'System.Management.Automation.NativeCommandExitException')) {
+				$code = [int]$global:LASTEXITCODE
+			}
+		} elseif ($global:LASTEXITCODE) {
+			$code = $global:LASTEXITCODE
+		}
+	}
 
 	$esc = [char]27
 	$st = "$esc\"  # 文字列終端 (ST)。ESC + バックスラッシュ
@@ -47,7 +85,6 @@ function global:prompt {
 	# 「終了コード<TAB>経過秒<TAB>コマンド」をユーザー変数 wezterm_cmd_done で送る。
 	# 出すかどうか（見ていないペインのときだけ）は lua/notify.lua が決める。
 	# 空 Enter では履歴が増えないので、通知済みの Id と比べて二度送らない
-	$last = Get-History -Count 1
 	if ($last -and $last.Id -ne $global:__WezTermNotifiedId) {
 		$global:__WezTermNotifiedId = $last.Id
 		$threshold = 10
@@ -79,6 +116,8 @@ function global:prompt {
 
 	# 元の prompt の出力に、入力開始 (B) の通知を付けて返す
 	$text = & $global:__WezTermOriginalPrompt
+	# 次の行で新しいエラーが出たかを見分ける印（元の prompt が出したエラーもここで含めておく）
+	$global:__WezTermLastError = if ($global:Error.Count -gt 0) { $global:Error[0] }
 	return "$text$esc]133;B$st"
 }
 

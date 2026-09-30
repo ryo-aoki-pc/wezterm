@@ -90,12 +90,16 @@ local function render(window)
 		table.insert(segs, { Text = RIGHT_CAP .. "  " })
 	end
 
+	-- バッジを出したか（出している間は下の日付・時刻を省く）
+	local badged = false
+
 	-- 1) 一時メッセージ（M.flash。数秒で消える）
 	local id = window:window_id()
 	local f = flashes[id]
 	if f then
 		if os.time() < f.expires then
 			badge(f.style.icon, f.text, f.style.color)
+			badged = true
 		else
 			flashes[id] = nil
 		end
@@ -106,6 +110,7 @@ local function render(window)
 	local mode = MODE_BADGES[window:active_key_table() or ""]
 	if mode then
 		badge(mode.icon, mode.text, mode.color)
+		badged = true
 	end
 
 	-- 3) ワークスペース名（default 以外のときだけ表示）
@@ -114,10 +119,14 @@ local function render(window)
 		push(ICON_WORKSPACE, p.accent2, workspace)
 	end
 
-	-- 4) 日付（日本語曜日）+ 5) 時刻
-	local wday = WDAYS[tonumber(wezterm.strftime("%w")) + 1]
-	push(ICON_DATE, p.accent, wezterm.strftime("%m/%d") .. " (" .. wday .. ")")
-	push(ICON_TIME, p.accent, wezterm.strftime("%H:%M"))
+	-- 4) 日付（日本語曜日）+ 5) 時刻。バッジを出している間は省く
+	--    （ステータスはタブの右に置かれ、狭いウィンドウでは収まらない分がタブの下に隠れる。
+	--    操作の結果・今のモードを時計より優先する）
+	if not badged then
+		local wday = WDAYS[tonumber(wezterm.strftime("%w")) + 1]
+		push(ICON_DATE, p.accent, wezterm.strftime("%m/%d") .. " (" .. wday .. ")")
+		push(ICON_TIME, p.accent, wezterm.strftime("%H:%M"))
+	end
 
 	-- 6) バッテリー（ノートPCのみ。デスクトップでは battery_info が空）
 	for _, b in ipairs(wezterm.battery_info()) do

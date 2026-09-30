@@ -1,6 +1,7 @@
 local wezterm = require("wezterm")
 local palette = require("colors").palette
 local ui = require("ui")
+local procs = require("procs")
 local M = {}
 
 local nf = wezterm.nerdfonts
@@ -98,9 +99,6 @@ end
 
 local LOCAL_HOST = short_host(wezterm.hostname())
 
--- フォアグラウンドにいる間、画面の中身が別のマシンになるプロセス
-local REMOTE_PROCS = { ["ssh"] = true, ["mosh"] = true, ["mosh-client"] = true }
-
 -- ペインが OSC 7 で報告したカレントディレクトリを短い表示名にする。
 -- 例: "C:/Users/foo/dev/myapp" -> "myapp"、ホームそのものなら "~"。
 -- 報告元が別のホスト（ssh 先のシェルが OSC 7 を送っている）なら "abiko-pi:myapp" のように
@@ -123,6 +121,9 @@ local function cwd_label(pane)
 	local remote = host ~= "" and host ~= "localhost" and host ~= LOCAL_HOST
 	-- 末尾の区切りを落としてから比較・切り出しする（Windows は \ と / が混在しうる）
 	path = (path:gsub("[/\\]$", ""))
+	-- Windows のパスは URL の形のまま "/C:/Users/foo" と先頭に / が付いてくるので外す
+	-- （外さないとホーム（USERPROFILE）と一致せず "~" にならない）
+	path = (path:gsub("^/(%a:)", "%1"))
 	local dir
 	if not remote then
 		local home = os.getenv("USERPROFILE") or os.getenv("HOME")
@@ -142,39 +143,32 @@ local function cwd_label(pane)
 	return dir, false
 end
 
--- ペインのフォアグラウンドプロセス名（パス末尾・.exe 除去・小文字）。
--- 例: "C:\\Program Files\\PowerShell\\7\\pwsh.exe" → "pwsh"
--- WSL ペイン等ではプロセス名が取れないことが多く、そのときは ""
-local function process_name(pane)
-	local name = (pane and pane.foreground_process_name) or ""
-	-- パス末尾のみ取り出し（Windows の \ と Unix の / 両対応）→ .exe 除去 → 小文字化
-	name = name:match("([^/\\]+)$") or ""
-	return (name:gsub("%.exe$", ""):lower())
+-- ペインで今動いているプログラムの名前（lua/procs.lua の running。例: "pwsh" / "ssh"）。
+-- Git Bash の中で動くプログラムは WezTerm から見えないので、シェル統合が送る
+-- ユーザー変数 WEZTERM_PROG（実行中のコマンド行）で補う。取れなければ ""
+local function program_name(pane)
+	local vars = pane and pane.user_vars
+	return procs.running(pane and pane.foreground_process_name, vars and vars.WEZTERM_PROG)
 end
 
--- ペインのフォアグラウンドプロセスからアイコンを決定する。
--- 例: "pwsh" → PowerShell アイコン
-local function process_icon(pane)
-	local name = process_name(pane)
-	if name == "" then
-		return GENERIC_ICON
-	end
+-- プログラム名からアイコンを決定する。例: "pwsh" → PowerShell アイコン（未知・"" は汎用）
+local function process_icon(name)
 	return PROCESS_ICONS[name] or GENERIC_ICON
 end
 
--- 明示的なタブ名が無いときのタイトル。上から順に採用する
+-- 明示的なタブ名が無いときのタイトル。上から順に採用する（name は program_name の結果）
 --   1) ssh 先のシェルが OSC 7 を送っている → 「ホスト:ディレクトリ」
 --   2) ssh 等の実行中 → ペインタイトル（多くの Linux の既定 bashrc が "user@host:dir" を
 --      設定する。"user@" は省く）。このとき OSC 7 の値は接続前のローカルのディレクトリの
 --      ままなので使わない
 --   3) ローカルのカレントディレクトリ名（シェル統合が OSC 7 を送っている場合）
 --   4) ペインのタイトル
-local function auto_title(pane)
+local function auto_title(pane, name)
 	local label, remote = cwd_label(pane)
 	if remote then
 		return label
 	end
-	if REMOTE_PROCS[process_name(pane)] then
+	if procs.REMOTE[name] then
 		-- 先頭、または空白の後ろの "user@" を省く（コピーモード中は "Copy mode: user@host:dir"）
 		local title = ((pane.title or ""):gsub("^[^@%s]+@", ""):gsub("(%s)[^@%s]+@", "%1"))
 		if title ~= "" then
@@ -216,12 +210,13 @@ function M.apply(config)
 			bg, fg = palette.tab_bg, palette.dim
 		end
 
-		local icon = process_icon(tab.active_pane)
+		local name = program_name(tab.active_pane)
+		local icon = process_icon(name)
 		-- タイトルは明示的に付けたタブ名 (Ctrl+Shift+Alt+T) を最優先し、
 		-- 無ければ auto_title（接続先 / カレントディレクトリ / ペインタイトル）
 		local title = tab.tab_title
 		if not title or #title == 0 then
-			title = auto_title(tab.active_pane)
+			title = auto_title(tab.active_pane, name)
 		end
 		-- ズーム中のペインは虫眼鏡を表示
 		local zoom = tab.active_pane.is_zoomed and (" " .. ZOOM_ICON) or ""
