@@ -503,7 +503,8 @@
 - **`~/.wezterm.lua` があると、`~/.config/wezterm` は読まれない**（手順 1 の補足）
   - Windows では、`wezterm.exe` と同じフォルダーの `wezterm.lua` も探される（公式の [Configuration Files](https://wezterm.org/config/files.html)。試していない）
 - **starship と一緒に使うとき**: starship を後ろに置くと、`PS1` の OSC 133 の印は消える（手順 5 の補足の実測）。画面でのプロンプトへのジャンプへの影響は確かめていない
-  - 手順 7 の並び（この 1 行 → starship）では、コマンドの終了コード（OSC 133 の `D`）がいつも 0 で送られる。starship → この 1 行 → zoxide の並びなら正しく送られる（自分用の bash の設定 `ryo-aoki-pc/bash` の検証コンテナでの実測。手順 7 はまだこの並びに直していない）
+  - 公式の統合が無いとき（この設定の統合が働く Windows の Git Bash など）は、手順 7 の並び（この 1 行 → starship）では、コマンドの終了コード（OSC 133 の `D`）がいつも 0 で送られる。starship → この 1 行 → zoxide の並びなら正しく送られる（自分用の bash の設定 `ryo-aoki-pc/bash` の、公式の統合の無い検証コンテナでの実測。手順 7 はまだこの並びに直していない）
+  - AlmaLinux 10（COPR の WezTerm）では `D` は公式の統合が送るので、手順 7 の並びでも失敗したコマンドは `D;1` になる（上流の `wezterm.sh` を読ませた模擬での実測）
 - **Git Bash の `~/.bash_profile`**（試していない）
   - WezTerm は Git Bash をログインシェル（`-l`）で起動するので、`~/.bashrc` は `~/.bash_profile` から読まれる必要がある
   - Git for Windows は、`~/.bashrc` があって `~/.bash_profile` などが無いと、`~/.bashrc` を読む `~/.bash_profile` を作り、`WARNING: Found ~/.bashrc but no ~/.bash_profile` と表示する
