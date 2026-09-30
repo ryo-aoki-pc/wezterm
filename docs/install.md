@@ -143,7 +143,7 @@
    - `WEZTERM_SHELL_INTEGRATION` を含む行が出たら、もう足してある。手順 6・7 は飛ばす
    - `zoxide init` を含む行が出たら（`WEZTERM_SHELL_INTEGRATION` の行が無いとき）、手順 6 は飛ばす
    - `starship init` を含む行だけが出たら、手順 7 は飛ばす
-   - `starship init` の行が `zoxide init` の行より後ろに出たら、先に setup-notes の [starship.md 手順 3〜5](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/starship.md#実施手順) で starship の行を前へ移す
+   - `starship init` の行が、`WEZTERM_SHELL_INTEGRATION` か `zoxide init` の行より後ろに出たら（前の版のこの文書や setup-notes の starship.md の並び）、setup-notes の [starship.md 手順 3〜6](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/starship.md#実施手順) で starship の行を前へ移す（シェル統合の行は動かさなくてよい）
    - Git Bash で `~/.bashrc` がまだ無ければ、`No such file or directory` と出る。手順 7 は飛ばす（手順 6 で作られる）
    - 自分用の bash の設定（`ryo-aoki-pc/bash`）を入れたホストでは、手順 6・7 は飛ばす（その設定が、starship・zoxide と合わせた順番でシェル統合を読む）
 
@@ -158,7 +158,7 @@
      - この 1 行 → starship（前の版のこの文書の手順 7 の並び）: `D` はいつも `D;0`
      - どの並びでも、starship がいると `PS1` の OSC 133 の印（`A` / `B`）は無くなる（starship が `PS1` を毎回作り直す）。`PS0` の `133;C` は残る
      - 画面でのプロンプトへのジャンプや、出力のコピーへの影響は確かめていない
-   - 前の版のこの文書（2026-09-30 まで）は、この 1 行を starship の行の前に差し込んでいた。そのホストは、setup-notes の starship.md の手順 3〜5 で starship の行を前へ移す（この 1 行は動かさなくてよい）
+   - 前の版のこの文書（2026-09-30 まで）は、この 1 行を starship の行の前に差し込んでいた。そのホストは、setup-notes の starship.md の手順 3〜6 で starship の行を前へ移す（この 1 行は動かさなくてよい）
 
    </details>
 
@@ -187,12 +187,12 @@
 1. `~/.bashrc` に zoxide の行があるときだけ（手順 6 の代わりに）、その行の前に 1 行を差し込む。
 
    ```bash
-   sed -i '/zoxide init bash/i [ -r "${WEZTERM_SHELL_INTEGRATION:=$HOME/.config/wezterm/shell/wezterm.sh}" ] && . "$WEZTERM_SHELL_INTEGRATION"' ~/.bashrc
+   sed -i '/zoxide init/i [ -r "${WEZTERM_SHELL_INTEGRATION:=$HOME/.config/wezterm/shell/wezterm.sh}" ] && . "$WEZTERM_SHELL_INTEGRATION"' ~/.bashrc
    grep -n -e 'WEZTERM_SHELL_INTEGRATION' -e 'starship init' -e 'zoxide init' ~/.bashrc
    ```
 
    - シェル統合の行が、`zoxide init` の行のすぐ上に出る
-   - `zoxide init bash` を含む行が 2 つ以上あると、それぞれの上に入る。余分な行はエディタで消す
+   - `zoxide init` を含む行が 2 つ以上あると、それぞれの上に入る。余分な行はエディタで消す（最初の `zoxide init` の行の上の 1 つを残す）
 
 1. WezTerm のウィンドウをすべて閉じてから、起動し直す。
 
@@ -443,7 +443,7 @@
 - **状態**: **x86_64 のコンテナでのみ検証済み（2026-09-30）。実機・Windows 11・WSL では本実行していない**
   - 下表の検証コンテナで、**この文書の bash のコードブロックを抜き出したもの**を、一般ユーザーの `bash -s` に手順ごとに流した（[付録](#付録-コンテナでの検証記録2026-09-30)）
   - 手順 8・9 は、WezTerm の画面の代わりに、そのユーザーの `wezterm-mux-server` を起動し直し、開いたペインに手順 9 のブロックを打ち込んで、画面の文字を `wezterm cli get-text` で読んだ
-  - 並びを直した手順 5〜7（starship の行より後ろ、zoxide の行より前）は、2026-09-30 に別の AlmaLinux 10.2 のコンテナで、4 つの `~/.bashrc` に流し直した。WezTerm は入れず、この設定の `shell/wezterm.sh` を読んだ対話のシェルを `script` の擬似端末で動かして、OSC 133 を生の出力で見た（[付録](#付録-並びを直した版の検証2026-09-30)）
+  - 並びを直した手順 5〜7（starship の行より後ろ、zoxide の行より前）は、2026-09-30 に別の AlmaLinux 10.2 のコンテナで、6 つの `~/.bashrc` に流し直した（手順 7 の `sed` の探す文字列を直した後の 2 つを含む）。WezTerm は入れず、この設定の `shell/wezterm.sh` を読んだ対話のシェルを `script` の擬似端末で動かして、OSC 133 を生の出力で見た（[付録](#付録-並びを直した版の検証2026-09-30)）
   - 確認したこと: 既存の設定の退避と戻し、clone、`wezterm ls-fonts` での読み込み（HackGen Console NF の有無の両方）、`~/.bashrc` の 1 行（今の手順 7 の、zoxide の行の前への差し込みは、並びを直した版の検証で）、WezTerm が起動したシェルに `TERM_PROGRAM` と `WEZTERM_SHELL_INTEGRATION` が入ること、公式のシェル統合との関係、ssh 先の節（`systemctl reload sshd` と、mux のペインから ssh した先での確かめ）、更新、ロールバック
   - **確認していないこと**: WezTerm の画面（見た目・タブ名・キー操作・プロンプトへのジャンプ・出力のコピー・完了通知の表示）、Windows 11 の Git Bash、WSL の節、zsh、aarch64、macOS
 
@@ -550,7 +550,7 @@ x86_64 のクラウドホストで `dockerd` を動かし、`docker run -d --pri
 |---|---|---|---|
 | 1 | u1（設定無し） | 手順 1・3〜6・8（mux）・9、[更新](#更新)の手順 1、[ロールバック](#ロールバック)の手順 1〜3 | 手順 1 は 2 行とも `No such file or directory`。手順 4 は HackGen が無い警告と `ERROR  wezterm_toast_notification::dbus` で、`ERROR  wezterm_gui` は無し。手順 5 は何も出さなかった。手順 9 は `WezTerm`・`/home/<USER>/.config/wezterm/shell/wezterm.sh`・`__wezterm_set_user_var`・`__wz_mouse_off`。更新は `Already up to date.`。ロールバックは `0`・`## main...origin/main`・`No such file or directory` |
 | 1 | r1（ssh 先） | 手順 1・3〜6、[ssh 先の節](#ssh-先でもシェル統合を使う任意)の手順 2（r1）と手順 4・5（u1 の mux のペインから）、ロールバックの手順 6・1〜3 | ssh 先の節の手順 2 は、手順 2 の補足の 2 行。手順 5 は `WezTerm`・`__wezterm_set_user_var`・`__wz_mouse_off`（ssh 先にも COPR の WezTerm があるため）。`wezterm cli list` のペインの CWD は `file://<HOST>/home/r1/`。ロールバックの手順 6 は `removed '/etc/ssh/sshd_config.d/50-wezterm.conf'` で、reload の後の `sshd -T` に `acceptenv` の行は無かった |
-| 2 | u2（既存の設定・starship・HackGen） | 手順 1〜5・7・8（mux）・9、更新の手順 1、ロールバックの手順 1〜4 | 手順 1 は 2 行とも出た。手順 2 は `renamed` が 2 行。手順 4 は 2 文字とも HackGen Console NF で、警告も `ERROR` も無し。手順 5 は `26:eval "$(starship init bash)"`。手順 7 の後は、26 行目がシェル統合で 27 行目が starship。手順 9 は実行 1 と同じ（プロンプトは starship のもの）。ロールバックの手順 4 で 2 つとも戻り、`wezterm ls-fonts` は元の最小の例のフォント（`Noto Sans Mono`）を読んだ |
+| 2 | u2（既存の設定・starship・HackGen） | 手順 1〜5・7（当時の、starship の行の前に差し込む版）・8（mux）・9、更新の手順 1、ロールバックの手順 1〜4 | 手順 1 は 2 行とも出た。手順 2 は `renamed` が 2 行。手順 4 は 2 文字とも HackGen Console NF で、警告も `ERROR` も無し。手順 5 は `26:eval "$(starship init bash)"`。手順 7 の後は、26 行目がシェル統合で 27 行目が starship。手順 9 は実行 1 と同じ（プロンプトは starship のもの）。ロールバックの手順 4 で 2 つとも戻り、`wezterm ls-fonts` は元の最小の例のフォント（`Noto Sans Mono`）を読んだ |
 
 個別に確かめたこと（systemd の無い AlmaLinux 10.2 のコンテナに同じ版の WezTerm を入れたものも使った）:
 
@@ -563,7 +563,7 @@ x86_64 のクラウドホストで `dockerd` を動かし、`docker run -d --pri
 | ロールバックの手順 5 の `sed`（WSL の行を模した 3 行のファイル） | その行だけが消え、`grep -c` は `0` |
 | 手順 6 の 1 行が無いときに、WezTerm が起動したシェル | 関数は公式の統合の `__wezterm_set_user_var` と `__wezterm_osc7` だけ。ログインシェルだった（`shopt -q login_shell` が真） |
 | `WEZTERM_SHELL_SKIP_ALL=1` を付けて起動したシェル（1 行あり） | `__wezterm_osc7`・`__wezterm_notify_done`・`__wz_mouse_off` があり、`__wezterm_integration_loaded=1`。`cd /usr/share` の後、`wezterm cli list` の CWD が `file://<HOST>/usr/share` になった |
-| 上のシェルに、starship を後ろに読ませたとき | 手順 5 の補足のとおり |
+| 上のシェルに、starship を後ろに読ませたとき | `PS1` の OSC 133 の印（`A` / `B`）は無くなった。`PS0` の `133;C` は残り、`STARSHIP_PROMPT_COMMAND` の先頭は `__wezterm_prompt_command` だった（2026-09-30 に手順 5 の補足を書き直す前の、その補足の記録） |
 | `SendEnv TERM_PROGRAM` で送られる値 | 送った側の値がそのまま届いた（`WezTerm`・`gnome`。無ければ空） |
 | 設定の誤り（存在しない設定名・文法エラー） | 手順 4 の補足のとおり。どちらも終了コードは 0 |
 
@@ -583,10 +583,20 @@ x86_64 のクラウドホストで `dockerd` を動かし、`docker run -d --pri
 
 | ユーザー（実施前の `~/.bashrc` の末尾） | 流した手順 | 結果 |
 |---|---|---|
-| wz1（`brew shellenv` → starship → `zoxide init bash --cmd z`） | 手順 5・7 | 手順 5 は starship と zoxide の 2 行。手順 7 の後は starship（27 行目）→ シェル統合（28 行目）→ zoxide（29 行目）。`false` の後は `D;1`、`zoxide: detected a possible configuration issue.` は出ない |
+| wz1（`brew shellenv` → starship → `zoxide init bash --cmd z`） | 手順 5・7（当時の、`zoxide init bash` で探す版） | 手順 5 は starship と zoxide の 2 行。手順 7 の後は starship（27 行目）→ シェル統合（28 行目）→ zoxide（29 行目）。`false` の後は `D;1`、`zoxide: detected a possible configuration issue.` は出ない |
 | wz2（`brew shellenv` → starship） | 手順 5・6 | 手順 5 は starship の 1 行。手順 6 の後は starship（27 行目）→ シェル統合（28 行目）。`false` の後は `D;1` |
 | wz3（`/etc/skel` のまま） | 手順 5・6 | 手順 5 は何も出さず、手順 6 で末尾に 1 行 |
-| wz4（前の版の手順書の並び: zoxide → シェル統合 → starship） | 手順 5、setup-notes の starship.md の手順 5 | 手順 5 は 3 行とも出た（starship が zoxide より後ろ）。starship.md の手順 5 の後は starship（27 行目）→ zoxide → シェル統合。`false` の後は `D;1`、警告は出ない |
+| wz4（前の版の手順書の並び: zoxide → シェル統合 → starship） | 手順 5、setup-notes の starship.md の手順 5（当時の、`brew shellenv` の行を動かさない版） | 手順 5 は 3 行とも出た（starship が zoxide より後ろ）。starship.md の手順 5 の後は starship（27 行目）→ zoxide → シェル統合。`false` の後は `D;1`、警告は出ない |
 
 - 上の 3 つの `false` の後の `D;1` は、`PROMPT_COMMAND` が配列（AlmaLinux の `/etc/bashrc`）のとき。starship → zoxide → シェル統合の並びは、文字列の `PROMPT_COMMAND`（Git Bash と同じ）でも `D;1` で、警告は出なかった（setup-notes の starship.md の付録）
 - 前の版の並び（シェル統合 → starship）は、同じ方法で `D` がいつも `D;0` だった（公式の統合が無いとき）。上流の公式の `wezterm.sh` を `/etc/profile.d` に置いた模擬では、`D;1` だった
+
+手順 7 の `sed` を `zoxide init` で探す形に、setup-notes の starship.md の手順 5 を `brew shellenv` の行も動かす形に直した後、同じコンテナで、抜き出し直したブロックを流した（2026-09-30 の夜）。
+
+| ユーザー（実施前の `~/.bashrc` の末尾） | 流した手順 | 結果 |
+|---|---|---|
+| wa（`brew shellenv` → starship → `zoxide init --cmd cd bash`） | 手順 5・7 | 手順 5 は starship と zoxide の 2 行。手順 7 の後は starship（27 行目）→ シェル統合（28 行目）→ zoxide（29 行目）。`false` の後は `D;1`、警告は出ない |
+| wb（`brew shellenv` → シェル統合 → starship） | 手順 5、starship.md の手順 5 | 手順 5 はシェル統合と starship の 2 行（starship が後ろ）。starship.md の手順 5 の後は `brew shellenv`（26 行目）→ starship → シェル統合。`false` の後は `D;1` |
+
+- wa と wb も、`script` の擬似端末で開き直した `bash -il` を上と同じ方法で見た。`false` の後だけ `D;1` で、zoxide の警告は出なかった。`z` の無い 2 つ（wa は `--cmd cd`、wb は zoxide の行が無い）では `z share` が `command not found` で、その後は `D;127` だった
+- 手順の後に `su -` で開いた新しいログインシェルは、どちらも何も出さなかった
