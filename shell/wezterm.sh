@@ -101,25 +101,31 @@ esac
 # OSC 7 でカレントディレクトリを送る。
 # Git Bash / MSYS2 の $PWD は "/c/Users/..." 形式で Windows 側から解決できないため、
 # cygpath があれば "C:/Users/..." に変換する（WSL / Linux / macOS では変換しない）。
+# 変換とエンコードはディレクトリが変わったときだけ行い、結果（__wz_osc7_path）を使い回す
+# （Git Bash では cygpath の起動に 1 回 40ms ほどかかり、プロンプトごとだと待たされる）
 __wezterm_osc7() {
-	local __wz_dir=$PWD
-	if command -v cygpath >/dev/null 2>&1; then
-		__wz_dir=$(cygpath -m "$PWD" 2>/dev/null) || __wz_dir=$PWD
+	if [ "$PWD" != "$__wz_osc7_pwd" ]; then
+		__wz_osc7_pwd=$PWD
+		local __wz_dir=$PWD
+		if command -v cygpath >/dev/null 2>&1; then
+			__wz_dir=$(cygpath -m "$PWD" 2>/dev/null) || __wz_dir=$PWD
+		fi
+		# file:// URL に載せるため最低限のパーセントエンコードを行う
+		# （% を先に処理しないと後続の置換結果まで壊れる）
+		# ※ パターンの % は \ で文字として扱う。zsh では先頭の % が「末尾に一致」の意味になり、
+		#   置換されずに末尾へ %25 が足されてしまう
+		__wz_dir=${__wz_dir//\%/%25}
+		__wz_dir=${__wz_dir// /%20}
+		# "C:/..." には先頭の / が無いので補う（file://host/C:/... が Windows の標準形）
+		case $__wz_dir in
+		/*) ;;
+		*) __wz_dir=/$__wz_dir ;;
+		esac
+		__wz_osc7_path=$__wz_dir
 	fi
-	# file:// URL に載せるため最低限のパーセントエンコードを行う
-	# （% を先に処理しないと後続の置換結果まで壊れる）
-	# ※ パターンの % は \ で文字として扱う。zsh では先頭の % が「末尾に一致」の意味になり、
-	#   置換されずに末尾へ %25 が足されてしまう
-	__wz_dir=${__wz_dir//\%/%25}
-	__wz_dir=${__wz_dir// /%20}
-	# "C:/..." には先頭の / が無いので補う（file://host/C:/... が Windows の標準形）
-	case $__wz_dir in
-	/*) ;;
-	*) __wz_dir=/$__wz_dir ;;
-	esac
 	# ホスト名は bash が $HOSTNAME、zsh が $HOST に持つ（lua/tabs.lua が自分のホスト名と
 	# 比べて、違えば ssh 先とみなす）
-	printf '\033]7;file://%s%s\033\\' "${HOSTNAME:-${HOST:-localhost}}" "$__wz_dir"
+	printf '\033]7;file://%s%s\033\\' "${HOSTNAME:-${HOST:-localhost}}" "$__wz_osc7_path"
 }
 
 # 経過秒 $1 が完了通知のしきい値（WEZTERM_NOTIFY_AFTER 秒。既定 10）以上か

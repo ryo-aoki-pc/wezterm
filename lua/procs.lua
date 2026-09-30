@@ -26,7 +26,7 @@ local PREFIXES = {
 	["winpty"] = true,
 }
 
--- コマンド行から、実際に動くプログラムの名前を取り出す（無ければ ""）。
+-- 1 つのコマンド（; や && で区切る前の単位）から、実際に動くプログラムの名前を取り出す（無ければ ""）。
 -- 例: "TERM=xterm-256color sudo -E ssh -p 22 host" → "ssh"
 -- 先頭の変数代入（NAME=値）・上の前置き・オプション（- で始まる語）・数字だけの語
 -- （nice -n 10 の 10）を飛ばした最初の語。引用符は外す。
@@ -46,6 +46,24 @@ function M.program_of(cmdline)
 		end
 	end
 	return ""
+end
+
+-- コマンド行（入力したとおりの 1 行）で、今動いていそうなプログラムの名前を選ぶ（無ければ ""）。
+-- ; && || | & と改行で区切った各コマンドのうち、ssh / mosh があればそれ（cd dir && ssh host、
+-- clear; ssh host など）、無ければ最初のコマンドのプログラム。
+-- ※ 引用符の中の区切り文字も区切りとみなす（ssh の判定の目安なので、厳密には解析しない）
+function M.main_program(cmdline)
+	local first = ""
+	for seg in ((cmdline or "") .. "\n"):gmatch("([^;&|\n]*)[;&|\n]") do
+		local p = M.program_of(seg)
+		if M.REMOTE[p] then
+			return p
+		end
+		if first == "" then
+			first = p
+		end
+	end
+	return first
 end
 
 -- WEZTERM_PROG で補ってよいフォアグラウンド: シェル自身・WSL の入口・不明（""）
@@ -72,7 +90,7 @@ local SHELLS = {
 function M.running(fg, prog)
 	local name = M.basename(fg)
 	if SHELLS[name] and prog and prog ~= "" then
-		local p = M.program_of(prog)
+		local p = M.main_program(prog)
 		if p ~= "" then
 			return p
 		end

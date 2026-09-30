@@ -132,9 +132,11 @@ local function find_last_output(pane)
 
 	-- 入力の後ろにプロンプトが一度も来ていない = そのコマンドはまだ実行中。それが ssh / mosh なら
 	-- ssh 先のシェルが区切りを送っていないので、出力範囲は ssh のセッション全体。丸ごとは返さない
-	-- ※ プロセスではなくコマンド行で見る（Git Bash から起動した ssh は WezTerm から見えない）。
-	--   先頭の TERM_PROGRAM=… / sudo / exec などは飛ばす（lua/procs.lua の program_of）
-	if not prompt_after and procs.REMOTE[procs.program_of(text_of(zones[k]))] then
+	-- ssh 中かどうかは次のどちらかで見る
+	--   コマンド行  cd dir && ssh host なども拾う（lua/procs.lua の main_program）。
+	--               Git Bash から起動した ssh はプロセスが見えないので、こちらが頼り
+	--   プロセス    エイリアスやスクリプトから起動した ssh も拾う（Linux・PowerShell など）
+	if not prompt_after and (procs.REMOTE[procs.main_program(text_of(zones[k]))] or in_remote_session(pane)) then
 		return nil, "remote"
 	end
 
