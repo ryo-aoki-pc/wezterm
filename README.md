@@ -44,6 +44,8 @@ Windows 11（既定シェルは Git Bash）を主に、Linux（GNOME Wayland）�
 `Symbols Nerd Font Mono` / `Noto Sans Mono CJK JP` へフォールバックしますが、
 見た目を揃えるには HackGen Console NF の導入を推奨します。
 
+導入の手順（前提の入れ方を含む）は [docs/install.md](docs/install.md) にあります。
+
 ## 配置と初回セットアップ
 
 | OS | 配置先 |
@@ -51,22 +53,22 @@ Windows 11（既定シェルは Git Bash）を主に、Linux（GNOME Wayland）�
 | Linux / macOS | `~/.config/wezterm` |
 | Windows | `%USERPROFILE%\.config\wezterm` |
 
-```sh
-git clone <this-repo> ~/.config/wezterm
-```
+導入は [docs/install.md](docs/install.md) の手順で行います（setup-notes と同じ書式の手順書）。
+AlmaLinux 10 と Windows 11 の Git Bash に同じコマンドを貼り、次のことをします。
+
+- 既にある設定（`~/.wezterm.lua`・`~/.config/wezterm`）を `.bak` に退避する
+- このリポジトリを `~/.config/wezterm` に clone する
+- `~/.bashrc` に、bash のシェル統合を読み込む 1 行を足す（→ [シェル統合](#シェル統合)。PowerShell は自動で読み込まれるので不要）
+- 任意で、WSL と ssh 先でもシェル統合を使えるようにする
 
 設定ファイルは保存すると自動で再読み込みされます（手動なら `Ctrl+Shift+R`）。
 ただしウィンドウ装飾（`window_decorations`）の変更だけは WezTerm の再起動が必要です。
 
-初回にやること:
+導入の後に、必要ならやること:
 
-1. **フォント**: HackGen Console NF を入れる（無くても動くが、アイコンや丸いタブの端の見た目が変わる）
-2. **bash / zsh のシェル統合**: `~/.bashrc`（zsh は `~/.zshrc`）に 1 行追記する。
-   カレントディレクトリでの分割・タブ名・プロンプトジャンプ・出力コピー・完了通知に必要
-   （→ [シェル統合](#シェル統合)）。PowerShell は自動で読み込まれるので不要
-3. **SSH 接続先（任意）**: `~/.ssh/config` に `Host` を書いておくと、起動メニューに
-   「ssh ホスト名」が並ぶ（→ [SSH ホスト](#ssh-ホスト)）
-4. **通知の許可（任意）**: 完了通知を使うなら、OS の通知設定で WezTerm を許可しておく
+- **SSH 接続先**: `~/.ssh/config` に `Host` を書いておくと、起動メニューに
+  「ssh ホスト名」が並ぶ（→ [SSH ホスト](#ssh-ホスト)）
+- **通知の許可**: 完了通知を使うなら、OS の通知設定で WezTerm を許可しておく
 
 ## 機能早見表
 
@@ -624,11 +626,9 @@ WezTerm 以外の端末で読み込まれた場合、「迷子のマウス報告
 ### bash（Git Bash / MSYS2 / QMK MSYS / Linux）と zsh
 
 `lua/shells.lua` が環境変数 `WEZTERM_SHELL_INTEGRATION` にパスを渡すので、
-`~/.bashrc`（zsh は `~/.zshrc`）に次の 1 行を追記します。
-
-```sh
-[ -r "${WEZTERM_SHELL_INTEGRATION:=$HOME/.config/wezterm/shell/wezterm.sh}" ] && . "$WEZTERM_SHELL_INTEGRATION"
-```
+`~/.bashrc`（zsh は `~/.zshrc`）に、このパスのスクリプトを読み込む 1 行を足します。
+足し方は [docs/install.md の手順 5〜7](docs/install.md#実施手順) にあります
+（starship の初期化があれば、その行より前に置きます）。
 
 環境変数が無いときのフォールバックを付けてあるのは、tmux や ssh を挟むとこの変数が
 届かないためです（tmux サーバは起動時の環境を子プロセスへ配るので、WezTerm が渡した
@@ -650,15 +650,15 @@ WezTerm 以外の端末で読み込まれた場合、「迷子のマウス報告
 Linux 版 WezTerm のパッケージは公式のシェル統合を `/etc/profile.d/wezterm.sh` に置きます。
 それが読み込まれている環境では OSC 7 / OSC 133 は公式側に任せ、`shell/wezterm.sh` は
 マウス報告よけだけを残して抜けます（同名の `__wezterm_osc7` を上書きして公式側のフックを
-壊さないため）。この場合、完了通知は動きません。
+壊さないため）。この場合、完了通知は動きません。AlmaLinux 10 の COPR 版では、公式側が
+すべての対話シェルで先に読まれ、この形になることをコンテナで確かめました
+（[docs/install.md の注意点](docs/install.md#注意点)）。
 
 ### WSL
 
-WSL ドメインは起動引数を渡せないため、WSL 側の `~/.bashrc` に直接書きます。
-
-```sh
-. /mnt/c/Users/<ユーザー名>/.config/wezterm/shell/wezterm.sh
-```
+WSL ドメインは起動引数を渡せないため、WSL 側の `~/.bashrc` に、Windows 側の
+`/mnt/c/Users/<ユーザー名>/.config/wezterm/shell/wezterm.sh` を読み込む行を直接書きます。
+足し方は [docs/install.md の「WSL でもシェル統合を使う（任意）」](docs/install.md#wsl-でもシェル統合を使う任意) にあります。
 
 ### tmux の中
 
@@ -671,24 +671,13 @@ tmux の中では `$TERM_PROGRAM` が `tmux` になるため、シェル統合�
 （ペインのタイトルから取る）、ssh 先のコマンドについてはプロンプトジャンプ・出力のコピー・完了通知が使えません。
 
 次の 3 つを設定すると、ssh 先でも手元と同じように使えます（myhost のような自分で管理しているホスト向け）。
+手順は [docs/install.md の「ssh 先でもシェル統合を使う（任意）」](docs/install.md#ssh-先でもシェル統合を使う任意) にあります。
 
-1. **手元の `~/.ssh/config`**（Windows は `%USERPROFILE%\.ssh\config`）で `TERM_PROGRAM` を送る。
-   WezTerm から ssh したときだけ `WezTerm` が入るので、他の端末から接続したときは統合は動かない
-
-   ```
-   Host myhost 192.168.1.10
-     SendEnv TERM_PROGRAM
-   ```
-
-2. **ssh 先の sshd** で受け取りを許可する（root で 1 回）
-
-   ```sh
-   echo 'AcceptEnv TERM_PROGRAM' | sudo tee /etc/ssh/sshd_config.d/50-wezterm.conf
-   sudo systemctl reload sshd
-   ```
-
-3. **ssh 先の `~/.bashrc`** に、手元と同じ[シェル統合の 1 行](#bashgit-bash--msys2--qmk-msys--linuxと-zsh)を書き、
-   この設定を ssh 先の `~/.config/wezterm` にも置く（Syncthing などで同期していればそのまま）
+- **手元の `~/.ssh/config`**（Windows は `%USERPROFILE%\.ssh\config`）の `Host` に `SendEnv TERM_PROGRAM` を足し、
+  `TERM_PROGRAM` を送る。WezTerm から ssh したときだけ `WezTerm` が入るので、他の端末から接続したときは統合は動かない
+- **ssh 先の sshd** で、`AcceptEnv TERM_PROGRAM` のドロップインを置いて受け取りを許可する
+- **ssh 先**にもこの設定を置き、ssh 先の `~/.bashrc` に手元と同じ[シェル統合の 1 行](#bashgit-bash--msys2--qmk-msys--linuxと-zsh)を足す
+  （Syncthing などで `~/.config/wezterm` を同期していれば、1 行だけでよい）
 
 設定後に ssh すると、タブ名が `myhost:setup-notes` のように ssh 先のディレクトリ名になり、
 ssh 先でも `Ctrl+Shift+Alt+↑/↓`・`Ctrl+Shift+Alt+C`・完了通知が効きます。
@@ -781,6 +770,8 @@ gui:
 | `lua/ui.lua` | 共有定数（パワーライン区切り・フォント候補）。`apply` は持たない |
 | `shell/wezterm.sh` | シェル統合（bash / zsh）。OSC 7 / OSC 133 / 完了通知 / 迷子のマウス報告よけ |
 | `shell/wezterm.ps1` | シェル統合（PowerShell）。OSC 7 / OSC 133 / 完了通知 |
+| `docs/install.md` | 導入の手順書（setup-notes と同じ書式。検証範囲は同書の「対象と検証環境」） |
+| `CLAUDE.md` | Claude Code 向けの、このリポジトリの構成と書き方の決まり |
 
 ## 使用している nightly 限定機能
 
@@ -827,7 +818,7 @@ bash -n shell/wezterm.sh && zsh -n shell/wezterm.sh
 | --- | --- |
 | アイコンやタブの丸い端が □ になる | HackGen Console NF（または Symbols Nerd Font Mono）が入っているか。`ls-fonts` でどのフォントが使われているか見る |
 | 設定を変えたのに反映されない / 見た目が素の WezTerm になった | 設定エラー。画面上部のエラー表示か、`ls-fonts` の `ERROR` 行を見る。stable 版で起動していないか（nightly 必須） |
-| 新しいタブが今のディレクトリで開かない / タブ名がディレクトリ名にならない | [シェル統合](#シェル統合)が読み込まれているか。bash は `~/.bashrc` の 1 行、WSL は WSL 側の `~/.bashrc` |
+| 新しいタブが今のディレクトリで開かない / タブ名がディレクトリ名にならない | [シェル統合](#シェル統合)が読み込まれているか。bash は `~/.bashrc` の 1 行、WSL は WSL 側の `~/.bashrc`（[docs/install.md の手順 9](docs/install.md#実施手順) で確かめられる） |
 | 「コピーできる出力がありません」と出る | 同上。コマンドプロンプトは非対応。tmux の中も非対応 |
 | 「ssh 先の出力は区切れません」と出る | ssh 先でシェル統合が動いていない。[ssh 先でもシェル統合を使う](#ssh-先でもシェル統合を使う) |
 | 完了通知が出ない | 10 秒以上かかったか（`WEZTERM_NOTIFY_AFTER`）、そのペインを見ていなかったか、OS の通知で WezTerm が許可されているか、表示中のワークスペースか。`sleep 11` を実行してすぐ別のタブに切り替えると試せる |
