@@ -100,10 +100,14 @@ function global:prompt {
 
 	# OSC 7: ファイルシステム以外のプロバイダ（レジストリ等）では送らない
 	if ($PWD.Provider.Name -eq 'FileSystem') {
-		$p = $PWD.ProviderPath.Replace('\', '/')
-		# file:// URL に載せるため最低限のパーセントエンコードを行う
-		# （% を先に処理しないと後続の置換結果まで壊れる）
-		$p = $p.Replace('%', '%25').Replace(' ', '%20')
+		# file:// URL に載せるため、英数字と - _ . ~ 以外を UTF-8 のパーセントエンコードにする
+		#   - # と ? をそのまま送ると、WezTerm がそこから後ろを捨てる（パスが変わり、タブ名がずれて、
+		#     新しいタブがホームで開く）
+		#   - ASCII 以外の文字は、[Console]::Write がコンソールのコード ページ（日本語版 Windows は
+		#     932）で書き出すため、そこに無い文字（é・ハングル・絵文字など）が化ける
+		# EscapeDataString は / と : もエンコードするので、この 2 つは戻す（C: はドライブ名として
+		# 読まれるよう、そのまま送る必要がある）
+		$p = [Uri]::EscapeDataString($PWD.ProviderPath.Replace('\', '/')).Replace('%2F', '/').Replace('%3A', ':')
 		# "C:/..." には先頭の / が無いので補う（file://host/C:/... が Windows の標準形）
 		if (-not $p.StartsWith('/')) { $p = "/$p" }
 		$out += "$esc]7;file://$global:__WezTermHostName$p$st"
@@ -114,7 +118,11 @@ function global:prompt {
 	# PSReadLine がプロンプト幅を誤らないよう、通知は戻り値に混ぜず直接書き出す
 	[Console]::Write($out)
 
-	# 元の prompt の出力に、入力開始 (B) の通知を付けて返す
+	# 元の prompt の出力に、入力開始 (B) の通知を付けて返す。
+	# 元の prompt が $? で直前の失敗を表示できるよう（oh-my-posh・starship など）、失敗だったときは
+	# $? を偽に戻してから呼ぶ（ここまでの処理で真になっている）。-ErrorAction Ignore のエラーは
+	# $Error に残らない（VS Code のシェル統合と同じ方法）
+	if (-not $ok) { Write-Error -Message 'wezterm' -ErrorAction Ignore }
 	$text = & $global:__WezTermOriginalPrompt
 	# 次の行で新しいエラーが出たかを見分ける印（元の prompt が出したエラーもここで含めておく）
 	$global:__WezTermLastError = if ($global:Error.Count -gt 0) { $global:Error[0] }
