@@ -175,7 +175,8 @@ local function auto_title(pane)
 		return label
 	end
 	if REMOTE_PROCS[process_name(pane)] then
-		local title = ((pane.title or ""):gsub("^[^@%s]+@", ""))
+		-- 先頭、または空白の後ろの "user@" を省く（コピーモード中は "Copy mode: user@host:dir"）
+		local title = ((pane.title or ""):gsub("^[^@%s]+@", ""):gsub("(%s)[^@%s]+@", "%1"))
 		if title ~= "" then
 			return title
 		end

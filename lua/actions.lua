@@ -65,20 +65,93 @@ M.rename_workspace = wezterm.action_callback(function(window, pane)
 	)
 end)
 
--- 直前のコマンドの出力だけをクリップボードへコピーする。
--- シェル統合 (shell/) が送る OSC 133 で区切られた「出力」範囲のうち最後のもの。
--- 統合が無いシェル（cmd / 統合未導入）では範囲が無いので、その旨を表示する
-M.copy_last_output = wezterm.action_callback(function(window, pane)
-	local zones = pane:get_semantic_zones("Output")
-	local last = zones and zones[#zones]
-	if not last then
-		statusbar.flash(window, "コピーできる出力がありません（要シェル統合）", "warn")
-		return
+-- ssh 等（フォアグラウンドにいる間、画面の中身が別のマシンになるプロセス）の実行中か
+local REMOTE_PROCS = { ["ssh"] = true, ["mosh"] = true, ["mosh-client"] = true }
+
+local function in_remote_session(pane)
+	local name = pane:get_foreground_process_name() or ""
+	name = (name:match("([^/\\]+)$") or ""):gsub("%.exe$", ""):lower()
+	return REMOTE_PROCS[name] == true
+end
+
+-- 直前に実行したコマンドの出力を探す。
+-- シェル統合 (shell/) が OSC 133 で画面を「プロンプト / 入力 / 出力」の範囲に区切るので、
+-- 最後に Enter で確定した「入力」範囲の直後の「出力」範囲を取る。
+-- 戻り値: 出力のテキスト（無ければ nil）, 無い理由
+--   "empty"  直前のコマンドは何も出力しなかった（cd など）/ 実行中でまだ出力が無い
+--   "none"   区切りが見つからない（シェル統合が無い）
+--   "remote" ssh 中で、ssh 先のシェルが区切りを送っていない
+local function find_last_output(pane)
+	local function text_of(z)
+		return pane:get_text_from_semantic_zone(z)
 	end
+	-- 空白だけの「出力」範囲は画面の余白（clear の後などに残る）なので数えない
+	local zones = {}
+	for _, z in ipairs(pane:get_semantic_zones()) do
+		if not (z.semantic_type == "Output" and not text_of(z):find("%S")) then
+			table.insert(zones, z)
+		end
+	end
+
+	-- 最後に確定した入力範囲を探す。末尾の入力範囲がカーソルと同じ行（以前）にあるなら、
+	-- まだ Enter を押していない入力途中の文字なので飛ばす
+	local cursor = pane:get_cursor_position()
+	local k
+	for i = #zones, 1, -1 do
+		if zones[i].semantic_type == "Input" then
+			local typing = i == #zones and cursor.y <= zones[i].end_y
+			if not typing then
+				k = i
+				break
+			end
+		end
+	end
+	if not k then
+		-- 起動メニューから直接 ssh を開いた場合も、手元のシェルが無いのでここに来る
+		return nil, in_remote_session(pane) and "remote" or "none"
+	end
+
+	-- その入力の後ろ、次のプロンプトまでが出力
+	local parts, prompt_after = {}, false
+	for i = k + 1, #zones do
+		local t = zones[i].semantic_type
+		if t ~= "Output" then
+			prompt_after = true
+			break
+		end
+		table.insert(parts, text_of(zones[i]))
+	end
+
+	-- ssh 中で、ssh コマンドの後ろにプロンプトが一度も来ていない = ssh 先のシェルが区切りを
+	-- 送っていない。このとき出力範囲は ssh のセッション全体なので、丸ごとは返さない
+	-- ※ コマンドの先頭とは限らない（TERM_PROGRAM= ssh … / sudo ssh … / exec ssh …）ので、
+	--   ssh / mosh が単語として含まれるかで見る
+	if not prompt_after and in_remote_session(pane) then
+		local cmd = text_of(zones[k])
+		if cmd:find("%f[%w_%-]ssh%f[^%w_%-]") or cmd:find("%f[%w_%-]mosh%f[^%w_%-]") then
+			return nil, "remote"
+		end
+	end
+
 	-- 出力の後ろに付く空行・空白は落とす
-	local text = (pane:get_text_from_semantic_zone(last):gsub("%s+$", ""))
+	local text = (table.concat(parts, "\n"):gsub("%s+$", ""))
 	if text == "" then
-		statusbar.flash(window, "直前の出力は空です", "warn")
+		return nil, "empty"
+	end
+	return text
+end
+
+local NO_OUTPUT_MESSAGES = {
+	empty = "直前の出力は空です",
+	none = "コピーできる出力がありません（要シェル統合）",
+	remote = "ssh 先の出力は区切れません（ssh 先でシェル統合が必要）",
+}
+
+-- 直前のコマンドの出力だけをクリップボードへコピーする（Ctrl+Shift+Alt+C）
+M.copy_last_output = wezterm.action_callback(function(window, pane)
+	local text, reason = find_last_output(pane)
+	if not text then
+		statusbar.flash(window, NO_OUTPUT_MESSAGES[reason], "warn")
 		return
 	end
 	window:copy_to_clipboard(text, "Clipboard")
