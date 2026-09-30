@@ -132,31 +132,37 @@
 
    </details>
 
-1. `~/.bashrc` に、シェル統合の行と starship の行があるか確かめる。
+1. `~/.bashrc` に、シェル統合の行と starship・zoxide の行があるか確かめる。
 
    ```bash
-   grep -n -e 'WEZTERM_SHELL_INTEGRATION' -e 'starship init' ~/.bashrc
+   grep -n -e 'WEZTERM_SHELL_INTEGRATION' -e 'starship init' -e 'zoxide init' ~/.bashrc
    ```
 
+   - シェル統合の行は、starship の行より後ろ、zoxide の行より前に置く（この手順の補足）
    - 何も出なければ、手順 7 は飛ばす
    - `WEZTERM_SHELL_INTEGRATION` を含む行が出たら、もう足してある。手順 6・7 は飛ばす
-   - `starship init` を含む行だけが出たら、手順 6 は飛ばす
+   - `zoxide init` を含む行が出たら（`WEZTERM_SHELL_INTEGRATION` の行が無いとき）、手順 6 は飛ばす
+   - `starship init` を含む行だけが出たら、手順 7 は飛ばす
+   - `starship init` の行が `zoxide init` の行より後ろに出たら、先に setup-notes の [starship.md 手順 3〜5](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/starship.md#実施手順) で starship の行を前へ移す
    - Git Bash で `~/.bashrc` がまだ無ければ、`No such file or directory` と出る。手順 7 は飛ばす（手順 6 で作られる）
    - 自分用の bash の設定（`ryo-aoki-pc/bash`）を入れたホストでは、手順 6・7 は飛ばす（その設定が、starship・zoxide と合わせた順番でシェル統合を読む）
 
    <details>
-   <summary>補足: starship の行より前に置く理由</summary>
+   <summary>補足: starship の行より後ろ、zoxide の行より前に置く理由</summary>
 
-   - setup-notes の [starship.md](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/starship.md) は、starship の初期化を zoxide と WezTerm のシェル統合より後ろに置く
-   - starship は、既にある `PROMPT_COMMAND` を `STARSHIP_PROMPT_COMMAND` に退避して、自分の中から呼ぶ。シェル統合が先に足した関数は呼ばれ続ける
-   - 検証コンテナで、公式の統合を止めて（[注意点](#注意点)）、この 1 行 → starship の順に読んだシェルでは:
-     - `PS1` の OSC 133 の印（`A` / `B`）は無くなった。starship が `PS1` を毎回作り直すため
-     - `PS0` の `133;C` は残り、`STARSHIP_PROMPT_COMMAND` の先頭は `__wezterm_prompt_command` だった
+   - starship は、既にある `PROMPT_COMMAND` を `STARSHIP_PROMPT_COMMAND` に退避して、自分の中から呼ぶ。シェル統合が starship より前にあると、統合の関数がその退避先に入り、呼ばれるときの `$?` がいつも 0 になる
+   - starship より後ろなら、統合は `$?` を保つ関数を `starship_precmd` の前に足すので、OSC 133 の `D` に正しい終了コードが入る
+   - zoxide は `~/.bashrc` のいちばん最後に置く（setup-notes の [zoxide.md 手順 6](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/zoxide.md#実施手順)）。統合が zoxide より後ろにあっても、結果は同じだった（統合は `PROMPT_COMMAND` の先頭に足すため）
+   - 自分用の bash の設定（`ryo-aoki-pc/bash`）の検証コンテナで、公式の統合の無い形で、擬似端末の生の出力を見た（2026-09-30）:
+     - starship → この 1 行 → zoxide（と starship → zoxide → この 1 行）: `false` の後は `D;1`。`zoxide: detected a possible configuration issue.` は出なかった
+     - この 1 行 → starship（前の版のこの文書の手順 7 の並び）: `D` はいつも `D;0`
+     - どの並びでも、starship がいると `PS1` の OSC 133 の印（`A` / `B`）は無くなる（starship が `PS1` を毎回作り直す）。`PS0` の `133;C` は残る
      - 画面でのプロンプトへのジャンプや、出力のコピーへの影響は確かめていない
+   - 前の版のこの文書（2026-09-30 まで）は、この 1 行を starship の行の前に差し込んでいた。そのホストは、setup-notes の starship.md の手順 3〜5 で starship の行を前へ移す（この 1 行は動かさなくてよい）
 
    </details>
 
-1. `~/.bashrc` に starship の行が無いときは、最後にシェル統合の 1 行を足す。
+1. `~/.bashrc` に zoxide の行が無いときは、最後にシェル統合の 1 行を足す。
 
    ```bash
    echo '[ -r "${WEZTERM_SHELL_INTEGRATION:=$HOME/.config/wezterm/shell/wezterm.sh}" ] && . "$WEZTERM_SHELL_INTEGRATION"' >> ~/.bashrc
@@ -164,6 +170,7 @@
    ```
 
    - 足した 1 行が、そのまま出る
+   - starship の行があれば、その後ろに入る
    - zsh を使うなら、同じ行を `~/.zshrc` にも足す（試していない）
 
    <details>
@@ -177,15 +184,15 @@
 
    </details>
 
-1. `~/.bashrc` に starship の行があるときだけ（手順 6 の代わりに）、その行の前に 1 行を差し込む。
+1. `~/.bashrc` に zoxide の行があるときだけ（手順 6 の代わりに）、その行の前に 1 行を差し込む。
 
    ```bash
-   sed -i '/starship init bash/i [ -r "${WEZTERM_SHELL_INTEGRATION:=$HOME/.config/wezterm/shell/wezterm.sh}" ] && . "$WEZTERM_SHELL_INTEGRATION"' ~/.bashrc
-   grep -n -e 'WEZTERM_SHELL_INTEGRATION' -e 'starship init' ~/.bashrc
+   sed -i '/zoxide init bash/i [ -r "${WEZTERM_SHELL_INTEGRATION:=$HOME/.config/wezterm/shell/wezterm.sh}" ] && . "$WEZTERM_SHELL_INTEGRATION"' ~/.bashrc
+   grep -n -e 'WEZTERM_SHELL_INTEGRATION' -e 'starship init' -e 'zoxide init' ~/.bashrc
    ```
 
-   - シェル統合の行が、`starship init` の行のすぐ上に出る
-   - `starship init bash` を含む行が 2 つ以上あると、それぞれの上に入る。余分な行はエディタで消す
+   - シェル統合の行が、`zoxide init` の行のすぐ上に出る
+   - `zoxide init bash` を含む行が 2 つ以上あると、それぞれの上に入る。余分な行はエディタで消す
 
 1. WezTerm のウィンドウをすべて閉じてから、起動し直す。
 
@@ -436,7 +443,8 @@
 - **状態**: **x86_64 のコンテナでのみ検証済み（2026-09-30）。実機・Windows 11・WSL では本実行していない**
   - 下表の検証コンテナで、**この文書の bash のコードブロックを抜き出したもの**を、一般ユーザーの `bash -s` に手順ごとに流した（[付録](#付録-コンテナでの検証記録2026-09-30)）
   - 手順 8・9 は、WezTerm の画面の代わりに、そのユーザーの `wezterm-mux-server` を起動し直し、開いたペインに手順 9 のブロックを打ち込んで、画面の文字を `wezterm cli get-text` で読んだ
-  - 確認したこと: 既存の設定の退避と戻し、clone、`wezterm ls-fonts` での読み込み（HackGen Console NF の有無の両方）、`~/.bashrc` の 1 行（starship の行の前への差し込みも）、WezTerm が起動したシェルに `TERM_PROGRAM` と `WEZTERM_SHELL_INTEGRATION` が入ること、公式のシェル統合との関係、ssh 先の節（`systemctl reload sshd` と、mux のペインから ssh した先での確かめ）、更新、ロールバック
+  - 並びを直した手順 5〜7（starship の行より後ろ、zoxide の行より前）は、2026-09-30 に別の AlmaLinux 10.2 のコンテナで、4 つの `~/.bashrc` に流し直した。WezTerm は入れず、この設定の `shell/wezterm.sh` を読んだ対話のシェルを `script` の擬似端末で動かして、OSC 133 を生の出力で見た（[付録](#付録-並びを直した版の検証2026-09-30)）
+  - 確認したこと: 既存の設定の退避と戻し、clone、`wezterm ls-fonts` での読み込み（HackGen Console NF の有無の両方）、`~/.bashrc` の 1 行（今の手順 7 の、zoxide の行の前への差し込みは、並びを直した版の検証で）、WezTerm が起動したシェルに `TERM_PROGRAM` と `WEZTERM_SHELL_INTEGRATION` が入ること、公式のシェル統合との関係、ssh 先の節（`systemctl reload sshd` と、mux のペインから ssh した先での確かめ）、更新、ロールバック
   - **確認していないこと**: WezTerm の画面（見た目・タブ名・キー操作・プロンプトへのジャンプ・出力のコピー・完了通知の表示）、Windows 11 の Git Bash、WSL の節、zsh、aarch64、macOS
 
 | 項目 | 検証コンテナ |
@@ -485,7 +493,7 @@
 | 場所 | 中身 |
 |---|---|
 | `~/.config/wezterm` | このリポジトリの clone（`main`） |
-| `~/.bashrc` | 末尾（starship の行があればその上）に、シェル統合の 1 行 |
+| `~/.bashrc` | 末尾（zoxide の行があればその上）に、シェル統合の 1 行 |
 | `~/.wezterm.lua.bak` / `~/.config/wezterm.bak` | 手順 2 で退避したときだけ |
 | （ssh 先）`/etc/ssh/sshd_config.d/50-wezterm.conf` | `AcceptEnv TERM_PROGRAM` の 1 行 |
 
@@ -502,9 +510,10 @@
   - stable では、nightly だけの設定（README の「使用している nightly 限定機能」）が `ERROR  wezterm_gui >` になり、組み込みの既定の設定で開く見込み（stable では試していない。存在しない設定名を足したときの出方は、手順 4 の補足）
 - **`~/.wezterm.lua` があると、`~/.config/wezterm` は読まれない**（手順 1 の補足）
   - Windows では、`wezterm.exe` と同じフォルダーの `wezterm.lua` も探される（公式の [Configuration Files](https://wezterm.org/config/files.html)。試していない）
-- **starship と一緒に使うとき**: starship を後ろに置くと、`PS1` の OSC 133 の印は消える（手順 5 の補足の実測）。画面でのプロンプトへのジャンプへの影響は確かめていない
-  - 公式の統合が無いとき（この設定の統合が働く Windows の Git Bash など）は、手順 7 の並び（この 1 行 → starship）では、コマンドの終了コード（OSC 133 の `D`）がいつも 0 で送られる。starship → この 1 行 → zoxide の並びなら正しく送られる（自分用の bash の設定 `ryo-aoki-pc/bash` の、公式の統合の無い検証コンテナでの実測。手順 7 はまだこの並びに直していない）
-  - AlmaLinux 10（COPR の WezTerm）では `D` は公式の統合が送るので、手順 7 の並びでも失敗したコマンドは `D;1` になる（上流の `wezterm.sh` を読ませた模擬での実測）
+- **starship と一緒に使うとき**: シェル統合の行は、starship の行より後ろに置く（手順 5 の補足）
+  - starship より前に置くと（前の版のこの文書の手順 7 の並び）、公式の統合が無いとき（この設定の統合が働く Windows の Git Bash など）は、コマンドの終了コード（OSC 133 の `D`）がいつも 0 で送られる
+  - AlmaLinux 10（COPR の WezTerm）では `D` は公式の統合が送るので、どちらの並びでも失敗したコマンドは `D;1` になる（上流の `wezterm.sh` を読ませた模擬での実測）
+  - どの並びでも、`PS1` の OSC 133 の印（`A` / `B`）は消える。画面でのプロンプトへのジャンプへの影響は確かめていない
 - **Git Bash の `~/.bash_profile`**（試していない）
   - WezTerm は Git Bash をログインシェル（`-l`）で起動するので、`~/.bashrc` は `~/.bash_profile` から読まれる必要がある
   - Git for Windows は、`~/.bashrc` があって `~/.bash_profile` などが無いと、`~/.bashrc` を読む `~/.bash_profile` を作り、`WARNING: Found ~/.bashrc but no ~/.bash_profile` と表示する
@@ -567,3 +576,17 @@ x86_64 のクラウドホストで `dockerd` を動かし、`docker run -d --pri
 - 実機（AlmaLinux 10）と aarch64
 - 更新で新しいコミットが入るところ（`Already up to date.` の状態でだけ流した）
 - stable の WezTerm で開いたときの出方
+
+### 付録: 並びを直した版の検証（2026-09-30）
+
+手順 5〜7 を「starship の行より後ろ、zoxide の行より前」に直した版を、x86_64 のクラウドホストの Docker で立てた `almalinux:10`（AlmaLinux 10.2、bash 5.2.26）で流した。WezTerm と COPR の公式の統合は入れず、Homebrew で starship 1.26.0 と zoxide 0.10.0 を入れ、各ユーザーの `~/.config/wezterm` にこの設定を clone した（`shell/wezterm.sh` は、印を BEL で終える直しの入ったもの）。**この文書の手順 5〜7 のブロックを抜き出したもの**を、そのユーザーの `bash -s` に流した。OSC 133 は、`TERM_PROGRAM=WezTerm` で `script` の擬似端末の `bash -il` を開き、`false` などを打ち込んで、生の出力から読んだ（自分用の bash の設定 `ryo-aoki-pc/bash` の検証と同じ方法）。
+
+| ユーザー（実施前の `~/.bashrc` の末尾） | 流した手順 | 結果 |
+|---|---|---|
+| wz1（`brew shellenv` → starship → `zoxide init bash --cmd z`） | 手順 5・7 | 手順 5 は starship と zoxide の 2 行。手順 7 の後は starship（27 行目）→ シェル統合（28 行目）→ zoxide（29 行目）。`false` の後は `D;1`、`zoxide: detected a possible configuration issue.` は出ない |
+| wz2（`brew shellenv` → starship） | 手順 5・6 | 手順 5 は starship の 1 行。手順 6 の後は starship（27 行目）→ シェル統合（28 行目）。`false` の後は `D;1` |
+| wz3（`/etc/skel` のまま） | 手順 5・6 | 手順 5 は何も出さず、手順 6 で末尾に 1 行 |
+| wz4（前の版の手順書の並び: zoxide → シェル統合 → starship） | 手順 5、setup-notes の starship.md の手順 5 | 手順 5 は 3 行とも出た（starship が zoxide より後ろ）。starship.md の手順 5 の後は starship（27 行目）→ zoxide → シェル統合。`false` の後は `D;1`、警告は出ない |
+
+- 上の 3 つの `false` の後の `D;1` は、`PROMPT_COMMAND` が配列（AlmaLinux の `/etc/bashrc`）のとき。starship → zoxide → シェル統合の並びは、文字列の `PROMPT_COMMAND`（Git Bash と同じ）でも `D;1` で、警告は出なかった（setup-notes の starship.md の付録）
+- 前の版の並び（シェル統合 → starship）は、同じ方法で `D` がいつも `D;0` だった（公式の統合が無いとき）。上流の公式の `wezterm.sh` を `/etc/profile.d` に置いた模擬では、`D;1` だった

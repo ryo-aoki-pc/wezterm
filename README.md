@@ -682,7 +682,7 @@ WezTerm 以外の端末で読み込まれた場合、「迷子のマウス報告
 `lua/shells.lua` が環境変数 `WEZTERM_SHELL_INTEGRATION` にパスを渡すので、
 `~/.bashrc`（zsh は `~/.zshrc`）に、このパスのスクリプトを読み込む 1 行を足します。
 足し方は [docs/install.md の手順 5〜7](docs/install.md#実施手順) にあります
-（starship の初期化があれば、その行より前に置きます）。
+（starship の初期化より後ろ、zoxide の初期化より前に置きます）。
 自分用の bash の設定（`ryo-aoki-pc/bash`）を入れたホストでは、この 1 行は要りません
 （その設定が、starship・zoxide と合わせた順番でこのスクリプトを読みます）。
 
