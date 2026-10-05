@@ -352,8 +352,25 @@ unset __wz_ps0_prog
 # PS1 は置き換えず前後に印だけ足す。
 # Git Bash の /etc/profile.d/git-prompt.sh が組み立てたブランチ表示付き
 # プロンプトをそのまま活かすため、この形を崩さないこと。
-# \[ \] で囲むのは「幅ゼロ」と bash に伝えるため（折り返し位置がずれるのを防ぐ）
-case ${PS1-} in
-*'133;B'*) ;;
-*) PS1='\[\033]133;A\007\]'"${PS1-}"'\[\033]133;B\007\]' ;;
+# starship などは precmd で PS1 を毎回作り直すので、既存の PROMPT_COMMAND の後で
+# 印を確かめて足し直す。\[ \] は「幅ゼロ」と bash に伝える（折り返し位置のずれを防ぐ）
+__wezterm_prompt_marks() {
+	local __wz_status=$?
+	case ${PS1-} in
+	*'133;B'*) ;;
+	*) PS1='\[\033]133;A\007\]'"${PS1-}"'\[\033]133;B\007\]' ;;
+	esac
+	return "$__wz_status"
+}
+case "${PROMPT_COMMAND[*]-}" in
+*__wezterm_prompt_marks*) ;;
+*)
+	# 配列の場合は最後の要素に足す。文字列の場合は元の文を残して末尾に足す。
+	# 配列の先頭だけに連結すると、後ろの要素で PS1 が作り直された場合に印が消える
+	case $(declare -p PROMPT_COMMAND 2>/dev/null) in
+	'declare -a'*) PROMPT_COMMAND+=(__wezterm_prompt_marks) ;;
+	*) PROMPT_COMMAND="${PROMPT_COMMAND:+$PROMPT_COMMAND;}__wezterm_prompt_marks" ;;
+	esac
+	;;
 esac
+__wezterm_prompt_marks

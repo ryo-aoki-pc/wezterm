@@ -16,8 +16,20 @@
 # WezTerm 以外の端末で読み込まれても無害なように何もせず抜ける
 if ($env:TERM_PROGRAM -ne 'WezTerm') { return }
 
-# 二重ロード防止（プロンプト関数を何重にもラップしないため）
-if ($global:__WezTermIntegrationLoaded) { return }
+# 自分のラッパーが残っていれば二重に包まない。プロファイルの再読み込みなどで
+# prompt / PSReadLine が作り直されたときは、新しい関数を包み直す。
+# 未定義の変数を先に Test-Path で確かめ、Set-StrictMode の初回読み込みにも対応する
+$__wz_prompt_wrapped = (Test-Path Variable:global:__WezTermWrappedPrompt) -and
+	[object]::ReferenceEquals($function:prompt, $global:__WezTermWrappedPrompt)
+$__wz_readline_present = Test-Path Function:\PSConsoleHostReadLine
+$__wz_readline_wrapped = $__wz_readline_present -and
+	(Test-Path Variable:global:__WezTermWrappedReadLine) -and
+	[object]::ReferenceEquals($function:PSConsoleHostReadLine, $global:__WezTermWrappedReadLine)
+if ($__wz_prompt_wrapped -and (-not $__wz_readline_present -or $__wz_readline_wrapped)) { return }
+# 片方だけが作り直された場合、残っているラッパーを元に戻してから両方を登録する。
+# これで元の prompt / 入力関数として自分自身を保存してしまう再帰を防ぐ
+if ($__wz_prompt_wrapped) { $function:prompt = $global:__WezTermOriginalPrompt }
+if ($__wz_readline_wrapped) { $function:PSConsoleHostReadLine = $global:__WezTermOriginalReadLine }
 $global:__WezTermIntegrationLoaded = $true
 
 # 既存の prompt 関数（ユーザープロファイルや oh-my-posh が定義したもの）を保存して
@@ -129,6 +141,8 @@ function global:prompt {
 	return "$text$esc]133;B$st"
 }
 
+$global:__WezTermWrappedPrompt = $function:prompt
+
 # 出力の開始位置 (133;C) を送る。これで「直前の出力をコピー」(Ctrl+Shift+Alt+C) が
 # PowerShell でも出力の範囲を取れる。
 # Enter で確定した直後・コマンドの実行前に呼ばれる PSConsoleHostReadLine（PSReadLine が
@@ -146,3 +160,4 @@ if (Test-Path Function:\PSConsoleHostReadLine) {
 		$line
 	}
 }
+$global:__WezTermWrappedReadLine = if (Test-Path Function:\PSConsoleHostReadLine) { $function:PSConsoleHostReadLine }

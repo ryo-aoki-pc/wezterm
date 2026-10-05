@@ -17,7 +17,7 @@
 - 機能とキー操作は [README](../README.md) にある
 
 > [!WARNING]
-> **AlmaLinux 10 は x86_64 のコンテナでのみ検証した**（WezTerm の画面は出さず、mux サーバーで開いたシェルで確かめた）。**実機・Windows 11・WSL では試していない**。詳しくは[対象と検証環境](#対象と検証環境)。
+> **導入・更新・ロールバックの全手順は AlmaLinux 10 の x86_64 コンテナでのみ検証した**。Windows 11 の実ホストでは、既存設定の読み込み・画面・シェル統合・分割・OS 通知バナーを別途検証した（2026-10-06）。外部 SSH 2 台も接続して調べたが、既存設定では統合の制限があった。WSL と SSH の条件を含む範囲は[対象と検証環境](#対象と検証環境)と末尾の検証記録を参照。物理キー・マウス・IME 変換中の表示は、入力操作ツールが WezTerm を対象にできず未確認。
 
 1. 既存の WezTerm の設定があるか確かめる。
 
@@ -156,8 +156,8 @@
    - 自分用の bash の設定（`ryo-aoki-pc/bash`）の検証コンテナで、公式の統合の無い形で、擬似端末の生の出力を見た（2026-09-30）:
      - starship → この 1 行 → zoxide（と starship → zoxide → この 1 行）: `false` の後は `D;1`。`zoxide: detected a possible configuration issue.` は出なかった
      - この 1 行 → starship（前の版のこの文書の手順 7 の並び）: `D` はいつも `D;0`
-     - どの並びでも、starship がいると `PS1` の OSC 133 の印（`A` / `B`）は無くなる（starship が `PS1` を毎回作り直す）。`PS0` の `133;C` は残る
-     - 画面でのプロンプトへのジャンプや、出力のコピーへの影響は確かめていない
+     - 当時の統合では、どの並びでも、starship がいると `PS1` の OSC 133 の印（`A` / `B`）は無くなった。2026-10-06 に、既存のプロンプト処理の後で印を付け直すよう修正し、Windows の Git Bash で A / B と出力コピーの復帰を確認した
+     - 2026-09-30 の時点では、画面でのプロンプトへのジャンプや、出力のコピーへの影響は確かめていなかった。2026-10-06 の実 GUI の結果は[ホストでの検証記録](#付録-windows-11-のホストでの動作検証2026-10-06)
    - 前の版のこの文書（2026-09-30 まで）は、この 1 行を starship の行の前に差し込んでいた。そのホストは、setup-notes の starship.md の手順 3〜6 で starship の行を前へ移す（この 1 行は動かさなくてよい）
 
    </details>
@@ -233,7 +233,7 @@
 
    - `declare -F` は、定義されている関数の名前だけを出す
    - 手順 6 の 1 行を足す前は、`__wezterm_set_user_var`（と公式の `__wezterm_osc7`）だけだった。シェルはログインシェルで起動していた
-   - 公式の統合を止めた（`WEZTERM_SHELL_SKIP_ALL=1` を付けて起動した）シェルでは、`__wezterm_notify_done` と `__wz_mouse_off` が出た。公式の統合が無い Windows の Git Bash も、この形になるはず（試していない）
+   - 公式の統合を止めた（`WEZTERM_SHELL_SKIP_ALL=1` を付けて起動した）シェルでは、`__wezterm_notify_done` と `__wz_mouse_off` が出た。公式の統合が無い Windows の Git Bash も、この形になることを 2026-10-06 に確認した
 
    </details>
 
@@ -243,7 +243,7 @@
 
 - WezTerm は WSL のシェルに起動引数を渡せないので、WSL の `~/.bashrc` に、Windows 側に置いたシェル統合を読む行を直接書く
 - Windows で[実施手順](#実施手順)の手順 1〜7 を通してから、WSL のシェルで貼る
-- **この節は試していない**
+- **この節のコードブロックは流していない**。Windows の実ホストの WSL 2 環境は、Linux 側の既定パスに統合を置く方法で検証した（[ホストでの検証記録](#付録-windows-11-のホストでの動作検証2026-10-06)）
 
 1. WSL のシェルで、Windows のホームを調べ、シェル統合のスクリプトが見えるか確かめる。
 
@@ -283,9 +283,9 @@
 
 ## ssh 先でもシェル統合を使う（任意）
 
-- ssh は `TERM_PROGRAM` を既定では送らないので、ssh 先のシェルではシェル統合が動かない（タブ名は接続先になる）
+- ssh は `TERM_PROGRAM` を既定では送らないので、ssh 先のシェルではこの設定の統合が動かない（パッケージ付属の公式統合は働くことがある）
 - 手元の `~/.ssh/config` で送り、ssh 先の sshd で受け取り、ssh 先にもこの設定を置く。自分で管理している AlmaLinux 10 のホストを想定している
-- 動けば、タブ名が `<HOST>:<ディレクトリ名>` になり、ssh 先でもプロンプトへのジャンプ・出力のコピー・完了通知が使える（README の「ssh 先でもシェル統合を使う」）
+- この設定の統合が動けば、タブ名が `<HOST>:<ディレクトリ名>` になり、ssh 先でもプロンプトへのジャンプ・出力のコピー・完了通知が使える。公式統合が先に読まれる場合は完了通知が動かず、Starship との併用では出力の区切りも失われることがある（[追加検証](#付録-os-通知と外部-ssh-の追加検証2026-10-06)）
 
 1. 手元の `~/.ssh/config` で、使う `Host` に `SendEnv TERM_PROGRAM` を足す。
 
@@ -440,12 +440,14 @@
 
 - **目的**: この設定（[ryo-aoki-pc/wezterm](https://github.com/ryo-aoki-pc/wezterm)）を `~/.config/wezterm` に置き、bash のシェル統合を読ませる。AlmaLinux 10 と Windows 11 の Git Bash で、同じコマンドにする
 - **進め方**: git で clone し、`~/.bashrc` に 1 行を足す。**読者が書き換える変数は無い**（リポジトリの URL と置き場所は固定）
-- **状態**: **x86_64 のコンテナでのみ検証済み（2026-09-30）。実機・Windows 11・WSL では本実行していない**
+- **状態**: **導入手順全体は x86_64 のコンテナで検証済み（2026-09-30）。既存設定の動作は Windows 11 の実ホストでも検証した（2026-10-06）**
   - 下表の検証コンテナで、**この文書の bash のコードブロックを抜き出したもの**を、一般ユーザーの `bash -s` に手順ごとに流した（[付録](#付録-コンテナでの検証記録2026-09-30)）
   - 手順 8・9 は、WezTerm の画面の代わりに、そのユーザーの `wezterm-mux-server` を起動し直し、開いたペインに手順 9 のブロックを打ち込んで、画面の文字を `wezterm cli get-text` で読んだ
   - 並びを直した手順 5〜7（starship の行より後ろ、zoxide の行より前）は、2026-09-30 に別の AlmaLinux 10.2 のコンテナで、6 つの `~/.bashrc` に流し直した（手順 7 の `sed` の探す文字列を直した後の 2 つを含む）。WezTerm は入れず、この設定の `shell/wezterm.sh` を読んだ対話のシェルを `script` の擬似端末で動かして、OSC 133 を生の出力で見た（[付録](#付録-並びを直した版の検証2026-09-30)）
   - 確認したこと: 既存の設定の退避と戻し、clone、`wezterm ls-fonts` での読み込み（HackGen Console NF の有無の両方）、`~/.bashrc` の 1 行（今の手順 7 の、zoxide の行の前への差し込みは、並びを直した版の検証で）、WezTerm が起動したシェルに `TERM_PROGRAM` と `WEZTERM_SHELL_INTEGRATION` が入ること、公式のシェル統合との関係、ssh 先の節（`systemctl reload sshd` と、mux のペインから ssh した先での確かめ）、更新、ロールバック
-  - **確認していないこと**: WezTerm の画面（見た目・タブ名・キー操作・プロンプトへのジャンプ・出力のコピー・完了通知の表示）、Windows 11 の Git Bash、WSL の節、zsh、aarch64、macOS
+  - Windows 11 では、nightly の実 GUI でフォント・日本語・タブ・ランチャー・パレット・分割・OSC 7 / 133・出力コピー・プロンプトジャンプ・完了通知データを確認した。WSL と修正内容の詳細は[ホストでの検証記録](#付録-windows-11-のホストでの動作検証2026-10-06)
+  - 追加検証では、Windows の成功・失敗の通知バナーを実画像で確認し、外部の AlmaLinux 10.2 / aarch64 の SSH 2 台で既存の公式統合と一時的なこの設定の統合を比較した。正常な範囲と既存設定の制限は[追加検証の記録](#付録-os-通知と外部-ssh-の追加検証2026-10-06)
+  - **確認していないこと**: Windows での導入・更新・ロールバックの全ブロック、物理キーとマウスの入力、IME の未確定表示、OS の通知センターを開いた状態の表示、MSYS2・QMK MSYS・zsh・macOS、Linux / aarch64 の GUI
 
 | 項目 | 検証コンテナ |
 |---|---|
@@ -477,7 +479,7 @@
 - **`~/.config/wezterm` に git で clone する**
   - `lua/` と `shell/` を `wezterm.config_dir` から読むので、ディレクトリごと置く（手順 3 の補足）
   - 更新は `git pull` で、手元で変えたところは `git diff` で見られる
-  - Windows の WezTerm も `%USERPROFILE%\.config\wezterm\wezterm.lua` を読むので、Git Bash から同じコマンドで置ける（試していない）
+  - Windows の WezTerm も `%USERPROFILE%\.config\wezterm\wezterm.lua` を読む。2026-10-06 に、既存配置の設定読み込みと新規 GUI の起動を確認した（clone・退避・ロールバックの全手順は未実施）
 - **シェル統合は `~/.bashrc` の 1 行**
   - PowerShell には起動引数で読ませられるが、bash はログインシェルで起動するので `--rcfile` を使えない（手順 6 の補足）
   - tmux・ssh を挟むと環境変数が届かないので、既定の置き場所をフォールバックにした
@@ -513,7 +515,7 @@
 - **starship と一緒に使うとき**: シェル統合の行は、starship の行より後ろに置く（手順 5 の補足）
   - starship より前に置くと（前の版のこの文書の手順 7 の並び）、公式の統合が無いとき（この設定の統合が働く Windows の Git Bash など）は、コマンドの終了コード（OSC 133 の `D`）がいつも 0 で送られる
   - AlmaLinux 10（COPR の WezTerm）では `D` は公式の統合が送るので、どちらの並びでも失敗したコマンドは `D;1` になる（上流の `wezterm.sh` を読ませた模擬での実測）
-  - どの並びでも、`PS1` の OSC 133 の印（`A` / `B`）は消える。画面でのプロンプトへのジャンプへの影響は確かめていない
+  - 2026-09-30 の検証では、どの並びでも Starship が PS1 の OSC 133 A / B を消した。この設定の統合を使う場合は 2026-10-06 の修正で印が戻る。公式統合が先に読まれる環境の制限は[追加検証](#付録-os-通知と外部-ssh-の追加検証2026-10-06)
 - **Git Bash の `~/.bash_profile`**（試していない）
   - WezTerm は Git Bash をログインシェル（`-l`）で起動するので、`~/.bashrc` は `~/.bash_profile` から読まれる必要がある
   - Git for Windows は、`~/.bashrc` があって `~/.bash_profile` などが無いと、`~/.bashrc` を読む `~/.bash_profile` を作り、`WARNING: Found ~/.bashrc but no ~/.bash_profile` と表示する
@@ -600,3 +602,85 @@ x86_64 のクラウドホストで `dockerd` を動かし、`docker run -d --pri
 
 - wa と wb も、`script` の擬似端末で開き直した `bash -il` を上と同じ方法で見た。`false` の後だけ `D;1` で、zoxide の警告は出なかった。`z` の無い 2 つ（wa は `--cmd cd`、wb は zoxide の行が無い）では `z share` が `command not found` で、その後は `D;127` だった
 - 手順の後に `su -` で開いた新しいログインシェルは、どちらも何も出さなかった
+
+### 付録: Windows 11 のホストでの動作検証（2026-10-06）
+
+既にこの設定を使っている Windows ホストで、設定の読み込みとシェルの実動作を調べた。
+導入・更新・ロールバックの全ブロックを貼る検証とは別の記録で、上の 2026-09-30 の記録は当時の結果のまま残している。
+
+| 項目 | 検証環境 |
+|---|---|
+| OS | Windows 11 Pro / x86_64、ビルド 26300 |
+| WezTerm | `20260905-153129-092dcf70`（nightly） |
+| フォント・DPI | HackGen Console NF、168 DPI（175%） |
+| シェル | Git Bash 5.3.15、Store 版 PowerShell 7.6.6、別の独立検証に PowerShell 7.6.5、Windows PowerShell 5.1 |
+| プロンプト | starship 1.26.0 → この統合 → zoxide 0.9.9（自分用の bash 設定） |
+| 開発者シェル | Visual Studio 2026 / 18 BuildTools、x64 |
+| WSL | AlmaLinux-10（bash 5.2.26）、podman-machine-default（bash 5.3.9） |
+| 設定の基点 | `fb52eeb` と、この検証で加えた修正 |
+
+GUI は検証専用のプロセスで起動し、`wezterm cli` でペインの起動・入力・状態取得を行った。
+キーに割り当てた操作は、検証用コピーにだけ加えた Lua イベントから実際の
+`window:perform_action` を呼び、ペイン・区切り・クリップボード・画像で結果を確認した。
+画像はウィンドウの実ピクセルサイズで取得し、DPI による画像側の切れを避けた。
+物理キーボード、マウス、IME の入力は自動操作していない。
+
+| 確かめたこと | 結果 |
+|---|---|
+| 設定読み込み・フォント | `ls-fonts` に設定エラー無し。英字・日本語・Nerd Font アイコンを HackGen Console NF で解決 |
+| 表示 | 本文の日本語・ANSI 色・タブの丸キャップ・日本語タブ名・非アクティブなペイン・ステータス・ウィンドウ操作ボタンを画像で確認。起動メニューと日本語の独自項目を含むパレットも表示 |
+| Windows の起動メニュー | Git Bash、PowerShell 7、Windows PowerShell、cmd、Developer PowerShell、Developer Command Prompt の 6 項目を独立プロセスで実際の引数から起動。空白・`#`・`%`・`&`・単一引用符・日本語を含む cwd を保持。Developer の x64 環境も確認 |
+| bash の既存フックとの共存 | 本物の bashrc と starship / zoxide を独立 PTY と GUI で実行。失敗コード、再読み込み、既存 PS0 / PS1、配列の PROMPT_COMMAND、nounset、履歴抑止、Unicode のユーザー変数を確認 |
+| PowerShell の統合 | 7 と 5.1 の独立 PTY で OSC 7 / 133、成功・失敗・native exit 37 / 23、StrictMode、10 回読み込み、prompt / ReadLine の個別再定義、PSReadLine の後読み込みを確認。UTF-8 BOM を保持 |
+| 通常分割 | GUI で PowerShell 7 → PowerShell 7、Git Bash → Git Bash、Vim 実行中の Git Bash → Git Bash を確認。実行中のコマンドを再実行せず cwd を保持 |
+| 出力コピー | GUI の bash で日本語を含む 3 行の出力を実行し、コピー結果がその 3 行だけと完全一致することを確認。元のクリップボードのテキストは復元 |
+| プロンプトジャンプ・モード | 修正後の Prompt / Input / Output の区切り、割り当てたプロンプトジャンプの実行、`resize_pane` の開始を確認 |
+| 長いコマンド | 実行中の `WEZTERM_PROG` と、終了後の消去を確認。3 秒のコマンドに対し `0<TAB>3<TAB>コマンド` の完了通知データを GUI で受信 |
+| マウス割り当て | `show-keys` で右クリック貼り付けと Ctrl+ホイールの拡縮が通常時・マウス報告中・alternate screen に対応することを確認 |
+| WSL の統合 | 両ユーザーにスクリプトと bashrc の読み込み行を配置。独立 PTY で OSC 7 / 133・`false` 後の D;1・再読み込みの重複無し、実 GUI の新しい WSL ペインで正しい Linux cwd と Prompt / Input / Output の区切りを確認。AlmaLinux の出力コピーが日本語を含む 2 行と完全一致し、通常分割も WSL のまま起動 |
+
+検証で見つけて修正したこと:
+
+- Starship が PS1 を毎回生成して OSC 133 A / B を消していた。既存のプロンプト処理の後で印を付け直すフックを追加した
+- PowerShell の初回ロード判定が StrictMode の未定義変数エラーになった。未定義でも安全な判定にし、prompt / ReadLine が作り直された後の再読み込みにも対応した
+- 通常分割は現在のシェルではなくドメインの既定を開いていた。ローカルでは既知の起動元シェルの定義を選び、WSL などはドメインを維持するよう変更した
+- Ctrl+ホイールの設定がマウス報告中には一致しなかった。その状態にも上下の割り当てを追加した
+- WSL の 2 環境には統合が未導入だった。各ユーザーの bashrc をバックアップし、既定パスの統合を読む 1 行を追加した。Podman の既存 systemd のフックも保持した
+
+Windows の通常設定への反映前のファイルは `%USERPROFILE%/.local/state/wezterm/backups/` に退避した。
+WSL の退避先は各ユーザーの `~/.local/state/wezterm/backups/host-test-20261006.*`。
+検証用の Lua イベントは通常設定へ含めていない。
+
+未確認: 物理キーの配列や OS のショートカット競合、実際の右クリック・ホイール入力、
+IME の未確定カーソル、OS の通知センターでの完了通知表示、外部 SSH 接続先、
+未導入の MSYS2 / QMK MSYS、zsh、macOS、Linux の画面。
+Lua のロジック検証 47 ケース、bash 構文、PowerShell パーサーと `git diff --check` も通した。
+
+### 付録: OS 通知と外部 SSH の追加検証（2026-10-06）
+
+上のホスト検証の後、同じ Windows ホストで通知の実表示と、既存の SSH 設定にある
+`abiko-pi`・`kawasaki-pi` を追加検証した。上の記録の未確認事項は、その時点の結果のまま残した。
+
+入力操作ツールは、WezTerm が操作対象一覧に現れず、明示的な起動も
+`product policy blocks this app` として拒否した。
+そのため、物理キー・右クリック・ホイールの入力経路、IME 変換中の未確定文字・候補窓は未確認。
+Lua アクションの実行や `send-text` の成功を、これらの入力検証の代わりにはしていない。
+
+| 確かめたこと | 条件と結果 |
+|---|---|
+| Windows の成功通知 | 検証専用 GUI の Git Bash で `WEZTERM_NOTIFY_AFTER=1; sleep 3` を実行し、別ペインをアクティブにした。`0<TAB>3<TAB>コマンド` を受信し、OS バナーに「完了」・コマンド・「3秒」が表示された実画像を確認 |
+| Windows の失敗通知 | 同じシェルの `sleep 2; false` で `1<TAB>2<TAB>コマンド` を受信し、OS バナーに「失敗 (終了コード 1)」・コマンド・「2秒」が表示された実画像を確認 |
+| Windows の通知許可 | `org.wezfurlong.wezterm` の ToastNotifier は Enabled、通知サービスは起動中、Focus セッションは無効。OS 設定は変更していない。通知センターを開いた状態や通知のクリックは未確認 |
+| 外部 SSH の環境・接続 | 2 台とも AlmaLinux 10.2 / aarch64、bash 5.2.26。既存の鍵で BatchMode / StrictHostKeyChecking を有効にして接続成功。ホスト鍵を追加・更新せず、遠隔の設定ファイルも変更していない |
+| SSH の既存条件 | 2 台ともパッケージ付属の公式統合が先に読まれ、この設定の通知フックは不在。通常ログインの PTY で OSC 7 / 133、`false` 後の D;1 を確認したが、`kawasaki-pi` は Starship の PS1 から B が消えた。既存の接続設定に SendEnv は無く、試験接続で SendEnv を足しても TERM_PROGRAM は空だった |
+| SSH の実 GUI・既存条件 | `env HISTFILE=/dev/null bash -il` の専用 SSH ペインで、2 台とも `/usr/share` のリモート cwd とホスト名を受信。日本語の printf 出力は Output ゾーンに分離されず、`abiko-pi` は Input、`kawasaki-pi` は Prompt に含まれた。生の OSC 列があるだけでは、出力コピーが正常とは判定していない |
+| SSH の一時的なこの設定の統合 | 遠隔コマンドで `env TERM_PROGRAM=WezTerm WEZTERM_SHELL_SKIP_ALL=1 HISTFILE=/dev/null bash -il` を起動。2 台とも A / B / C と `false` 後の D;1 を独立 PTY で確認。GUI でも Prompt / Input / Output が分離し、日本語 2 行だけの出力コピーが完全一致。元のクリップボードのテキストは復元 |
+| SSH の完了通知・再読込 | 一時セッションの 2 台とも既定閾値の `sleep 11` で `0<TAB>11<TAB>sleep 11` を自然送信。GUI の `kawasaki-pi` でも閾値を 1 秒にしたコマンドの完了バナーを Windows で確認。統合を 2 回読み直しても WezTerm のフック・PS0 の C は重複しない。`abiko-pi` の既存 zoxide フックは bashrc 自体の再読込で増えた |
+
+SSH の一時セッションの成功は、通常接続の設定が完了していることを意味しない。
+通常接続でこの設定の統合を使うには、`TERM_PROGRAM` の送受信と、公式統合が先に読まれる条件を
+接続先で整える必要がある。今回、sshd・SSH 設定・既存の bashrc は変更していない。
+検証専用のペインと GUI は終了し、テスト用コードや接続ログはリポジトリへ含めていない。
+
+PR 前の独立レビューでも Lua 47 ケース、実設定の読み込み、bash 構文とプロンプトの回帰、
+PowerShell 5.1 / 7 の StrictMode・10 回読み込み・prompt / ReadLine の個別再定義・後読み込みが通った。
