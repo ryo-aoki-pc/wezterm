@@ -25,7 +25,7 @@
 --    Ctrl+Shift+Alt+H/L  前 / 次のワークスペースへ
 --    Ctrl+Shift+S        リサイズモード開始 → h/j/k/l または矢印で調整
 --                        （Esc または Enter で終了 / 2秒で自動終了）
---    右クリック          クリップボードから貼り付け
+--    右クリック          OS のクリップボードから貼り付け（SSH 先の Neovim 内でも）
 --    Ctrl+ホイール       フォント拡大 / 縮小
 --    ※ ワークスペース名変更・ペインを新しいタブ/ウィンドウへ・設定フォルダを開く
 --      などキーの無い操作はコマンドパレット（palette.lua）にある
@@ -93,9 +93,17 @@ function M.apply(config)
 	--   ここでは定義しない（mouse_bindings はデフォルトを置き換えず追記される）
 	config.mouse_bindings = {
 		{
-			-- 右クリックでペースト
+			-- マウス報告が無いシェルなどでの右クリック
 			event = { Down = { streak = 1, button = "Right" } },
 			mods = "NONE",
+			action = act.PasteFrom("Clipboard"),
+		},
+		{
+			-- Neovim / tmux がマウス報告を要求していても、右クリックは端末で貼り付ける。
+			-- mouse_reporting の既定は false なので、両方の状態に割り当てが必要。
+			event = { Down = { streak = 1, button = "Right" } },
+			mods = "NONE",
+			mouse_reporting = true,
 			action = act.PasteFrom("Clipboard"),
 		},
 		-- Ctrl+ホイールでフォント拡大 / 縮小（ブラウザと同じ操作。Ctrl + +/- と同じ動作）
