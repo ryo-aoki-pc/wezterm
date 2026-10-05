@@ -26,7 +26,7 @@
 --    Ctrl+Shift+S        リサイズモード開始 → h/j/k/l または矢印で調整
 --                        （Esc または Enter で終了 / 2秒で自動終了）
 --    右クリック          OS のクリップボードから貼り付け（SSH 先の Neovim 内でも）
---    Ctrl+ホイール       フォント拡大 / 縮小
+--    Ctrl+ホイール       フォント拡大 / 縮小（Neovim / tmux 内でも）
 --    ※ ワークスペース名変更・ペインを新しいタブ/ウィンドウへ・設定フォルダを開く
 --      などキーの無い操作はコマンドパレット（palette.lua）にある
 --
@@ -89,6 +89,12 @@ function M.apply(config)
 		})
 	end
 
+	local function split_current_shell(direction)
+		return wezterm.action_callback(function(window, pane)
+			window:perform_action(act.SplitPane({ direction = direction, command = shells.for_split(pane) }), pane)
+		end)
+	end
+
 	-- ※ 左クリックでのコピー / リンクオープンは WezTerm のデフォルトと同一のため
 	--   ここでは定義しない（mouse_bindings はデフォルトを置き換えず追記される）
 	config.mouse_bindings = {
@@ -117,12 +123,25 @@ function M.apply(config)
 			mods = "CTRL",
 			action = act.DecreaseFontSize,
 		},
+		-- マウス報告中も Ctrl+ホイールはフォントを変える（通常のホイールはアプリへ渡す）
+		{
+			event = { Down = { streak = 1, button = { WheelUp = 1 } } },
+			mods = "CTRL",
+			mouse_reporting = true,
+			action = act.IncreaseFontSize,
+		},
+		{
+			event = { Down = { streak = 1, button = { WheelDown = 1 } } },
+			mods = "CTRL",
+			mouse_reporting = true,
+			action = act.DecreaseFontSize,
+		},
 	}
 
 	config.keys = {
 		-- ペイン分割（現在と同じシェル）
-		{ key = "d", mods = "CTRL|SHIFT", action = act.SplitHorizontal({ domain = "CurrentPaneDomain" }) },
-		{ key = "e", mods = "CTRL|SHIFT", action = act.SplitVertical({ domain = "CurrentPaneDomain" }) },
+		{ key = "d", mods = "CTRL|SHIFT", action = split_current_shell("Right") },
+		{ key = "e", mods = "CTRL|SHIFT", action = split_current_shell("Down") },
 
 		-- ペイン分割（シェルを一覧から選んで起動）
 		{ key = "d", mods = "CTRL|SHIFT|ALT", action = split_with_shell("Right") },
