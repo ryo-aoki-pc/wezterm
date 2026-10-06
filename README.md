@@ -668,9 +668,9 @@ WezTerm からは `bash.exe` しか見えず、vim の編集中でも確認な�
 | 実行中のコマンドを送る（`WEZTERM_PROG`） | ○（Git Bash・MSYS2・WSL のみ） | 不要（WezTerm がプロセスを見られる） | × |
 | 迷子のマウス報告よけ | ○ | — | — |
 
-WezTerm 以外の端末で読み込まれた場合、「迷子のマウス報告よけ」以外は何もしません
-（`$TERM_PROGRAM` で判定）。既存のプロンプト（`PS1` や `prompt` 関数、oh-my-posh など）は
-置き換えず、前後に印を足すだけです。
+公式統合が無い環境では、`$TERM_PROGRAM` が `WezTerm` のときだけ統合を有効にし、ほかの端末では
+「迷子のマウス報告よけ」だけを動かします。既に有効な公式 Bash 統合がある場合は、それを補完します。
+既存のプロンプト（`PS1` や `prompt` 関数、oh-my-posh など）は保ち、前後に印を足します。
 
 ### PowerShell
 
@@ -716,9 +716,11 @@ WezTerm 以外の端末で読み込まれた場合、「迷子のマウス報告
 既存の `PS1` は置き換えず前後に印を足すだけなので、Git Bash の
 `git-prompt.sh` によるブランチ表示はそのまま残ります。
 
-- bash は既存の `PROMPT_COMMAND` の後で `PS1` の OSC 133 A / B を付け直します。
-  Starship がプロンプトを毎回作り直す場合も、入力・出力の区切りを維持します。
-  終了コードを送るフックは先頭に残すため、読み込み順は Starship → この統合 → zoxide のままです
+- bash はプロンプトを表示する前に `PS1` の OSC 133 A / B を毎回付け直します。Starship が
+  プロンプトを作り直しても、プロンプトと入力の範囲を WezTerm に伝えられます
+- Starship がある bash では、Starship が先に終了コードと `PIPESTATUS` を保存し、その後にこの統合を
+  動かします。OSC 133 D と完了通知は Starship が保存した終了コードを使うので、Starship の
+  パイプ個別ステータス表示も保ちます。初期化順は上記のままです
 - zsh は入力の開始（OSC 133 B）の印をプロンプトの末尾に付けます。プロンプトを毎回作り直すテーマでも
   プロンプトごとに付け直しますが、テーマのフックがこの統合より後に動く場合は付かず、直前の出力をコピーできません
 - bash の OSC 133 の印（`PS1` の A / B と `PS0` の C）は BEL で終えます。`ESC \` で終えると、後ろに続く
@@ -728,12 +730,21 @@ WezTerm 以外の端末で読み込まれた場合、「迷子のマウス報告
   bash 5.3 以降（Git Bash の現行版）はサブシェルを作らずに送るので、コマンドごとの待ち時間はほぼありません
   （古い bash はサブシェルを 1〜2 回作る）。Linux / macOS では WezTerm が自分でプロセスを調べられるので送りません
 
+Git Bash + Starship の修正後の検証範囲と結果は [tests/starship/FIX-REPORT.md](tests/starship/FIX-REPORT.md) にあります。
+
 Linux 版 WezTerm のパッケージは公式のシェル統合を `/etc/profile.d/wezterm.sh` に置きます。
-それが読み込まれている環境では OSC 7 / OSC 133 は公式側に任せ、`shell/wezterm.sh` は
-マウス報告よけだけを残して抜けます（同名の `__wezterm_osc7` を上書きして公式側のフックを
-壊さないため）。この場合、完了通知は動きません。AlmaLinux 10 の COPR 版では、公式側が
-すべての対話シェルで先に読まれ、この形になることをコンテナで確かめました
+公式の Bash 統合が有効なら、`shell/wezterm.sh` は公式の OSC 7・ユーザー変数・`bash-preexec` を
+保ち、OSC 133 のプロンプト・入力・出力の印と独自完了通知を補います。公式の semantic フック 2 個だけを
+独自処理へ移し、Starship やユーザーのフックは保ちます。公式の関数を上書きせず、独自の cwd 処理は
+`__wz_osc7` として定義します。
+
+`bash-preexec` が終了コードとパイプ状態を保存し、Starship がプロンプトを作り直した後に印を付けるため、
+公式の印と独自の印を二重に送らない構成です。zsh・ble.sh・tmux、semantic の明示的な無効化では、
+従来どおり公式へ任せます。初期化の 1 行、Starship → 統合 → zoxide の読む順番、環境変数の設定は変更しません
 （[docs/install.md の注意点](docs/install.md#注意点)）。
+
+公式の bash-preexec 経路で Starship だけを直接再初期化した場合は、この統合も続けて読み直します。
+Starship が重ねた登録を各 1 個へ戻します。通常の個人 Bash 設定は Starship の再初期化をガードしています。
 
 ### WSL
 
@@ -751,29 +762,35 @@ tmux の中では `$TERM_PROGRAM` が `tmux` になるため、シェル統合�
 
 ### ssh 先でもシェル統合を使う
 
-この設定のシェル統合は `$TERM_PROGRAM` が `WezTerm` のときだけ動きます。ssh はこの環境変数を既定では
-接続先へ渡さないので、ssh 先のシェルではこの統合が動きません。その場合でもタブ名は接続先になりますが
+ssh は `$TERM_PROGRAM` を既定では接続先へ渡しません。公式統合が無い接続先では、この設定の独自統合を
+動かすために `TERM_PROGRAM=WezTerm` の受信が必要です。この統合が動かない場合でもタブ名は接続先になりますが
 （ペインのタイトルから取る）、この設定の完了通知は使えません。
 プロンプトジャンプ・出力のコピーは、接続先の別の統合が OSC 133 の区切りを正しく送る場合に限り使えます。
 
-次の 3 つを設定すると、ssh 先でも手元と同じように使えます（myhost のような自分で管理しているホスト向け）。
+公式統合が無い ssh 先では、次の 3 つを設定します（myhost のような自分で管理しているホスト向け）。
 手順は [docs/install.md の「ssh 先でもシェル統合を使う（任意）」](docs/install.md#ssh-先でもシェル統合を使う任意) にあります。
 
 - **手元の `~/.ssh/config`**（Windows は `%USERPROFILE%\.ssh\config`）の `Host` に `SendEnv TERM_PROGRAM` を足し、
-  `TERM_PROGRAM` を送る。WezTerm から ssh したときだけ `WezTerm` が入るので、他の端末から接続したときは統合は動かない
+  `TERM_PROGRAM` を送る。公式統合が無い場合、この値が `WezTerm` のときだけ独自統合を動かす
 - **ssh 先の sshd** で、`AcceptEnv TERM_PROGRAM` のドロップインを置いて受け取りを許可する
 - **ssh 先**にもこの設定を置き、ssh 先の `~/.bashrc` に手元と同じ[シェル統合の 1 行](#bashgit-bash--msys2--qmk-msys--linuxと-zsh)を足す
   （Syncthing などで `~/.config/wezterm` を同期していれば、1 行だけでよい）
 
-設定後に ssh すると、タブ名が `myhost:setup-notes` のように ssh 先のディレクトリ名になり、
+独自統合が動くと、タブ名が `myhost:setup-notes` のように ssh 先のディレクトリ名になり、
 ssh 先でも `Ctrl+Shift+Alt+↑/↓`・`Ctrl+Shift+Alt+C`・完了通知が効きます。
 確かめるには、ssh 先で `echo $TERM_PROGRAM` が `WezTerm` になるかを見ます。
 ssh 先で tmux を使っている場合、tmux の中では無効です（[tmux の中](#tmux-の中)）。
 
-ssh 先でパッケージ付属の公式統合が先に読まれる場合は、上の 3 条件だけでは完了通知は使えません。
-この設定の統合はマウス報告よけだけになり、Starship との併用では出力の区切りも失われることがあります。
-外部の AlmaLinux 10 / aarch64 の 2 台で通常接続と、公式統合を止めた一時セッションを比較した結果は
-[追加検証の記録](docs/install.md#付録-os-通知と外部-ssh-の追加検証2026-10-06)にあります。
+AlmaLinux の COPR 版など、接続先で公式 Bash 統合が既に有効な場合は、`TERM_PROGRAM` が届かなくても
+この設定が公式統合を補完します。接続先の `~/.bashrc` が修正版の `shell/wezterm.sh` を読む必要があります。
+公式の cwd・ユーザー変数を残し、Starship 後に入力範囲の印を付け直す構成です。
+
+外部の AlmaLinux 10 / aarch64 の 2 台で通常接続と、公式統合を止めた一時セッションを比較した修正前の結果は
+[追加検証の記録](docs/install.md#付録-os-通知と外部-ssh-の追加検証2026-10-06)に残しています。
+修正前の SSH 実機検証では、公式統合 → Starship の並びで入力開始の印が消え、出力コピーがログイン時の
+出力を選び続ける問題と独自通知の未送信を確認しました。当時の記録は [SSH 検証記録](tests/starship/SSH-REPORT.md)に残しています。
+公式 Bash 統合との共存を修正し、Windows と `kawasaki-pi` の配置先へ反映しました。通常 SSH の両接続経路で
+出力コピーと独自通知の成立を確認しています。修正内容と追加検証は [SSH 修正後の検証記録](tests/starship/SSH-FIX-REPORT.md)にあります。
 
 ### 迷子のマウス報告よけ
 

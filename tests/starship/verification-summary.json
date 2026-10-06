@@ -1,0 +1,2833 @@
+{
+  "date": "2026-10-06",
+  "scope": "Windows Git Bash 5.3 / AlmaLinux SSH Bash 5.2 / Starship 1.26.0",
+  "source_sha256": "40bbe213610c39019a1b394ae6a02dcc8b7dba64f2a87bdb7fbaca2a99532595",
+  "raw_artifacts": "詳細な端末出力、実ペイン状態、配置前バックアップ、配置記録はローカル保存。公開要約は元の検証記録から件数と判定を抽出。",
+  "limitations": [
+    "統合→Starshipの推奨外の順では、統合再読込前にA/Bとコピー境界が欠ける。",
+    "公式bash-preexec経路でStarshipのみ再初期化すると登録が重なる。統合を読み直すと単独化する。",
+    "今回の実行検証はBash 5.2/5.3。Bash 5.0以前の公式dispatcher再読込は対象外。",
+    "zsh、実tmux/ble.sh、別Starship版は今回未検証。通知データとaction確認は物理キー/OSトーストの目視確認と区別。"
+  ],
+  "suites": {
+    "initial_environment": {
+      "date": "2026-10-06",
+      "timezone": "Asia/Tokyo",
+      "commit": "fb52eeb643c1bf866c44b2716bb8376151797cd4",
+      "wezterm": "20260905-153129-092dcf70",
+      "starship": "1.26.0",
+      "case_results": []
+    },
+    "initial_bash": {
+      "case_results": [
+        {
+          "name": "control",
+          "order": "w",
+          "exit": 0,
+          "noediting": false,
+          "nounset": false,
+          "a": 20,
+          "b": 20,
+          "c": 42
+        },
+        {
+          "name": "recommended",
+          "order": "swz",
+          "exit": 0,
+          "noediting": false,
+          "nounset": false,
+          "a": 0,
+          "b": 0,
+          "c": 42
+        },
+        {
+          "name": "reverse",
+          "order": "wsz",
+          "exit": 0,
+          "noediting": false,
+          "nounset": false,
+          "a": 0,
+          "b": 0,
+          "c": 42
+        },
+        {
+          "name": "zoxide-before",
+          "order": "szw",
+          "exit": 0,
+          "noediting": false,
+          "nounset": false,
+          "a": 0,
+          "b": 0,
+          "c": 42
+        },
+        {
+          "name": "noediting",
+          "order": "swz",
+          "exit": 0,
+          "noediting": true,
+          "nounset": false,
+          "a": 0,
+          "b": 0,
+          "c": 42
+        },
+        {
+          "name": "nounset",
+          "order": "swz",
+          "exit": 0,
+          "noediting": true,
+          "nounset": true,
+          "a": 0,
+          "b": 0,
+          "c": 42
+        },
+        {
+          "name": "array-before",
+          "order": "swz",
+          "exit": 0,
+          "noediting": true,
+          "nounset": false,
+          "a": 0,
+          "b": 0,
+          "c": 42
+        },
+        {
+          "name": "pipeline-starship-only",
+          "order": "s",
+          "exit": 0,
+          "noediting": true,
+          "nounset": false,
+          "a": 0,
+          "b": 0,
+          "c": 4
+        },
+        {
+          "name": "pipeline-recommended",
+          "order": "sw",
+          "exit": 0,
+          "noediting": true,
+          "nounset": false,
+          "a": 0,
+          "b": 0,
+          "c": 12
+        },
+        {
+          "name": "pipeline-reverse",
+          "order": "ws",
+          "exit": 0,
+          "noediting": true,
+          "nounset": false,
+          "a": 0,
+          "b": 0,
+          "c": 12
+        },
+        {
+          "name": "array-after-real",
+          "order": "saw",
+          "exit": 0,
+          "noediting": true,
+          "nounset": false,
+          "a": 0,
+          "b": 0,
+          "c": 12
+        },
+        {
+          "name": "array-existing-wz-tail",
+          "order": "swbw",
+          "exit": 0,
+          "noediting": true,
+          "nounset": false,
+          "a": 0,
+          "b": 0,
+          "c": 12
+        },
+        {
+          "name": "array-existing-mouse-tail",
+          "order": "swmw",
+          "exit": 0,
+          "noediting": true,
+          "nounset": false,
+          "a": 0,
+          "b": 0,
+          "c": 12
+        },
+        {
+          "name": "official-present",
+          "order": "w",
+          "exit": 0,
+          "noediting": true,
+          "nounset": false,
+          "a": 0,
+          "b": 0,
+          "c": 0
+        },
+        {
+          "name": "user-ps0",
+          "order": "sw",
+          "exit": 0,
+          "noediting": true,
+          "nounset": false,
+          "a": 0,
+          "b": 0,
+          "c": 12
+        },
+        {
+          "name": "pipeline-visible-baseline",
+          "order": "s",
+          "exit": 0,
+          "noediting": true,
+          "nounset": false,
+          "a": 0,
+          "b": 0,
+          "c": 0
+        },
+        {
+          "name": "pipeline-visible-recommended",
+          "order": "sw",
+          "exit": 0,
+          "noediting": true,
+          "nounset": false,
+          "a": 0,
+          "b": 0,
+          "c": 5
+        },
+        {
+          "name": "pipeline-visible-reverse",
+          "order": "ws",
+          "exit": 0,
+          "noediting": true,
+          "nounset": false,
+          "a": 0,
+          "b": 0,
+          "c": 5
+        }
+      ]
+    },
+    "initial_bash_helpers": {
+      "case_results": [
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {}
+      ]
+    },
+    "initial_powershell": {
+      "ProcessCases": 74,
+      "CallbackChecks": 34,
+      "StandardPassed": 494,
+      "StandardTotal": 494,
+      "KnownFailures": 6,
+      "case_results": []
+    },
+    "initial_lua": {
+      "passed": 49,
+      "failed": 0,
+      "total": 49,
+      "case_results": [],
+      "evaluations": [
+        {
+          "name": "procs: Windows のパス",
+          "passed": true
+        },
+        {
+          "name": "procs: 待機中の Git Bash",
+          "passed": true
+        },
+        {
+          "name": "procs: Git Bash の vim",
+          "passed": true
+        },
+        {
+          "name": "procs: Git Bash の ssh",
+          "passed": true
+        },
+        {
+          "name": "procs: 環境変数と sudo",
+          "passed": true
+        },
+        {
+          "name": "procs: cd の後に ssh",
+          "passed": true
+        },
+        {
+          "name": "procs: clear の後に ssh",
+          "passed": true
+        },
+        {
+          "name": "procs: mosh",
+          "passed": true
+        },
+        {
+          "name": "procs: 不明な前景を補完",
+          "passed": true
+        },
+        {
+          "name": "procs: WSL 入口を補完",
+          "passed": true
+        },
+        {
+          "name": "procs: 実プロセスを優先",
+          "passed": true
+        },
+        {
+          "name": "procs: 実プロセス node を優先",
+          "passed": true
+        },
+        {
+          "name": "copy: 通常の完了コマンド",
+          "passed": true
+        },
+        {
+          "name": "copy: 複数の出力範囲を連結",
+          "passed": true
+        },
+        {
+          "name": "copy: 入力途中の次コマンドを無視",
+          "passed": true
+        },
+        {
+          "name": "copy: 起動直後",
+          "passed": true
+        },
+        {
+          "name": "copy: clear 後の空白だけの出力",
+          "passed": true
+        },
+        {
+          "name": "copy: 出力なしコマンド",
+          "passed": true
+        },
+        {
+          "name": "copy: 実行中で出力なし",
+          "passed": true
+        },
+        {
+          "name": "copy: 実行中の通常コマンド",
+          "passed": true
+        },
+        {
+          "name": "copy: Starship が A/B を消して Output だけ",
+          "passed": true
+        },
+        {
+          "name": "copy: 区切りが一切ない",
+          "passed": true
+        },
+        {
+          "name": "copy: 最初だけ古い Input が残り新しい A/B がない",
+          "passed": true
+        },
+        {
+          "name": "copy: ssh 先統合なし: 入力コマンドで判定",
+          "passed": true
+        },
+        {
+          "name": "copy: ssh 先統合なし: ユーザー変数で判定",
+          "passed": true
+        },
+        {
+          "name": "copy: 直接 ssh 起動で Input がない",
+          "passed": true
+        },
+        {
+          "name": "copy: ssh 終了後はローカルの出力コピー",
+          "passed": true
+        },
+        {
+          "name": "copy: ssh 先の統合あり",
+          "passed": true
+        },
+        {
+          "name": "tabs: OSC 7 のローカル cwd",
+          "passed": true
+        },
+        {
+          "name": "tabs: Starship の A/B 消失と無関係に vim のアイコン",
+          "passed": true
+        },
+        {
+          "name": "tabs: プログラム終了後のクリアで bash のアイコン",
+          "passed": true
+        },
+        {
+          "name": "tabs: ssh 実行中はローカル cwd を使わずリモートタイトル",
+          "passed": true
+        },
+        {
+          "name": "tabs: ssh 先 OSC 7 はホスト名つき cwd",
+          "passed": true
+        },
+        {
+          "name": "tabs: 明示的なタブ名が優先",
+          "passed": true
+        },
+        {
+          "name": "tabs: cwd がない場合はタイトル",
+          "passed": true
+        },
+        {
+          "name": "tabs: OSC 9;4 の進捗表示",
+          "passed": true
+        },
+        {
+          "name": "tabs: 非アクティブの未読出力表示",
+          "passed": true
+        },
+        {
+          "name": "tabs: ズーム表示",
+          "passed": true
+        },
+        {
+          "name": "notify: 前面のアクティブペインは抑制",
+          "passed": true
+        },
+        {
+          "name": "notify: 前面の非アクティブペイン",
+          "passed": true
+        },
+        {
+          "name": "notify: 別アプリを見ているとき",
+          "passed": true
+        },
+        {
+          "name": "notify: 失敗の終了コード",
+          "passed": true
+        },
+        {
+          "name": "notify: コマンド名なし",
+          "passed": true
+        },
+        {
+          "name": "notify: 不正値は無視",
+          "passed": true
+        },
+        {
+          "name": "notify: WEZTERM_PROG は通知を出さない",
+          "passed": true
+        },
+        {
+          "name": "statusbar: 一時メッセージ",
+          "passed": true
+        },
+        {
+          "name": "statusbar: モード表示と workspace",
+          "passed": true
+        },
+        {
+          "name": "statusbar: 時計・日付",
+          "passed": true
+        },
+        {
+          "name": "bindings: プロンプトジャンプと出力コピー",
+          "passed": true
+        }
+      ]
+    },
+    "initial_gui": {
+      "snapshots": 23,
+      "confirmed": 17,
+      "unconfirmed": 0,
+      "case_results": [],
+      "evaluations": [
+        {
+          "name": "Starship なしでは直前の出力だけをコピー",
+          "kind": "normal",
+          "confirmed": true
+        },
+        {
+          "name": "Starship Bash は Output 範囲だけ",
+          "kind": "defect",
+          "confirmed": true
+        },
+        {
+          "name": "Starship Bash のコピーは要シェル統合メッセージ",
+          "kind": "defect",
+          "confirmed": true
+        },
+        {
+          "name": "同一ペイン後付けではプロンプトと新コマンドまで誤コピー",
+          "kind": "defect",
+          "confirmed": true
+        },
+        {
+          "name": "日本語・空白・#・% の cwd を分割へ引継ぎ",
+          "kind": "normal",
+          "confirmed": true
+        },
+        {
+          "name": "リサイズモード",
+          "kind": "normal",
+          "confirmed": true
+        },
+        {
+          "name": "コピーモード",
+          "kind": "normal",
+          "confirmed": true
+        },
+        {
+          "name": "ズームの切替",
+          "kind": "normal",
+          "confirmed": true
+        },
+        {
+          "name": "Bash の実通知データは失敗コード1",
+          "kind": "normal",
+          "confirmed": true
+        },
+        {
+          "name": "pwsh: 出力コピー",
+          "kind": "normal",
+          "confirmed": true
+        },
+        {
+          "name": "pwsh: native 失敗は Starship ERR/7",
+          "kind": "normal",
+          "confirmed": true
+        },
+        {
+          "name": "pwsh: 空 Enter は直前の出力を維持",
+          "kind": "normal",
+          "confirmed": true
+        },
+        {
+          "name": "pwsh: 実履歴から通知データ0/2秒",
+          "kind": "normal",
+          "confirmed": true
+        },
+        {
+          "name": "windows-powershell: 出力コピー",
+          "kind": "normal",
+          "confirmed": true
+        },
+        {
+          "name": "windows-powershell: native 失敗は Starship ERR/7",
+          "kind": "normal",
+          "confirmed": true
+        },
+        {
+          "name": "windows-powershell: 空 Enter は直前の出力を維持",
+          "kind": "normal",
+          "confirmed": true
+        },
+        {
+          "name": "windows-powershell: 実履歴から通知データ0/2秒",
+          "kind": "normal",
+          "confirmed": true
+        }
+      ]
+    },
+    "git_bash_fix": {
+      "source_sha256": "5e1a4386f11e802fb8b5a8e184b84367d97a879a36339a91fed73a8e78c1437c",
+      "cases": 20,
+      "checks": 393,
+      "required_passed": 367,
+      "required_checks": 367,
+      "pass": true,
+      "case_results": [
+        {
+          "name": "control",
+          "order": "w",
+          "noediting": false,
+          "nounset": false,
+          "evaluations": 12,
+          "passed": 12,
+          "required_checks": 12,
+          "required_passed": 12
+        },
+        {
+          "name": "recommended",
+          "order": "swz",
+          "noediting": false,
+          "nounset": false,
+          "evaluations": 23,
+          "passed": 23,
+          "required_checks": 23,
+          "required_passed": 23
+        },
+        {
+          "name": "reverse",
+          "order": "wsz",
+          "noediting": false,
+          "nounset": false,
+          "evaluations": 22,
+          "passed": 19,
+          "required_checks": 14,
+          "required_passed": 14
+        },
+        {
+          "name": "zoxide-before",
+          "order": "szw",
+          "noediting": false,
+          "nounset": false,
+          "evaluations": 20,
+          "passed": 20,
+          "required_checks": 20,
+          "required_passed": 20
+        },
+        {
+          "name": "noediting",
+          "order": "swz",
+          "noediting": true,
+          "nounset": false,
+          "evaluations": 20,
+          "passed": 20,
+          "required_checks": 20,
+          "required_passed": 20
+        },
+        {
+          "name": "nounset",
+          "order": "swz",
+          "noediting": true,
+          "nounset": true,
+          "evaluations": 20,
+          "passed": 20,
+          "required_checks": 20,
+          "required_passed": 20
+        },
+        {
+          "name": "array-before",
+          "order": "swz",
+          "noediting": true,
+          "nounset": false,
+          "evaluations": 21,
+          "passed": 21,
+          "required_checks": 21,
+          "required_passed": 21
+        },
+        {
+          "name": "pipeline-starship-only",
+          "order": "s",
+          "noediting": true,
+          "nounset": false,
+          "evaluations": 10,
+          "passed": 10,
+          "required_checks": 10,
+          "required_passed": 10
+        },
+        {
+          "name": "pipeline-recommended",
+          "order": "sw",
+          "noediting": true,
+          "nounset": false,
+          "evaluations": 20,
+          "passed": 20,
+          "required_checks": 20,
+          "required_passed": 20
+        },
+        {
+          "name": "pipeline-reverse",
+          "order": "ws",
+          "noediting": true,
+          "nounset": false,
+          "evaluations": 22,
+          "passed": 19,
+          "required_checks": 14,
+          "required_passed": 14
+        },
+        {
+          "name": "array-after-real",
+          "order": "saw",
+          "noediting": true,
+          "nounset": false,
+          "evaluations": 21,
+          "passed": 21,
+          "required_checks": 21,
+          "required_passed": 21
+        },
+        {
+          "name": "array-existing-wz-tail",
+          "order": "swbw",
+          "noediting": true,
+          "nounset": false,
+          "evaluations": 20,
+          "passed": 20,
+          "required_checks": 20,
+          "required_passed": 20
+        },
+        {
+          "name": "array-existing-mouse-tail",
+          "order": "swmw",
+          "noediting": true,
+          "nounset": false,
+          "evaluations": 20,
+          "passed": 20,
+          "required_checks": 20,
+          "required_passed": 20
+        },
+        {
+          "name": "official-present",
+          "order": "w",
+          "noediting": true,
+          "nounset": false,
+          "evaluations": 6,
+          "passed": 6,
+          "required_checks": 6,
+          "required_passed": 6
+        },
+        {
+          "name": "user-ps0",
+          "order": "sw",
+          "noediting": true,
+          "nounset": false,
+          "evaluations": 21,
+          "passed": 21,
+          "required_checks": 21,
+          "required_passed": 21
+        },
+        {
+          "name": "pipeline-visible-baseline",
+          "order": "s",
+          "noediting": true,
+          "nounset": false,
+          "evaluations": 12,
+          "passed": 12,
+          "required_checks": 12,
+          "required_passed": 12
+        },
+        {
+          "name": "pipeline-visible-recommended",
+          "order": "sw",
+          "noediting": true,
+          "nounset": false,
+          "evaluations": 22,
+          "passed": 22,
+          "required_checks": 22,
+          "required_passed": 22
+        },
+        {
+          "name": "pipeline-visible-reverse",
+          "order": "ws",
+          "noediting": true,
+          "nounset": false,
+          "evaluations": 24,
+          "passed": 21,
+          "required_checks": 14,
+          "required_passed": 14
+        },
+        {
+          "name": "legacy-array",
+          "order": "slw",
+          "noediting": true,
+          "nounset": false,
+          "evaluations": 22,
+          "passed": 22,
+          "required_checks": 22,
+          "required_passed": 22
+        },
+        {
+          "name": "exported-array",
+          "order": "sxw",
+          "noediting": true,
+          "nounset": false,
+          "evaluations": 21,
+          "passed": 21,
+          "required_checks": 21,
+          "required_passed": 21
+        }
+      ],
+      "failures": [],
+      "known_limitations": [
+        {
+          "case": "reverse",
+          "test": "one OSC 133 A per prompt",
+          "pass": false,
+          "required": false
+        },
+        {
+          "case": "reverse",
+          "test": "one OSC 133 B per prompt",
+          "pass": false,
+          "required": false
+        },
+        {
+          "case": "reverse",
+          "test": "output bounded by C then A/B before next C",
+          "pass": false,
+          "required": false
+        },
+        {
+          "case": "pipeline-reverse",
+          "test": "one OSC 133 A per prompt",
+          "pass": false,
+          "required": false
+        },
+        {
+          "case": "pipeline-reverse",
+          "test": "one OSC 133 B per prompt",
+          "pass": false,
+          "required": false
+        },
+        {
+          "case": "pipeline-reverse",
+          "test": "output bounded by C then A/B before next C",
+          "pass": false,
+          "required": false
+        },
+        {
+          "case": "pipeline-visible-reverse",
+          "test": "one OSC 133 A per prompt",
+          "pass": false,
+          "required": false
+        },
+        {
+          "case": "pipeline-visible-reverse",
+          "test": "one OSC 133 B per prompt",
+          "pass": false,
+          "required": false
+        },
+        {
+          "case": "pipeline-visible-reverse",
+          "test": "output bounded by C then A/B before next C",
+          "pass": false,
+          "required": false
+        }
+      ],
+      "helpers": [
+        {
+          "test": "base64 0 bytes",
+          "pass": true
+        },
+        {
+          "test": "base64 1 bytes",
+          "pass": true
+        },
+        {
+          "test": "base64 2 bytes",
+          "pass": true
+        },
+        {
+          "test": "base64 3 bytes",
+          "pass": true
+        },
+        {
+          "test": "base64 4 bytes",
+          "pass": true
+        },
+        {
+          "test": "base64 23 bytes",
+          "pass": true
+        },
+        {
+          "test": "base64 255 bytes",
+          "pass": true
+        },
+        {
+          "test": "uservar truncation BMP",
+          "pass": true
+        },
+        {
+          "test": "uservar truncation emoji",
+          "pass": true
+        },
+        {
+          "test": "uservar truncation emoji-boundary-199",
+          "pass": true
+        },
+        {
+          "test": "uservar truncation emoji-boundary-198",
+          "pass": true
+        },
+        {
+          "test": "uservar truncation emoji-boundary-197",
+          "pass": true
+        },
+        {
+          "test": "uservar truncation ASCII",
+          "pass": true
+        },
+        {
+          "test": "OSC7 special characters / path cache",
+          "pass": true
+        }
+      ]
+    },
+    "git_bash_reinit": {
+      "starship": "starship 1.26.0",
+      "all_passed": true,
+      "case_results": [],
+      "evaluations": [
+        {
+          "name": "exit_zero",
+          "pass": true
+        },
+        {
+          "name": "no_extra_integration_source",
+          "pass": true
+        },
+        {
+          "name": "exact_one_a_b_each_prompt",
+          "pass": true
+        },
+        {
+          "name": "prompt_after_starship_reinit_has_one_a_b",
+          "pass": true
+        },
+        {
+          "name": "pipeline_saved_1_0",
+          "pass": true
+        },
+        {
+          "name": "false_d1",
+          "pass": true
+        },
+        {
+          "name": "false_saved_status1",
+          "pass": true
+        },
+        {
+          "name": "no_shell_error",
+          "pass": true
+        },
+        {
+          "name": "blank_enter_also_one_a_b",
+          "pass": true
+        },
+        {
+          "name": "single_starship_hook_after_reinit",
+          "pass": true
+        }
+      ]
+    },
+    "git_bash_fix_gui": {
+      "snapshots": 23,
+      "confirmed": 19,
+      "unconfirmed": 0,
+      "case_results": [],
+      "evaluations": [
+        {
+          "name": "Starship なしでは直前の出力だけをコピー",
+          "kind": "normal",
+          "confirmed": true
+        },
+        {
+          "name": "Starship Bash の Prompt/Input/Output 範囲",
+          "kind": "normal",
+          "confirmed": true
+        },
+        {
+          "name": "Starship Bash の直前の出力だけコピー",
+          "kind": "normal",
+          "confirmed": true
+        },
+        {
+          "name": "同一ペイン後付けでも直前の出力だけコピー",
+          "kind": "normal",
+          "confirmed": true
+        },
+        {
+          "name": "starship: プロンプトジャンプ後の可視範囲",
+          "kind": "normal",
+          "confirmed": true
+        },
+        {
+          "name": "baseline: プロンプトジャンプ後の可視範囲",
+          "kind": "normal",
+          "confirmed": true
+        },
+        {
+          "name": "日本語・空白・#・% の cwd を分割へ引継ぎ",
+          "kind": "normal",
+          "confirmed": true
+        },
+        {
+          "name": "リサイズモード",
+          "kind": "normal",
+          "confirmed": true
+        },
+        {
+          "name": "コピーモード",
+          "kind": "normal",
+          "confirmed": true
+        },
+        {
+          "name": "ズームの切替",
+          "kind": "normal",
+          "confirmed": true
+        },
+        {
+          "name": "Bash の実通知データは失敗コード1",
+          "kind": "normal",
+          "confirmed": true
+        },
+        {
+          "name": "pwsh: 出力コピー",
+          "kind": "normal",
+          "confirmed": true
+        },
+        {
+          "name": "pwsh: native 失敗は Starship ERR/7",
+          "kind": "normal",
+          "confirmed": true
+        },
+        {
+          "name": "pwsh: 空 Enter は直前の出力を維持",
+          "kind": "normal",
+          "confirmed": true
+        },
+        {
+          "name": "pwsh: 実履歴から通知データ0/2秒",
+          "kind": "normal",
+          "confirmed": true
+        },
+        {
+          "name": "windows-powershell: 出力コピー",
+          "kind": "normal",
+          "confirmed": true
+        },
+        {
+          "name": "windows-powershell: native 失敗は Starship ERR/7",
+          "kind": "normal",
+          "confirmed": true
+        },
+        {
+          "name": "windows-powershell: 空 Enter は直前の出力を維持",
+          "kind": "normal",
+          "confirmed": true
+        },
+        {
+          "name": "windows-powershell: 実履歴から通知データ0/2秒",
+          "kind": "normal",
+          "confirmed": true
+        }
+      ]
+    },
+    "ssh_before_fix": {
+      "source_sha256": "5e1a4386f11e802fb8b5a8e184b84367d97a879a36339a91fed73a8e78c1437c",
+      "source_sha256_after": "5e1a4386f11e802fb8b5a8e184b84367d97a879a36339a91fed73a8e78c1437c",
+      "source_unchanged": true,
+      "cases": 12,
+      "checks": 227,
+      "required_passed": 210,
+      "required_checks": 220,
+      "pass": false,
+      "case_results": [
+        {
+          "name": "starship-only",
+          "evaluations": 11,
+          "passed": 11,
+          "required_checks": 11,
+          "required_passed": 11
+        },
+        {
+          "name": "worktree-recommended",
+          "evaluations": 24,
+          "passed": 24,
+          "required_checks": 24,
+          "required_passed": 24
+        },
+        {
+          "name": "worktree-noediting",
+          "evaluations": 21,
+          "passed": 21,
+          "required_checks": 21,
+          "required_passed": 21
+        },
+        {
+          "name": "worktree-nounset",
+          "evaluations": 21,
+          "passed": 21,
+          "required_checks": 21,
+          "required_passed": 21
+        },
+        {
+          "name": "worktree-unset-term",
+          "evaluations": 16,
+          "passed": 16,
+          "required_checks": 16,
+          "required_passed": 16
+        },
+        {
+          "name": "worktree-tmux-term",
+          "evaluations": 16,
+          "passed": 16,
+          "required_checks": 16,
+          "required_passed": 16
+        },
+        {
+          "name": "worktree-forwarded-term",
+          "evaluations": 16,
+          "passed": 16,
+          "required_checks": 16,
+          "required_passed": 16
+        },
+        {
+          "name": "worktree-reverse",
+          "evaluations": 22,
+          "passed": 20,
+          "required_checks": 15,
+          "required_passed": 15
+        },
+        {
+          "name": "production-recommended",
+          "evaluations": 21,
+          "passed": 18,
+          "required_checks": 21,
+          "required_passed": 18
+        },
+        {
+          "name": "official-starship-only",
+          "evaluations": 17,
+          "passed": 15,
+          "required_checks": 17,
+          "required_passed": 15
+        },
+        {
+          "name": "official-worktree",
+          "evaluations": 21,
+          "passed": 18,
+          "required_checks": 21,
+          "required_passed": 18
+        },
+        {
+          "name": "official-production",
+          "evaluations": 21,
+          "passed": 19,
+          "required_checks": 21,
+          "required_passed": 19
+        }
+      ],
+      "failures": [
+        {
+          "case": "production-recommended",
+          "test": "Starship exit / PIPESTATUS: pipeline",
+          "pass": false,
+          "required": true
+        },
+        {
+          "case": "production-recommended",
+          "test": "Starship exit / PIPESTATUS: pipefail",
+          "pass": false,
+          "required": true
+        },
+        {
+          "case": "production-recommended",
+          "test": "Starship exit / PIPESTATUS: source_twice",
+          "pass": false,
+          "required": true
+        },
+        {
+          "case": "official-starship-only",
+          "test": "OSC 133 B once per prompt",
+          "pass": false,
+          "required": true
+        },
+        {
+          "case": "official-starship-only",
+          "test": "OSC 133 C once per command",
+          "pass": false,
+          "required": true
+        },
+        {
+          "case": "official-worktree",
+          "test": "mouse reset once per prompt",
+          "pass": false,
+          "required": true
+        },
+        {
+          "case": "official-worktree",
+          "test": "OSC 133 B once per prompt",
+          "pass": false,
+          "required": true
+        },
+        {
+          "case": "official-worktree",
+          "test": "OSC 133 C once per command",
+          "pass": false,
+          "required": true
+        },
+        {
+          "case": "official-production",
+          "test": "OSC 133 B once per prompt",
+          "pass": false,
+          "required": true
+        },
+        {
+          "case": "official-production",
+          "test": "OSC 133 C once per command",
+          "pass": false,
+          "required": true
+        }
+      ],
+      "known_limitations": [
+        {
+          "case": "worktree-reverse",
+          "test": "OSC 133 A once per prompt",
+          "pass": false,
+          "required": false
+        },
+        {
+          "case": "worktree-reverse",
+          "test": "OSC 133 B once per prompt",
+          "pass": false,
+          "required": false
+        }
+      ]
+    },
+    "ssh_before_fix_gui": {
+      "snapshots": 53,
+      "confirmed": 46,
+      "unconfirmed": 0,
+      "defects_reproduced": 10,
+      "case_results": [],
+      "defects": [
+        {
+          "name": "login-bash: 入力範囲の印Bが消失",
+          "observed": true
+        },
+        {
+          "name": "login-bash: 直前の出力をコピーできない",
+          "observed": true
+        },
+        {
+          "name": "login-bash: 独自の完了通知なし",
+          "observed": true
+        },
+        {
+          "name": "official-bash: 入力範囲の印Bが消失",
+          "observed": true
+        },
+        {
+          "name": "official-bash: 直前の出力をコピーできない",
+          "observed": true
+        },
+        {
+          "name": "official-bash: 独自の完了通知なし",
+          "observed": true
+        },
+        {
+          "name": "login-native: 入力範囲の印Bが消失",
+          "observed": true
+        },
+        {
+          "name": "login-native: 直前の出力をコピーできない",
+          "observed": true
+        },
+        {
+          "name": "login-native: 独自の完了通知なし",
+          "observed": true
+        },
+        {
+          "name": "Git Bashの現設定: Last login行を誤コピー",
+          "observed": true
+        }
+      ],
+      "evaluations": [
+        {
+          "name": "worktree-bash: remote の出力だけをコピー",
+          "confirmed": true
+        },
+        {
+          "name": "worktree-bash: remote の入力範囲",
+          "confirmed": true
+        },
+        {
+          "name": "worktree-bash: remote のホスト付き cwd",
+          "confirmed": true
+        },
+        {
+          "name": "worktree-bash: 本番タブ関数のホスト表示",
+          "confirmed": true
+        },
+        {
+          "name": "worktree-bash: 実行中も ssh と判定",
+          "confirmed": true
+        },
+        {
+          "name": "worktree-bash: false の保存コード1",
+          "confirmed": true
+        },
+        {
+          "name": "worktree-bash: パイプ個別 status 1 0",
+          "confirmed": true
+        },
+        {
+          "name": "worktree-bash: remote 失敗の通知データ",
+          "confirmed": true
+        },
+        {
+          "name": "worktree-bash: 70行を正確にコピー",
+          "confirmed": true
+        },
+        {
+          "name": "worktree-bash: remote プロンプトへのジャンプ",
+          "confirmed": true
+        },
+        {
+          "name": "worktree-bash: 空 Enter で直前出力を保持",
+          "confirmed": true
+        },
+        {
+          "name": "worktree-native: remote の出力だけをコピー",
+          "confirmed": true
+        },
+        {
+          "name": "worktree-native: remote の入力範囲",
+          "confirmed": true
+        },
+        {
+          "name": "worktree-native: remote のホスト付き cwd",
+          "confirmed": true
+        },
+        {
+          "name": "worktree-native: 本番タブ関数のホスト表示",
+          "confirmed": true
+        },
+        {
+          "name": "worktree-native: 実行中も ssh と判定",
+          "confirmed": true
+        },
+        {
+          "name": "worktree-native: false の保存コード1",
+          "confirmed": true
+        },
+        {
+          "name": "worktree-native: パイプ個別 status 1 0",
+          "confirmed": true
+        },
+        {
+          "name": "worktree-native: remote 失敗の通知データ",
+          "confirmed": true
+        },
+        {
+          "name": "worktree-native: 70行を正確にコピー",
+          "confirmed": true
+        },
+        {
+          "name": "worktree-native: remote プロンプトへのジャンプ",
+          "confirmed": true
+        },
+        {
+          "name": "worktree-native: 空 Enter で直前出力を保持",
+          "confirmed": true
+        },
+        {
+          "name": "Git Bash: remote Linux がローカル ssh 値を保持",
+          "confirmed": true
+        },
+        {
+          "name": "login-bash: SSH 終了後のローカルコピー",
+          "confirmed": true
+        },
+        {
+          "name": "login-bash: SSH 終了後のローカル cwd/プログラム",
+          "confirmed": true
+        },
+        {
+          "name": "login-bash: SSH 終了後の実行変数を消去",
+          "confirmed": true
+        },
+        {
+          "name": "official-bash: SSH 終了後のローカルコピー",
+          "confirmed": true
+        },
+        {
+          "name": "official-bash: SSH 終了後のローカル cwd/プログラム",
+          "confirmed": true
+        },
+        {
+          "name": "official-bash: SSH 終了後の実行変数を消去",
+          "confirmed": true
+        },
+        {
+          "name": "worktree-bash: SSH 終了後のローカルコピー",
+          "confirmed": true
+        },
+        {
+          "name": "worktree-bash: SSH 終了後のローカル cwd/プログラム",
+          "confirmed": true
+        },
+        {
+          "name": "worktree-bash: SSH 終了後の実行変数を消去",
+          "confirmed": true
+        },
+        {
+          "name": "starship-only-bash: SSH 終了後のローカルコピー",
+          "confirmed": true
+        },
+        {
+          "name": "starship-only-bash: SSH 終了後のローカル cwd/プログラム",
+          "confirmed": true
+        },
+        {
+          "name": "starship-only-bash: SSH 終了後の実行変数を消去",
+          "confirmed": true
+        },
+        {
+          "name": "login-bash: 現設定の cwd/タブ名",
+          "confirmed": true
+        },
+        {
+          "name": "login-bash: 現設定のパイプは1 0を保持",
+          "confirmed": true
+        },
+        {
+          "name": "login-bash: A によるジャンプは機能",
+          "confirmed": true
+        },
+        {
+          "name": "official-bash: 現設定の cwd/タブ名",
+          "confirmed": true
+        },
+        {
+          "name": "official-bash: 現設定のパイプは1 0を保持",
+          "confirmed": true
+        },
+        {
+          "name": "official-bash: A によるジャンプは機能",
+          "confirmed": true
+        },
+        {
+          "name": "login-native: 現設定の cwd/タブ名",
+          "confirmed": true
+        },
+        {
+          "name": "login-native: 現設定のパイプは1 0を保持",
+          "confirmed": true
+        },
+        {
+          "name": "login-native: A によるジャンプは機能",
+          "confirmed": true
+        },
+        {
+          "name": "統合なし比較: SSH全画面の誤コピーを抑止",
+          "confirmed": true
+        },
+        {
+          "name": "通常ログイン: TERM_PROGRAM 未受信を実ペインでも確認",
+          "confirmed": true
+        }
+      ]
+    },
+    "ssh_lua": {
+      "passed": 39,
+      "failed": 0,
+      "known_limits": 3,
+      "required": 36,
+      "total": 39,
+      "case_results": [],
+      "evaluations": [
+        {
+          "category": "required",
+          "name": "procs: Git Bash の通常 ssh",
+          "passed": true
+        },
+        {
+          "category": "required",
+          "name": "procs: Git Bash で連結後に ssh",
+          "passed": true
+        },
+        {
+          "category": "required",
+          "name": "procs: Git Bash で Windows OpenSSH の絶対パス",
+          "passed": true
+        },
+        {
+          "category": "required",
+          "name": "procs: 起動メニューの直接 ssh",
+          "passed": true
+        },
+        {
+          "category": "required",
+          "name": "procs: 直接 ssh は遠隔 WEZTERM_PROG より優先",
+          "passed": true
+        },
+        {
+          "category": "required",
+          "name": "procs: Git Bash で ssh 値を保持",
+          "passed": true
+        },
+        {
+          "category": "required",
+          "name": "procs: ローカルへ戻り ssh 値を消去",
+          "passed": true
+        },
+        {
+          "category": "required",
+          "name": "procs: 遠隔公式統合が値を消した待機中",
+          "passed": true
+        },
+        {
+          "category": "required",
+          "name": "procs: 遠隔公式統合が値を上書きしたコマンド中",
+          "passed": true
+        },
+        {
+          "category": "required",
+          "name": "procs: WSL の入口から ssh",
+          "passed": true
+        },
+        {
+          "category": "known_limit",
+          "name": "procs: Git Bash の ssh エイリアスは展開できない",
+          "passed": true
+        },
+        {
+          "category": "required",
+          "name": "copy: 遠隔 Starship の区切り + ローカル ssh 値保持",
+          "passed": true
+        },
+        {
+          "category": "required",
+          "name": "copy: 遠隔 Starship の区切り + 起動メニューから直接 ssh",
+          "passed": true
+        },
+        {
+          "category": "required",
+          "name": "copy: 遠隔公式統合が WEZTERM_PROG を消しても区切りを使用",
+          "passed": true
+        },
+        {
+          "category": "required",
+          "name": "copy: 遠隔入力中の文字は前の結果に混ぜない",
+          "passed": true
+        },
+        {
+          "category": "required",
+          "name": "copy: 遠隔複数コマンドでは最後の出力のみ",
+          "passed": true
+        },
+        {
+          "category": "required",
+          "name": "copy: 遠隔の空出力コマンド",
+          "passed": true
+        },
+        {
+          "category": "required",
+          "name": "copy: TERM_PROGRAM が届かず遠隔統合なし",
+          "passed": true
+        },
+        {
+          "category": "required",
+          "name": "copy: 直接起動の ssh に遠隔統合なし",
+          "passed": true
+        },
+        {
+          "category": "required",
+          "name": "copy: 遠隔統合なしでも実プロセス ssh で判定",
+          "passed": true
+        },
+        {
+          "category": "required",
+          "name": "copy: ssh 終了後はローカル入力以降の出力を使用",
+          "passed": true
+        },
+        {
+          "category": "required",
+          "name": "copy: 統合あり遠隔コマンド実行中は完了まで拒否",
+          "passed": true
+        },
+        {
+          "category": "known_limit",
+          "name": "copy: Git Bash のエイリアス ssh と遠隔統合なしは判別不能",
+          "passed": true
+        },
+        {
+          "category": "required",
+          "name": "tabs: 遠隔 OSC 7 のホストとディレクトリを優先",
+          "passed": true
+        },
+        {
+          "category": "required",
+          "name": "tabs: 遠隔 cwd が空白・日本語を含む",
+          "passed": true
+        },
+        {
+          "category": "required",
+          "name": "tabs: 遠隔ルートを表示",
+          "passed": true
+        },
+        {
+          "category": "required",
+          "name": "tabs: 遠隔ホームはローカルの ~ と同一視しない",
+          "passed": true
+        },
+        {
+          "category": "required",
+          "name": "tabs: 遠隔公式統合が実行変数を消してもホスト表示を維持",
+          "passed": true
+        },
+        {
+          "category": "required",
+          "name": "tabs: 遠隔公式統合が vim を送ったときのアイコン",
+          "passed": true
+        },
+        {
+          "category": "required",
+          "name": "tabs: 直接起動 ssh は遠隔値を消しても ssh アイコン",
+          "passed": true
+        },
+        {
+          "category": "required",
+          "name": "tabs: 遠隔統合なしでは接続前 cwd よりタイトル優先",
+          "passed": true
+        },
+        {
+          "category": "required",
+          "name": "tabs: ssh 終了後にローカル cwd と bash を復帰",
+          "passed": true
+        },
+        {
+          "category": "required",
+          "name": "tabs: 手動タイトルは遠隔 cwd より優先",
+          "passed": true
+        },
+        {
+          "category": "known_limit",
+          "name": "tabs: 同じ短縮ホスト名はローカルとして扱う",
+          "passed": true
+        },
+        {
+          "category": "required",
+          "name": "notify: 遠隔完了データを非アクティブペインで表示",
+          "passed": true
+        },
+        {
+          "category": "required",
+          "name": "notify: 遠隔失敗データを表示",
+          "passed": true
+        },
+        {
+          "category": "required",
+          "name": "notify: 前面で見ている遠隔ペインは抑制",
+          "passed": true
+        },
+        {
+          "category": "required",
+          "name": "notify: 別アプリを見ている遠隔ペインは通知",
+          "passed": true
+        },
+        {
+          "category": "required",
+          "name": "notify: 不正な遠隔データは無視",
+          "passed": true
+        }
+      ]
+    },
+    "final_git_bash": {
+      "source_sha256": "40bbe213610c39019a1b394ae6a02dcc8b7dba64f2a87bdb7fbaca2a99532595",
+      "cases": 20,
+      "checks": 393,
+      "required_passed": 367,
+      "required_checks": 367,
+      "pass": true,
+      "case_results": [
+        {
+          "name": "control",
+          "order": "w",
+          "noediting": false,
+          "nounset": false,
+          "evaluations": 12,
+          "passed": 12,
+          "required_checks": 12,
+          "required_passed": 12
+        },
+        {
+          "name": "recommended",
+          "order": "swz",
+          "noediting": false,
+          "nounset": false,
+          "evaluations": 23,
+          "passed": 23,
+          "required_checks": 23,
+          "required_passed": 23
+        },
+        {
+          "name": "reverse",
+          "order": "wsz",
+          "noediting": false,
+          "nounset": false,
+          "evaluations": 22,
+          "passed": 19,
+          "required_checks": 14,
+          "required_passed": 14
+        },
+        {
+          "name": "zoxide-before",
+          "order": "szw",
+          "noediting": false,
+          "nounset": false,
+          "evaluations": 20,
+          "passed": 20,
+          "required_checks": 20,
+          "required_passed": 20
+        },
+        {
+          "name": "noediting",
+          "order": "swz",
+          "noediting": true,
+          "nounset": false,
+          "evaluations": 20,
+          "passed": 20,
+          "required_checks": 20,
+          "required_passed": 20
+        },
+        {
+          "name": "nounset",
+          "order": "swz",
+          "noediting": true,
+          "nounset": true,
+          "evaluations": 20,
+          "passed": 20,
+          "required_checks": 20,
+          "required_passed": 20
+        },
+        {
+          "name": "array-before",
+          "order": "swz",
+          "noediting": true,
+          "nounset": false,
+          "evaluations": 21,
+          "passed": 21,
+          "required_checks": 21,
+          "required_passed": 21
+        },
+        {
+          "name": "pipeline-starship-only",
+          "order": "s",
+          "noediting": true,
+          "nounset": false,
+          "evaluations": 10,
+          "passed": 10,
+          "required_checks": 10,
+          "required_passed": 10
+        },
+        {
+          "name": "pipeline-recommended",
+          "order": "sw",
+          "noediting": true,
+          "nounset": false,
+          "evaluations": 20,
+          "passed": 20,
+          "required_checks": 20,
+          "required_passed": 20
+        },
+        {
+          "name": "pipeline-reverse",
+          "order": "ws",
+          "noediting": true,
+          "nounset": false,
+          "evaluations": 22,
+          "passed": 19,
+          "required_checks": 14,
+          "required_passed": 14
+        },
+        {
+          "name": "array-after-real",
+          "order": "saw",
+          "noediting": true,
+          "nounset": false,
+          "evaluations": 21,
+          "passed": 21,
+          "required_checks": 21,
+          "required_passed": 21
+        },
+        {
+          "name": "array-existing-wz-tail",
+          "order": "swbw",
+          "noediting": true,
+          "nounset": false,
+          "evaluations": 20,
+          "passed": 20,
+          "required_checks": 20,
+          "required_passed": 20
+        },
+        {
+          "name": "array-existing-mouse-tail",
+          "order": "swmw",
+          "noediting": true,
+          "nounset": false,
+          "evaluations": 20,
+          "passed": 20,
+          "required_checks": 20,
+          "required_passed": 20
+        },
+        {
+          "name": "official-present",
+          "order": "w",
+          "noediting": true,
+          "nounset": false,
+          "evaluations": 6,
+          "passed": 6,
+          "required_checks": 6,
+          "required_passed": 6
+        },
+        {
+          "name": "user-ps0",
+          "order": "sw",
+          "noediting": true,
+          "nounset": false,
+          "evaluations": 21,
+          "passed": 21,
+          "required_checks": 21,
+          "required_passed": 21
+        },
+        {
+          "name": "pipeline-visible-baseline",
+          "order": "s",
+          "noediting": true,
+          "nounset": false,
+          "evaluations": 12,
+          "passed": 12,
+          "required_checks": 12,
+          "required_passed": 12
+        },
+        {
+          "name": "pipeline-visible-recommended",
+          "order": "sw",
+          "noediting": true,
+          "nounset": false,
+          "evaluations": 22,
+          "passed": 22,
+          "required_checks": 22,
+          "required_passed": 22
+        },
+        {
+          "name": "pipeline-visible-reverse",
+          "order": "ws",
+          "noediting": true,
+          "nounset": false,
+          "evaluations": 24,
+          "passed": 21,
+          "required_checks": 14,
+          "required_passed": 14
+        },
+        {
+          "name": "legacy-array",
+          "order": "slw",
+          "noediting": true,
+          "nounset": false,
+          "evaluations": 22,
+          "passed": 22,
+          "required_checks": 22,
+          "required_passed": 22
+        },
+        {
+          "name": "exported-array",
+          "order": "sxw",
+          "noediting": true,
+          "nounset": false,
+          "evaluations": 21,
+          "passed": 21,
+          "required_checks": 21,
+          "required_passed": 21
+        }
+      ],
+      "failures": [],
+      "known_limitations": [
+        {
+          "case": "reverse",
+          "test": "one OSC 133 A per prompt",
+          "pass": false,
+          "required": false
+        },
+        {
+          "case": "reverse",
+          "test": "one OSC 133 B per prompt",
+          "pass": false,
+          "required": false
+        },
+        {
+          "case": "reverse",
+          "test": "output bounded by C then A/B before next C",
+          "pass": false,
+          "required": false
+        },
+        {
+          "case": "pipeline-reverse",
+          "test": "one OSC 133 A per prompt",
+          "pass": false,
+          "required": false
+        },
+        {
+          "case": "pipeline-reverse",
+          "test": "one OSC 133 B per prompt",
+          "pass": false,
+          "required": false
+        },
+        {
+          "case": "pipeline-reverse",
+          "test": "output bounded by C then A/B before next C",
+          "pass": false,
+          "required": false
+        },
+        {
+          "case": "pipeline-visible-reverse",
+          "test": "one OSC 133 A per prompt",
+          "pass": false,
+          "required": false
+        },
+        {
+          "case": "pipeline-visible-reverse",
+          "test": "one OSC 133 B per prompt",
+          "pass": false,
+          "required": false
+        },
+        {
+          "case": "pipeline-visible-reverse",
+          "test": "output bounded by C then A/B before next C",
+          "pass": false,
+          "required": false
+        }
+      ],
+      "helpers": [
+        {
+          "test": "base64 0 bytes",
+          "pass": true
+        },
+        {
+          "test": "base64 1 bytes",
+          "pass": true
+        },
+        {
+          "test": "base64 2 bytes",
+          "pass": true
+        },
+        {
+          "test": "base64 3 bytes",
+          "pass": true
+        },
+        {
+          "test": "base64 4 bytes",
+          "pass": true
+        },
+        {
+          "test": "base64 23 bytes",
+          "pass": true
+        },
+        {
+          "test": "base64 255 bytes",
+          "pass": true
+        },
+        {
+          "test": "uservar truncation BMP",
+          "pass": true
+        },
+        {
+          "test": "uservar truncation emoji",
+          "pass": true
+        },
+        {
+          "test": "uservar truncation emoji-boundary-199",
+          "pass": true
+        },
+        {
+          "test": "uservar truncation emoji-boundary-198",
+          "pass": true
+        },
+        {
+          "test": "uservar truncation emoji-boundary-197",
+          "pass": true
+        },
+        {
+          "test": "uservar truncation ASCII",
+          "pass": true
+        },
+        {
+          "test": "OSC7 special characters / path cache",
+          "pass": true
+        }
+      ]
+    },
+    "final_ssh": {
+      "source_sha256": "40bbe213610c39019a1b394ae6a02dcc8b7dba64f2a87bdb7fbaca2a99532595",
+      "source_sha256_after": "40bbe213610c39019a1b394ae6a02dcc8b7dba64f2a87bdb7fbaca2a99532595",
+      "source_unchanged": true,
+      "cases": 22,
+      "checks": 508,
+      "required_passed": 438,
+      "required_checks": 438,
+      "pass": true,
+      "case_results": [
+        {
+          "name": "starship-only",
+          "evaluations": 11,
+          "passed": 11,
+          "required_checks": 11,
+          "required_passed": 11
+        },
+        {
+          "name": "worktree-recommended",
+          "evaluations": 25,
+          "passed": 25,
+          "required_checks": 25,
+          "required_passed": 25
+        },
+        {
+          "name": "worktree-noediting",
+          "evaluations": 22,
+          "passed": 22,
+          "required_checks": 22,
+          "required_passed": 22
+        },
+        {
+          "name": "worktree-nounset",
+          "evaluations": 22,
+          "passed": 22,
+          "required_checks": 22,
+          "required_passed": 22
+        },
+        {
+          "name": "worktree-unset-term",
+          "evaluations": 16,
+          "passed": 16,
+          "required_checks": 16,
+          "required_passed": 16
+        },
+        {
+          "name": "worktree-tmux-term",
+          "evaluations": 16,
+          "passed": 16,
+          "required_checks": 16,
+          "required_passed": 16
+        },
+        {
+          "name": "worktree-forwarded-term",
+          "evaluations": 16,
+          "passed": 16,
+          "required_checks": 16,
+          "required_passed": 16
+        },
+        {
+          "name": "worktree-reverse",
+          "evaluations": 23,
+          "passed": 20,
+          "required_checks": 15,
+          "required_passed": 15
+        },
+        {
+          "name": "production-recommended",
+          "evaluations": 21,
+          "passed": 18,
+          "required_checks": 5,
+          "required_passed": 5
+        },
+        {
+          "name": "official-starship-only",
+          "evaluations": 17,
+          "passed": 15,
+          "required_checks": 5,
+          "required_passed": 5
+        },
+        {
+          "name": "official-production",
+          "evaluations": 21,
+          "passed": 19,
+          "required_checks": 5,
+          "required_passed": 5
+        },
+        {
+          "name": "official-worktree",
+          "evaluations": 30,
+          "passed": 28,
+          "required_checks": 28,
+          "required_passed": 28
+        },
+        {
+          "name": "official-worktree-unset-term",
+          "evaluations": 29,
+          "passed": 27,
+          "required_checks": 27,
+          "required_passed": 27
+        },
+        {
+          "name": "official-worktree-forwarded-term",
+          "evaluations": 27,
+          "passed": 25,
+          "required_checks": 25,
+          "required_passed": 25
+        },
+        {
+          "name": "official-worktree-noediting",
+          "evaluations": 29,
+          "passed": 27,
+          "required_checks": 27,
+          "required_passed": 27
+        },
+        {
+          "name": "official-worktree-nounset",
+          "evaluations": 29,
+          "passed": 27,
+          "required_checks": 27,
+          "required_passed": 27
+        },
+        {
+          "name": "official-worktree-userhooks",
+          "evaluations": 33,
+          "passed": 31,
+          "required_checks": 31,
+          "required_passed": 31
+        },
+        {
+          "name": "official-worktree-legacy",
+          "evaluations": 27,
+          "passed": 25,
+          "required_checks": 25,
+          "required_passed": 25
+        },
+        {
+          "name": "official-migrate-running",
+          "evaluations": 29,
+          "passed": 27,
+          "required_checks": 27,
+          "required_passed": 27
+        },
+        {
+          "name": "official-pc-user-ps1",
+          "evaluations": 29,
+          "passed": 27,
+          "required_checks": 27,
+          "required_passed": 27
+        },
+        {
+          "name": "official-dispatcher-removed",
+          "evaluations": 16,
+          "passed": 16,
+          "required_checks": 16,
+          "required_passed": 16
+        },
+        {
+          "name": "official-no-starship",
+          "evaluations": 20,
+          "passed": 20,
+          "required_checks": 20,
+          "required_passed": 20
+        }
+      ],
+      "failures": [],
+      "known_limitations": [
+        {
+          "case": "worktree-reverse",
+          "test": "OSC 133 A once per prompt",
+          "pass": false,
+          "required": false
+        },
+        {
+          "case": "worktree-reverse",
+          "test": "OSC 133 B once per prompt",
+          "pass": false,
+          "required": false
+        },
+        {
+          "case": "worktree-reverse",
+          "test": "command output is bounded by C then A/B before next C",
+          "pass": false,
+          "required": false
+        },
+        {
+          "case": "production-recommended",
+          "test": "Starship exit / PIPESTATUS: pipeline",
+          "pass": false,
+          "required": false
+        },
+        {
+          "case": "production-recommended",
+          "test": "Starship exit / PIPESTATUS: pipefail",
+          "pass": false,
+          "required": false
+        },
+        {
+          "case": "production-recommended",
+          "test": "Starship exit / PIPESTATUS: source_twice",
+          "pass": false,
+          "required": false
+        },
+        {
+          "case": "official-starship-only",
+          "test": "OSC 133 B once per prompt",
+          "pass": false,
+          "required": false
+        },
+        {
+          "case": "official-starship-only",
+          "test": "OSC 133 C once per command",
+          "pass": false,
+          "required": false
+        },
+        {
+          "case": "official-production",
+          "test": "OSC 133 B once per prompt",
+          "pass": false,
+          "required": false
+        },
+        {
+          "case": "official-production",
+          "test": "OSC 133 C once per command",
+          "pass": false,
+          "required": false
+        },
+        {
+          "case": "official-worktree",
+          "test": "Starship direct reinit-only precmd hook uniqueness",
+          "pass": false,
+          "required": false
+        },
+        {
+          "case": "official-worktree",
+          "test": "Starship direct reinit-only preexec hook uniqueness",
+          "pass": false,
+          "required": false
+        },
+        {
+          "case": "official-worktree-unset-term",
+          "test": "Starship direct reinit-only precmd hook uniqueness",
+          "pass": false,
+          "required": false
+        },
+        {
+          "case": "official-worktree-unset-term",
+          "test": "Starship direct reinit-only preexec hook uniqueness",
+          "pass": false,
+          "required": false
+        },
+        {
+          "case": "official-worktree-forwarded-term",
+          "test": "Starship direct reinit-only precmd hook uniqueness",
+          "pass": false,
+          "required": false
+        },
+        {
+          "case": "official-worktree-forwarded-term",
+          "test": "Starship direct reinit-only preexec hook uniqueness",
+          "pass": false,
+          "required": false
+        },
+        {
+          "case": "official-worktree-noediting",
+          "test": "Starship direct reinit-only precmd hook uniqueness",
+          "pass": false,
+          "required": false
+        },
+        {
+          "case": "official-worktree-noediting",
+          "test": "Starship direct reinit-only preexec hook uniqueness",
+          "pass": false,
+          "required": false
+        },
+        {
+          "case": "official-worktree-nounset",
+          "test": "Starship direct reinit-only precmd hook uniqueness",
+          "pass": false,
+          "required": false
+        },
+        {
+          "case": "official-worktree-nounset",
+          "test": "Starship direct reinit-only preexec hook uniqueness",
+          "pass": false,
+          "required": false
+        },
+        {
+          "case": "official-worktree-userhooks",
+          "test": "Starship direct reinit-only precmd hook uniqueness",
+          "pass": false,
+          "required": false
+        },
+        {
+          "case": "official-worktree-userhooks",
+          "test": "Starship direct reinit-only preexec hook uniqueness",
+          "pass": false,
+          "required": false
+        },
+        {
+          "case": "official-worktree-legacy",
+          "test": "Starship direct reinit-only precmd hook uniqueness",
+          "pass": false,
+          "required": false
+        },
+        {
+          "case": "official-worktree-legacy",
+          "test": "Starship direct reinit-only preexec hook uniqueness",
+          "pass": false,
+          "required": false
+        },
+        {
+          "case": "official-migrate-running",
+          "test": "Starship direct reinit-only precmd hook uniqueness",
+          "pass": false,
+          "required": false
+        },
+        {
+          "case": "official-migrate-running",
+          "test": "Starship direct reinit-only preexec hook uniqueness",
+          "pass": false,
+          "required": false
+        },
+        {
+          "case": "official-pc-user-ps1",
+          "test": "Starship direct reinit-only precmd hook uniqueness",
+          "pass": false,
+          "required": false
+        },
+        {
+          "case": "official-pc-user-ps1",
+          "test": "Starship direct reinit-only preexec hook uniqueness",
+          "pass": false,
+          "required": false
+        }
+      ]
+    },
+    "final_ssh_gui": {
+      "passed": 84,
+      "failed": 0,
+      "snapshots": 76,
+      "controls_confirmed": 2,
+      "controls_unclassified": 0,
+      "case_results": [],
+      "controls": [
+        {
+          "name": "login-bash: 配置snapshotの比較",
+          "kind": "legacy",
+          "observed": true
+        },
+        {
+          "name": "login-native: 配置snapshotの比較",
+          "kind": "legacy",
+          "observed": true
+        }
+      ],
+      "evaluations": [
+        {
+          "name": "fixed-login-bash: 直前のリモート出力だけをコピー",
+          "pass": true
+        },
+        {
+          "name": "fixed-login-bash: 入力範囲の印",
+          "pass": true
+        },
+        {
+          "name": "fixed-login-bash: リモート cwd",
+          "pass": true
+        },
+        {
+          "name": "fixed-login-bash: 本番のタブ名",
+          "pass": true
+        },
+        {
+          "name": "fixed-login-bash: 実行中の遠隔プログラム/ホスト表示",
+          "pass": true
+        },
+        {
+          "name": "fixed-login-bash: false の終了コード1",
+          "pass": true
+        },
+        {
+          "name": "fixed-login-bash: パイプ個別ステータス1 0",
+          "pass": true
+        },
+        {
+          "name": "fixed-login-bash: 失敗の完了通知データ",
+          "pass": true
+        },
+        {
+          "name": "fixed-login-bash: 70行の出力コピー",
+          "pass": true
+        },
+        {
+          "name": "fixed-login-bash: プロンプト移動先",
+          "pass": true
+        },
+        {
+          "name": "fixed-login-bash: 空 Enter 後の出力保持",
+          "pass": true
+        },
+        {
+          "name": "fixed-login-bash: 複数行入力の出力コピー",
+          "pass": true
+        },
+        {
+          "name": "fixed-login-bash: サブシェルの出力範囲",
+          "pass": true
+        },
+        {
+          "name": "fixed-login-bash: サブシェルの終了コード7",
+          "pass": true
+        },
+        {
+          "name": "fixed-login-bash: Starship 単独再初期化後のコピー",
+          "pass": true
+        },
+        {
+          "name": "fixed-login-bash: 統合再読込後のコピー",
+          "pass": true
+        },
+        {
+          "name": "fixed-login-native: 直前のリモート出力だけをコピー",
+          "pass": true
+        },
+        {
+          "name": "fixed-login-native: 入力範囲の印",
+          "pass": true
+        },
+        {
+          "name": "fixed-login-native: リモート cwd",
+          "pass": true
+        },
+        {
+          "name": "fixed-login-native: 本番のタブ名",
+          "pass": true
+        },
+        {
+          "name": "fixed-login-native: 実行中の SSH 判定",
+          "pass": true
+        },
+        {
+          "name": "fixed-login-native: false の終了コード1",
+          "pass": true
+        },
+        {
+          "name": "fixed-login-native: パイプ個別ステータス1 0",
+          "pass": true
+        },
+        {
+          "name": "fixed-login-native: 失敗の完了通知データ",
+          "pass": true
+        },
+        {
+          "name": "fixed-login-native: 70行の出力コピー",
+          "pass": true
+        },
+        {
+          "name": "fixed-login-native: プロンプト移動先",
+          "pass": true
+        },
+        {
+          "name": "fixed-login-native: 空 Enter 後の出力保持",
+          "pass": true
+        },
+        {
+          "name": "fixed-login-native: 複数行入力の出力コピー",
+          "pass": true
+        },
+        {
+          "name": "fixed-login-native: サブシェルの出力範囲",
+          "pass": true
+        },
+        {
+          "name": "fixed-login-native: サブシェルの終了コード7",
+          "pass": true
+        },
+        {
+          "name": "fixed-login-native: Starship 単独再初期化後のコピー",
+          "pass": true
+        },
+        {
+          "name": "fixed-login-native: 統合再読込後のコピー",
+          "pass": true
+        },
+        {
+          "name": "fixed-official-bash: 直前のリモート出力だけをコピー",
+          "pass": true
+        },
+        {
+          "name": "fixed-official-bash: 入力範囲の印",
+          "pass": true
+        },
+        {
+          "name": "fixed-official-bash: リモート cwd",
+          "pass": true
+        },
+        {
+          "name": "fixed-official-bash: 本番のタブ名",
+          "pass": true
+        },
+        {
+          "name": "fixed-official-bash: 実行中の遠隔プログラム/ホスト表示",
+          "pass": true
+        },
+        {
+          "name": "fixed-official-bash: false の終了コード1",
+          "pass": true
+        },
+        {
+          "name": "fixed-official-bash: パイプ個別ステータス1 0",
+          "pass": true
+        },
+        {
+          "name": "fixed-official-bash: 失敗の完了通知データ",
+          "pass": true
+        },
+        {
+          "name": "fixed-official-bash: 70行の出力コピー",
+          "pass": true
+        },
+        {
+          "name": "fixed-official-bash: プロンプト移動先",
+          "pass": true
+        },
+        {
+          "name": "fixed-official-bash: 空 Enter 後の出力保持",
+          "pass": true
+        },
+        {
+          "name": "fixed-official-bash: 複数行入力の出力コピー",
+          "pass": true
+        },
+        {
+          "name": "fixed-official-bash: サブシェルの出力範囲",
+          "pass": true
+        },
+        {
+          "name": "fixed-official-bash: サブシェルの終了コード7",
+          "pass": true
+        },
+        {
+          "name": "fixed-official-bash: Starship 単独再初期化後のコピー",
+          "pass": true
+        },
+        {
+          "name": "fixed-official-bash: 統合再読込後のコピー",
+          "pass": true
+        },
+        {
+          "name": "worktree-bash: 直前のリモート出力だけをコピー",
+          "pass": true
+        },
+        {
+          "name": "worktree-bash: 入力範囲の印",
+          "pass": true
+        },
+        {
+          "name": "worktree-bash: リモート cwd",
+          "pass": true
+        },
+        {
+          "name": "worktree-bash: 本番のタブ名",
+          "pass": true
+        },
+        {
+          "name": "worktree-bash: 実行中の SSH 判定",
+          "pass": true
+        },
+        {
+          "name": "worktree-bash: false の終了コード1",
+          "pass": true
+        },
+        {
+          "name": "worktree-bash: パイプ個別ステータス1 0",
+          "pass": true
+        },
+        {
+          "name": "worktree-bash: 失敗の完了通知データ",
+          "pass": true
+        },
+        {
+          "name": "worktree-bash: 70行の出力コピー",
+          "pass": true
+        },
+        {
+          "name": "worktree-bash: プロンプト移動先",
+          "pass": true
+        },
+        {
+          "name": "worktree-bash: 空 Enter 後の出力保持",
+          "pass": true
+        },
+        {
+          "name": "worktree-native: 直前のリモート出力だけをコピー",
+          "pass": true
+        },
+        {
+          "name": "worktree-native: 入力範囲の印",
+          "pass": true
+        },
+        {
+          "name": "worktree-native: リモート cwd",
+          "pass": true
+        },
+        {
+          "name": "worktree-native: 本番のタブ名",
+          "pass": true
+        },
+        {
+          "name": "worktree-native: 実行中の SSH 判定",
+          "pass": true
+        },
+        {
+          "name": "worktree-native: false の終了コード1",
+          "pass": true
+        },
+        {
+          "name": "worktree-native: パイプ個別ステータス1 0",
+          "pass": true
+        },
+        {
+          "name": "worktree-native: 失敗の完了通知データ",
+          "pass": true
+        },
+        {
+          "name": "worktree-native: 70行の出力コピー",
+          "pass": true
+        },
+        {
+          "name": "worktree-native: プロンプト移動先",
+          "pass": true
+        },
+        {
+          "name": "worktree-native: 空 Enter 後の出力保持",
+          "pass": true
+        },
+        {
+          "name": "fixed-login-bash: SSH 終了後のローカル出力",
+          "pass": true
+        },
+        {
+          "name": "fixed-login-bash: SSH 終了後のローカル cwd/プログラム",
+          "pass": true
+        },
+        {
+          "name": "fixed-login-bash: SSH 終了後の実行変数を消去",
+          "pass": true
+        },
+        {
+          "name": "fixed-official-bash: SSH 終了後のローカル出力",
+          "pass": true
+        },
+        {
+          "name": "fixed-official-bash: SSH 終了後のローカル cwd/プログラム",
+          "pass": true
+        },
+        {
+          "name": "fixed-official-bash: SSH 終了後の実行変数を消去",
+          "pass": true
+        },
+        {
+          "name": "worktree-bash: SSH 終了後のローカル出力",
+          "pass": true
+        },
+        {
+          "name": "worktree-bash: SSH 終了後のローカル cwd/プログラム",
+          "pass": true
+        },
+        {
+          "name": "worktree-bash: SSH 終了後の実行変数を消去",
+          "pass": true
+        },
+        {
+          "name": "login-bash: SSH 終了後のローカル出力",
+          "pass": true
+        },
+        {
+          "name": "login-bash: SSH 終了後のローカル cwd/プログラム",
+          "pass": true
+        },
+        {
+          "name": "login-bash: SSH 終了後の実行変数を消去",
+          "pass": true
+        },
+        {
+          "name": "fixed-login-bash: TERM_PROGRAM 未受信の通常プロファイル",
+          "pass": true
+        },
+        {
+          "name": "fixed-login-native: TERM_PROGRAM 未受信の通常プロファイル",
+          "pass": true
+        }
+      ]
+    },
+    "deployed_ssh_gui": {
+      "passed": 37,
+      "failed": 0,
+      "snapshots": 28,
+      "controls_confirmed": 0,
+      "controls_unclassified": 0,
+      "case_results": [],
+      "controls": [],
+      "evaluations": [
+        {
+          "name": "fixed-login-bash: 直前のリモート出力だけをコピー",
+          "pass": true
+        },
+        {
+          "name": "fixed-login-bash: 入力範囲の印",
+          "pass": true
+        },
+        {
+          "name": "fixed-login-bash: リモート cwd",
+          "pass": true
+        },
+        {
+          "name": "fixed-login-bash: 本番のタブ名",
+          "pass": true
+        },
+        {
+          "name": "fixed-login-bash: 実行中の遠隔プログラム/ホスト表示",
+          "pass": true
+        },
+        {
+          "name": "fixed-login-bash: false の終了コード1",
+          "pass": true
+        },
+        {
+          "name": "fixed-login-bash: パイプ個別ステータス1 0",
+          "pass": true
+        },
+        {
+          "name": "fixed-login-bash: 失敗の完了通知データ",
+          "pass": true
+        },
+        {
+          "name": "fixed-login-bash: 70行の出力コピー",
+          "pass": true
+        },
+        {
+          "name": "fixed-login-bash: プロンプト移動先",
+          "pass": true
+        },
+        {
+          "name": "fixed-login-bash: 空 Enter 後の出力保持",
+          "pass": true
+        },
+        {
+          "name": "fixed-login-bash: 複数行入力の出力コピー",
+          "pass": true
+        },
+        {
+          "name": "fixed-login-bash: サブシェルの出力範囲",
+          "pass": true
+        },
+        {
+          "name": "fixed-login-bash: サブシェルの終了コード7",
+          "pass": true
+        },
+        {
+          "name": "fixed-login-bash: Starship 単独再初期化後のコピー",
+          "pass": true
+        },
+        {
+          "name": "fixed-login-bash: 統合再読込後のコピー",
+          "pass": true
+        },
+        {
+          "name": "fixed-login-native: 直前のリモート出力だけをコピー",
+          "pass": true
+        },
+        {
+          "name": "fixed-login-native: 入力範囲の印",
+          "pass": true
+        },
+        {
+          "name": "fixed-login-native: リモート cwd",
+          "pass": true
+        },
+        {
+          "name": "fixed-login-native: 本番のタブ名",
+          "pass": true
+        },
+        {
+          "name": "fixed-login-native: 実行中の SSH 判定",
+          "pass": true
+        },
+        {
+          "name": "fixed-login-native: false の終了コード1",
+          "pass": true
+        },
+        {
+          "name": "fixed-login-native: パイプ個別ステータス1 0",
+          "pass": true
+        },
+        {
+          "name": "fixed-login-native: 失敗の完了通知データ",
+          "pass": true
+        },
+        {
+          "name": "fixed-login-native: 70行の出力コピー",
+          "pass": true
+        },
+        {
+          "name": "fixed-login-native: プロンプト移動先",
+          "pass": true
+        },
+        {
+          "name": "fixed-login-native: 空 Enter 後の出力保持",
+          "pass": true
+        },
+        {
+          "name": "fixed-login-native: 複数行入力の出力コピー",
+          "pass": true
+        },
+        {
+          "name": "fixed-login-native: サブシェルの出力範囲",
+          "pass": true
+        },
+        {
+          "name": "fixed-login-native: サブシェルの終了コード7",
+          "pass": true
+        },
+        {
+          "name": "fixed-login-native: Starship 単独再初期化後のコピー",
+          "pass": true
+        },
+        {
+          "name": "fixed-login-native: 統合再読込後のコピー",
+          "pass": true
+        },
+        {
+          "name": "fixed-login-bash: SSH 終了後のローカル出力",
+          "pass": true
+        },
+        {
+          "name": "fixed-login-bash: SSH 終了後のローカル cwd/プログラム",
+          "pass": true
+        },
+        {
+          "name": "fixed-login-bash: SSH 終了後の実行変数を消去",
+          "pass": true
+        },
+        {
+          "name": "fixed-login-bash: TERM_PROGRAM 未受信の通常プロファイル",
+          "pass": true
+        },
+        {
+          "name": "fixed-login-native: TERM_PROGRAM 未受信の通常プロファイル",
+          "pass": true
+        }
+      ]
+    },
+    "official_guards": {
+      "source_sha256": "40bbe213610c39019a1b394ae6a02dcc8b7dba64f2a87bdb7fbaca2a99532595",
+      "source_stable": true,
+      "official_sha256": "8635895db5fd8828e6f7654e015ddb8564ccec21179d2aca627e0329edf9b408",
+      "passed": 90,
+      "failed": 0,
+      "total": 90,
+      "case_results": [
+        {
+          "name": "tmux-environment",
+          "exit_code": 0,
+          "evaluations": 18,
+          "passed": 18
+        },
+        {
+          "name": "tmux-term-program",
+          "exit_code": 0,
+          "evaluations": 18,
+          "passed": 18
+        },
+        {
+          "name": "tmux-both",
+          "exit_code": 0,
+          "evaluations": 18,
+          "passed": 18
+        },
+        {
+          "name": "semantic-skip",
+          "exit_code": 0,
+          "evaluations": 18,
+          "passed": 18
+        },
+        {
+          "name": "blehook-stub",
+          "exit_code": 0,
+          "evaluations": 18,
+          "passed": 18
+        }
+      ]
+    }
+  }
+}

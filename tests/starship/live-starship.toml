@@ -1,0 +1,14 @@
+# 実ペインの比較用。表示・成功/失敗・所要時間を短く確実に確認する。
+add_newline = false
+format = '$directory$status$cmd_duration$character'
+[directory]
+style = 'blue'
+[status]
+disabled = false
+format = 'STATUS=$status '
+[cmd_duration]
+min_time = 0
+format = 'DURATION=$duration '
+[character]
+success_symbol = 'OK> '
+error_symbol = 'ERR> '
