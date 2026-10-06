@@ -1,0 +1,15 @@
+format = '$character$status$cmd_duration'
+add_newline = false
+
+[character]
+success_symbol = '[OK](green)'
+error_symbol = '[FAIL](red)'
+
+[status]
+disabled = false
+format = '[STATUS:$status]($style) '
+
+[cmd_duration]
+min_time = 0
+show_milliseconds = true
+format = '[DURATION:$duration]($style) '

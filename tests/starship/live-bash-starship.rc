@@ -1,0 +1,4 @@
+# プロファイル・履歴ファイルを変更せずに Starship と統合を読む。
+HISTFILE=/dev/null
+eval "$(starship init bash)"
+. "$WEZTERM_SHELL_INTEGRATION"

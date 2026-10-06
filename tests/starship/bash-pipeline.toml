@@ -1,0 +1,12 @@
+add_newline = false
+format = "$status$character"
+
+[status]
+disabled = false
+pipestatus = true
+format = "S=$status "
+pipestatus_format = "PIPE=$pipestatus -> S=$status "
+
+[character]
+success_symbol = "OK>"
+error_symbol = "ERR>"
