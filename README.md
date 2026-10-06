@@ -626,7 +626,7 @@ WezTerm は中で動いているプログラムを調べ、すべてが「確認
 Git Bash などは、Windows のプログラム名が `bash.exe` で一覧の `bash` と一致しないため、待機中でも確認が出ます。
 一覧に `bash.exe` を足すと待機中は確認なしで閉じられますが、**足さないでください**。
 Git Bash / MSYS2 から起動したプログラム（`vim`・`ssh`・`less` など）は Windows 上で親プロセスが消えるため
-WezTerm からは `bash.exe` しか見えず、vim の編集中でも確認なしで閉じてしまいます（実機で確認済み）。
+WezTerm からは `bash.exe` しか見えず、vim の編集中でも確認なしで閉じてしまいます。
 
 #### コマンドプロンプト（cmd）
 
@@ -685,7 +685,7 @@ WezTerm からは `bash.exe` しか見えず、vim の編集中でも確認な�
   入れ替わったか）で見分けます。成功は 0、コマンドレットのエラー・`throw` は 1、ネイティブコマンドは
   その終了コード（Windows PowerShell で `2>&1` を付けて stderr を受けた場合も、終了コード 0 なら成功）
 - 元の `prompt` 関数からは、直前のコマンドの成否（`$?`）がそのまま見えます
-  （`$?` で失敗を表示するテーマのため。oh-my-posh・starship そのものでは試していない）
+  （`$?` で失敗を表示するテーマのため）
 - プロファイルで `Set-StrictMode` を有効にしていても、プロンプトの中では切るので壊れません
 - `shell/wezterm.ps1` は **UTF-8 BOM 付き**で保存してください。Windows PowerShell 5.1 は
   BOM の無い `.ps1` を ANSI として読むため、日本語コメントが化けて構文エラーになります
@@ -785,12 +785,7 @@ AlmaLinux の COPR 版など、接続先で公式 Bash 統合が既に有効な�
 この設定が公式統合を補完します。接続先の `~/.bashrc` が修正版の `shell/wezterm.sh` を読む必要があります。
 公式の cwd・ユーザー変数を残し、Starship 後に入力範囲の印を付け直す構成です。
 
-外部の AlmaLinux 10 / aarch64 の 2 台で通常接続と、公式統合を止めた一時セッションを比較した修正前の結果は
-[追加検証の記録](docs/install.md#付録-os-通知と外部-ssh-の追加検証2026-10-06)に残しています。
-修正前の SSH 実機検証では、公式統合 → Starship の並びで入力開始の印が消え、出力コピーがログイン時の
-出力を選び続ける問題と独自通知の未送信を確認しました。当時の記録は [SSH 検証記録](tests/starship/SSH-REPORT.md)に残しています。
-公式 Bash 統合との共存を修正し、Windows と `kawasaki-pi` の配置先へ反映しました。通常 SSH の両接続経路で
-出力コピーと独自通知の成立を確認しています。修正内容と追加検証は [SSH 修正後の検証記録](tests/starship/SSH-FIX-REPORT.md)にあります。
+[SSH 共存修正前後の検証記録](docs/verification/readme.md#ssh-共存修正前後の検証2026-10-06)を参照してください。
 
 ### 迷子のマウス報告よけ
 
@@ -880,7 +875,9 @@ gui:
 | `lua/procs.lua` | 実行中のプログラムの判定（ssh 中か・タブのアイコン。`WEZTERM_PROG` も使う）。`apply` は持たない |
 | `shell/wezterm.sh` | シェル統合（bash / zsh）。OSC 7 / OSC 133 / 完了通知 / 実行中のコマンド（`WEZTERM_PROG`）/ 迷子のマウス報告よけ |
 | `shell/wezterm.ps1` | シェル統合（PowerShell）。OSC 7 / OSC 133 / 完了通知 |
-| `docs/install.md` | 導入の手順書（setup-notes と同じ書式。検証範囲は同書の「対象と検証環境」） |
+| `docs/install.md` | 導入の手順書（操作・前提・期待結果） |
+| `docs/verification/install.md` | 導入・GUI・シェル統合の検証記録 |
+| `docs/reference/install.md` | 導入の選定理由と技術的説明 |
 | `CLAUDE.md` | Claude Code 向けの、このリポジトリの構成と書き方の決まり |
 
 ## 使用している nightly 限定機能
@@ -922,13 +919,7 @@ wezterm --config-file "$PWD/wezterm.lua" show-keys
 bash -n shell/wezterm.sh && zsh -n shell/wezterm.sh
 ```
 
-Windows 11 の実ホストでの表示・シェル統合・通常分割などの検証範囲と修正結果は、
-[2026-10-06 の検証記録](docs/install.md#付録-windows-11-のホストでの動作検証2026-10-06)にあります。
-OS の通知バナー・外部 SSH と、入力操作ツールの制約は[追加検証](docs/install.md#付録-os-通知と外部-ssh-の追加検証2026-10-06)を参照してください。
-
-新規 AlmaLinux 10.2 / x86_64 VM で、共通 bash 分岐の導入、GNOME Wayland の実 GUI、
-Anthy の日本語変換、公式シェル統合、更新・設定の復帰も確認しました。
-今回実施していないキー操作・SSH / WSL の範囲は、[新規 VM の検証記録](docs/install.md#付録-現行版の新規-vm-での再検証2026-10-06)にあります。
+実施した環境・対象版・結果・未確認事項は [導入と動作の検証記録](docs/verification/install.md)、README にあった実機の記録は [README の検証記録](docs/verification/readme.md) を参照してください。
 
 ## トラブルシューティング
 
