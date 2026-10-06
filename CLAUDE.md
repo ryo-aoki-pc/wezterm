@@ -11,6 +11,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ビルド・テストフレームワークは無い。ドキュメント・コードのコメント・コミットメッセージは日本語で書く。検証していないことを「動く」と書かない。
 
+2026-10-06 に、新規 AlmaLinux 10.2 / x86_64 VM の共通 bash 分岐で配置・clone・実 GUI・公式シェル統合・Anthy の確定・更新・ロールバックを確認した。全キー操作、SSH / WSL 任意節、aarch64 GUI は今回未実施。版と範囲は `docs/install.md` の「現行版の新規 VM での再検証」に記録した。
+
 ## よく使うコマンド
 
 ```bash
