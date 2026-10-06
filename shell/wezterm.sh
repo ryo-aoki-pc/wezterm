@@ -49,6 +49,147 @@ __wz_mouse_off() {
 }
 
 if [ -n "${BASH_VERSION-}" ]; then
+	# 公式統合などが用意した bash-preexec は、dispatcher の先頭で終了コードと
+	# BP_PIPESTATUS を保存する。その前に自分のフックを入れない。
+	__wz_bash_preexec_active() {
+		[ -n "${bash_preexec_imported-}${__bp_imported-}" ] &&
+			declare -F __bp_precmd_invoke_cmd >/dev/null || return 1
+		local __wz_pc
+		for __wz_pc in "${PROMPT_COMMAND[@]-}"; do
+			case $__wz_pc in *'__bp_precmd_invoke_cmd'* | *'__bp_install'*) return 0 ;; esac
+		done
+		return 1
+	}
+
+	# Starship は precmd の最初に $? と PIPESTATUS を保存する。先にこちらの
+	# 関数を呼ぶとパイプの各終了コードが消えるため、フックはその後ろに置く。
+	__wz_starship_active() {
+		[ "${STARSHIP_SHELL-}" = bash ] || return 1
+		declare -F starship_precmd >/dev/null || return 1
+		local __wz_pc
+		for __wz_pc in "${PROMPT_COMMAND[@]-}"; do
+			case $__wz_pc in *starship_precmd*) return 0 ;; esac
+		done
+		if __wz_bash_preexec_active; then
+			for __wz_pc in "${precmd_functions[@]-}"; do
+				[ "$__wz_pc" = starship_precmd ] && return 0
+			done
+		fi
+		return 1
+	}
+
+	# 前の版が先頭に付けた自分のフックだけを外す。ユーザーのコードを
+	# セミコロンで分割したり、文字列の途中を置換したりしない。
+	__wz_strip_prompt_prefixes() {
+		__wz_prompt_code=$1
+		local __wz_dispatcher=
+		while :; do
+			case $__wz_prompt_code in
+			__wezterm_prompt_command | __wz_mouse_off) __wz_prompt_code=; break ;;
+			__wezterm_prompt_command\;*) __wz_prompt_code=${__wz_prompt_code#__wezterm_prompt_command;} ;;
+			__wz_mouse_off\;*) __wz_prompt_code=${__wz_prompt_code#__wz_mouse_off;} ;;
+			__wezterm_prompt_command$'\n'*) __wz_prompt_code=${__wz_prompt_code#__wezterm_prompt_command$'\n'} ;;
+			__wz_mouse_off$'\n'*) __wz_prompt_code=${__wz_prompt_code#__wz_mouse_off$'\n'} ;;
+			__bp_precmd_invoke_cmd$'\n'*)
+				# 初回の __bp_install が旧版の先頭フックを dispatcher の後ろへ移す。
+				# この既知の形だけ扱い、任意のユーザーコードは分割しない。
+				[ -z "$__wz_dispatcher" ] || break
+				__wz_dispatcher=$'__bp_precmd_invoke_cmd\n'
+				__wz_prompt_code=${__wz_prompt_code#$'__bp_precmd_invoke_cmd\n'}
+				;;
+			*) break ;;
+			esac
+		done
+		while :; do
+			case $__wz_prompt_code in
+			*$'\n'__wezterm_prompt_command) __wz_prompt_code=${__wz_prompt_code%$'\n'__wezterm_prompt_command} ;;
+			*$'\n'__wz_mouse_off) __wz_prompt_code=${__wz_prompt_code%$'\n'__wz_mouse_off} ;;
+			*) break ;;
+			esac
+		done
+		__wz_prompt_code=$__wz_dispatcher$__wz_prompt_code
+	}
+	if __wz_starship_active || __wz_bash_preexec_active; then
+		__wz_prompt_commands=()
+		for __wz_pc_code in "${PROMPT_COMMAND[@]-}"; do
+			__wz_strip_prompt_prefixes "$__wz_pc_code"
+			[ -n "$__wz_prompt_code" ] && __wz_prompt_commands+=("$__wz_prompt_code")
+		done
+		# 自分の単独フックを除いた空要素は残さない。先頭が空だと Starship の
+		# 再初期化が「未登録」と判断し、starship_precmd をもう一つ足してしまう。
+		# スカラーのコードも 1 要素として保持する（末尾コメント等を壊さない）。
+		PROMPT_COMMAND=("${__wz_prompt_commands[@]}")
+		# 統合を先に読んだ古い .bashrc からの復旧。Starship が退避した
+		# 自分のフックを外してから、以下で PROMPT_COMMAND の後ろに付け直す。
+		if [ -n "${STARSHIP_PROMPT_COMMAND-}" ]; then
+			__wz_strip_prompt_prefixes "$STARSHIP_PROMPT_COMMAND"
+			STARSHIP_PROMPT_COMMAND=$__wz_prompt_code
+		fi
+		unset __wz_pc_code __wz_prompt_code __wz_prompt_commands
+	fi
+	if __wz_bash_preexec_active && __wz_starship_active; then
+		# Starship の bash-preexec 経路は再 init のたびに同じ関数を append する。
+		# 統合を読み直したときは最初の登録だけ残し、他の関数の順序を保つ。
+		__wz_prompt_commands=() __wz_starship_seen=
+		for __wz_pc_code in "${precmd_functions[@]-}"; do
+			if [ "$__wz_pc_code" = starship_precmd ]; then
+				[ -z "$__wz_starship_seen" ] || continue
+				__wz_starship_seen=1
+			fi
+			__wz_prompt_commands+=("$__wz_pc_code")
+		done
+		precmd_functions=("${__wz_prompt_commands[@]}")
+		__wz_prompt_commands=() __wz_starship_seen=
+		for __wz_pc_code in "${preexec_functions[@]-}"; do
+			if [ "$__wz_pc_code" = starship_preexec_all ]; then
+				[ -z "$__wz_starship_seen" ] || continue
+				__wz_starship_seen=1
+			fi
+			__wz_prompt_commands+=("$__wz_pc_code")
+		done
+		preexec_functions=("${__wz_prompt_commands[@]}")
+		unset __wz_pc_code __wz_prompt_commands __wz_starship_seen
+	fi
+
+	# 配列なら全要素を調べ、既存フックを重ねない。既存のコードと配列の
+	# 順番は保ち、Starship があるときは末尾、ないときは先頭に加える。
+	__wz_add_prompt_hook() {
+		local __wz_hook=$1 __wz_pc __wz_decl
+		for __wz_pc in "${PROMPT_COMMAND[@]-}"; do
+			case ";${__wz_pc//$'\n'/;};" in *";$__wz_hook;"*) return 0 ;; esac
+		done
+		__wz_decl=$(declare -p PROMPT_COMMAND 2>/dev/null) || __wz_decl=
+		if __wz_bash_preexec_active; then
+			local __wz_has_mode= __wz_hooks=()
+			for __wz_pc in "${PROMPT_COMMAND[@]-}"; do
+				if [ "$__wz_pc" = __bp_interactive_mode ] && [ -z "$__wz_has_mode" ]; then
+					__wz_hooks+=("$__wz_hook")
+					__wz_has_mode=1
+				fi
+				__wz_hooks+=("$__wz_pc")
+			done
+			if [ -n "$__wz_has_mode" ]; then
+				# interactive_mode の直前に入れ、途中の既存 PC 要素も温存する。
+				# その後に置くと DEBUG trap が mode を消し、次の preexec が動かない。
+				PROMPT_COMMAND=("${__wz_hooks[@]}")
+			else
+				# 初回 install 前は scalar の末尾へ足す。__bp_install 自身が
+				# dispatcher の後、interactive_mode の前へ移してくれる。
+				# 改行で足し、既存コードの末尾コメントを壊さない。
+				PROMPT_COMMAND[0]="${PROMPT_COMMAND[0]-}${PROMPT_COMMAND[0]:+$'\n'}$__wz_hook"
+			fi
+		elif __wz_starship_active; then
+			case $__wz_decl in
+			'declare -a'*) PROMPT_COMMAND+=("$__wz_hook") ;;
+			*) PROMPT_COMMAND="${PROMPT_COMMAND:+$PROMPT_COMMAND;}$__wz_hook" ;;
+			esac
+		else
+			case $__wz_decl in
+			'declare -a'*) PROMPT_COMMAND=("$__wz_hook" "${PROMPT_COMMAND[@]}") ;;
+			*) PROMPT_COMMAND="$__wz_hook${PROMPT_COMMAND:+;$PROMPT_COMMAND}" ;;
+			esac
+		fi
+	}
 	case $- in
 	*i*)
 		# readline に \e[< を食わせ、終端の M / m まで読み捨てる。
@@ -63,11 +204,7 @@ if [ -n "${BASH_VERSION-}" ]; then
 		;;
 	esac
 
-	case "${PROMPT_COMMAND-}" in
-	*__wz_mouse_off*) ;;
-	"") PROMPT_COMMAND="__wz_mouse_off" ;;
-	*) PROMPT_COMMAND="__wz_mouse_off;$PROMPT_COMMAND" ;;
-	esac
+	__wz_add_prompt_hook __wz_mouse_off
 elif [ -n "${ZSH_VERSION-}" ]; then
 	case $- in
 	*i*)
@@ -91,14 +228,41 @@ elif [ -n "${ZSH_VERSION-}" ]; then
 	add-zsh-hook precmd __wz_mouse_off
 fi
 
-# 公式のシェル統合 (Linux 版パッケージが入れる /etc/profile.d/wezterm.sh など) が
-# 既に読まれている環境では、OSC 7 / OSC 133 は向こうに任せて抜ける。
-# 重ねると __wezterm_osc7 を同名で上書きし、公式側のフックを壊してしまう。
-# ※ マウス報告よけは上で済ませてあるので、ここで抜けても効いたまま
-command -v __wezterm_set_user_var >/dev/null 2>&1 && return 0
+# 公式の bash 統合は Starship より先に PS1 を包み、後で入力開始の印が消える。
+# bash-preexec の状態保存・cwd・ユーザー変数は温存し、semantic の担当だけ
+# 下の独自処理へ移す。公式関数の定義は上書きしない。
+__wz_official_bash=
+if command -v __wezterm_set_user_var >/dev/null 2>&1; then
+	if [ -n "${BASH_VERSION-}" ] && __wz_bash_preexec_active &&
+		[ -z "${BLE_VERSION-}${TMUX-}${WEZTERM_SHELL_SKIP_SEMANTIC_ZONES-}" ] &&
+		[ "${TERM_PROGRAM-}" != tmux ]; then
+		__wz_official_bash=1
+		__wz_functions=()
+		for __wz_fn in "${precmd_functions[@]-}"; do
+			[ "$__wz_fn" = __wezterm_semantic_precmd ] || __wz_functions+=("$__wz_fn")
+		done
+		precmd_functions=("${__wz_functions[@]}")
+		__wz_functions=()
+		for __wz_fn in "${preexec_functions[@]-}"; do
+			[ "$__wz_fn" = __wezterm_semantic_preexec ] || __wz_functions+=("$__wz_fn")
+		done
+		preexec_functions=("${__wz_functions[@]}")
+		unset __wz_functions __wz_fn
+		# 稼働中の公式プロンプトから移行する場合だけ、保存された元の値へ戻す。
+		if [ -n "${__wezterm_save_ps1+set}" ] && [ "${PS1-}" = "${__wezterm_check_ps1-}" ]; then
+			PS1=$__wezterm_save_ps1
+			PS2=${__wezterm_save_ps2-}
+		fi
+		# 公式 user-vars はこの変数を未設定のまま参照するので nounset を補う。
+		: "${WEZTERM_HOSTNAME:=}"
+	else
+		# zsh / ble.sh / tmux と semantic を明示的に無効化した環境は公式へ任せる。
+		return 0
+	fi
+fi
 
-# WezTerm 以外の端末で読み込まれても無害なように何もせず抜ける
-[ "${TERM_PROGRAM-}" = "WezTerm" ] || return 0
+# SSH では TERM_PROGRAM が届かなくても、既に有効な公式 bash 統合を補完する。
+[ "${TERM_PROGRAM-}" = "WezTerm" ] || [ -n "$__wz_official_bash" ] || return 0
 
 # 読み込んだ印（確かめる用。何度読まれてもフックや印は重ならないので、ここでは抜けない）
 __wezterm_integration_loaded=1
@@ -122,7 +286,7 @@ esac
 # cygpath があれば "C:/Users/..." に変換する（WSL / Linux / macOS では変換しない）。
 # 変換とエンコードはディレクトリが変わったときだけ行い、結果（__wz_osc7_path）を使い回す
 # （Git Bash では cygpath の起動に 1 回 40ms ほどかかり、プロンプトごとだと待たされる）
-__wezterm_osc7() {
+__wz_osc7() {
 	if [ "$PWD" != "${__wz_osc7_pwd-}" ]; then
 		__wz_osc7_pwd=$PWD
 		local __wz_dir=$PWD
@@ -198,7 +362,7 @@ if [ -n "${ZSH_VERSION-}" ]; then
 				__wezterm_notify_done "$__wz_status" "$__wz_elapsed" "$__wz_cmd"
 			unset __wz_cmd_start __wz_cmd
 		fi
-		__wezterm_osc7
+		__wz_osc7
 		printf '\033]133;A\033\\'
 		# 入力の開始 (B) が無ければ付ける。テーマがプロンプトを毎回作り直しても付け直せるよう、
 		# プロンプトごとに確かめる（B が無いと入力の範囲ができず、直前の出力をコピーできない）
@@ -245,11 +409,18 @@ __wezterm_b64() {
 }
 
 # ユーザー変数を送る（OSC 1337 SetUserVar）。値は先頭 200 文字まで（貼り付けた長い
-# コマンドでも変換の手間と送る量を抑える。今のロケールの文字単位で切るので、UTF-8 の
-# 途中では切れない）
+# コマンドでも変換の手間と送る量を抑える）。Git Bash は絵文字を UTF-16 の
+# 2 単位として数えるので、境界で切れた上位サロゲートは落としてから送る。
 # 引数: $1 = 名前, $2 = 値
 __wezterm_uservar() {
-	__wezterm_b64 "${2:0:200}"
+	local __wz_value=${2:0:200} __wz_tail
+	if ((${#2} > 200)); then
+		printf -v __wz_tail %d "'${__wz_value: -1}"
+		if ((__wz_tail >= 0xD800 && __wz_tail <= 0xDBFF)); then
+			__wz_value=${__wz_value:0:199}
+		fi
+	fi
+	__wezterm_b64 "$__wz_value"
 	printf '\033]1337;SetUserVar=%s=%s\033\\' "$1" "$__wz_b64"
 }
 
@@ -302,6 +473,13 @@ __wezterm_ps0() {
 # 最後に $? を元の値で返す（後ろに並ぶ __wz_mouse_off・zoxide などのフックのため）
 __wezterm_prompt_command() {
 	local __wz_status=$?
+	# Starship が先に動く構成では、後続フックの $? ではなく保存済みの値を使う。
+	# 検出を毎回行い、Starship を使わなくなったシェルの古い値は参照しない。
+	if __wz_bash_preexec_active; then
+		__wz_status=${__bp_last_ret_value:-$__wz_status}
+	elif __wz_starship_active; then
+		__wz_status=${STARSHIP_CMD_STATUS:-$__wz_status}
+	fi
 	printf '\033]133;D;%s\033\\' "$__wz_status"
 	# __wz_cmd_start は下の PS0 がコマンド実行直前に入れる。空 Enter では PS0 が
 	# 展開されないので未設定のまま = コマンドは走っていない
@@ -319,15 +497,13 @@ __wezterm_prompt_command() {
 	fi
 	# 次のコマンドが履歴に入ったかを見分ける基準（__wezterm_hist_ok）
 	__wz_hist_prompt=$HISTCMD
-	__wezterm_osc7
+	[ -n "$__wz_official_bash" ] || __wz_osc7
+	# Starship が毎回 PS1 を作り直した後に、プロンプト・入力の印を付け直す。
+	__wezterm_mark_prompt
 	return "$__wz_status"
 }
 
-case "${PROMPT_COMMAND-}" in
-*__wezterm_prompt_command*) ;;
-"") PROMPT_COMMAND="__wezterm_prompt_command" ;;
-*) PROMPT_COMMAND="__wezterm_prompt_command;$PROMPT_COMMAND" ;;
-esac
+__wz_add_prompt_hook __wezterm_prompt_command
 
 # PS0 はコマンドを読み取ってから実行する直前に展開される = 出力の開始位置 (C)
 # ※ PS1 と違い \[ \] で囲まない。あれは readline の幅計算用マーカーで、
@@ -349,28 +525,30 @@ case ${PS0-} in
 esac
 unset __wz_ps0_prog
 
-# PS1 は置き換えず前後に印だけ足す。
+# PS1 は置き換えず前後に印だけ足す。プロンプトごとに呼び、テーマが PS1 を
+# 作り直した場合も復帰する。既にある印は重ねない。
 # Git Bash の /etc/profile.d/git-prompt.sh が組み立てたブランチ表示付き
 # プロンプトをそのまま活かすため、この形を崩さないこと。
-# starship などは precmd で PS1 を毎回作り直すので、既存の PROMPT_COMMAND の後で
-# 印を確かめて足し直す。\[ \] は「幅ゼロ」と bash に伝える（折り返し位置のずれを防ぐ）
-__wezterm_prompt_marks() {
-	local __wz_status=$?
+# \[ \] で囲むのは「幅ゼロ」と bash に伝えるため（折り返し位置がずれるのを防ぐ）
+__wezterm_mark_prompt() {
+	case ${PS1-} in
+	*'133;A'*) ;;
+	*) PS1='\[\033]133;A\007\]'"${PS1-}" ;;
+	esac
 	case ${PS1-} in
 	*'133;B'*) ;;
-	*) PS1='\[\033]133;A\007\]'"${PS1-}"'\[\033]133;B\007\]' ;;
+	*) PS1=${PS1-}'\[\033]133;B\007\]' ;;
 	esac
-	return "$__wz_status"
+	if [ -n "$__wz_official_bash" ]; then
+		# 公式から引き継いだ複数行入力の継続プロンプトも区切る。
+		case ${PS2-} in
+		*'133;P;k=s'*) ;;
+		*) PS2='\[\033]133;P;k=s\007\]'"${PS2-}" ;;
+		esac
+		case ${PS2-} in
+		*'133;B'*) ;;
+		*) PS2=${PS2-}'\[\033]133;B\007\]' ;;
+		esac
+	fi
 }
-case "${PROMPT_COMMAND[*]-}" in
-*__wezterm_prompt_marks*) ;;
-*)
-	# 配列の場合は最後の要素に足す。文字列の場合は元の文を残して末尾に足す。
-	# 配列の先頭だけに連結すると、後ろの要素で PS1 が作り直された場合に印が消える
-	case $(declare -p PROMPT_COMMAND 2>/dev/null) in
-	'declare -a'*) PROMPT_COMMAND+=(__wezterm_prompt_marks) ;;
-	*) PROMPT_COMMAND="${PROMPT_COMMAND:+$PROMPT_COMMAND;}__wezterm_prompt_marks" ;;
-	esac
-	;;
-esac
-__wezterm_prompt_marks
+__wezterm_mark_prompt
