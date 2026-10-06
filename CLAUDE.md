@@ -7,11 +7,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 [WezTerm](https://wezterm.org/) の nightly 向けの個人設定。Windows 11（既定のシェルは Git Bash）が主で、Linux（GNOME Wayland）と macOS でも同じ設定が動くように書いてある。`~/.config/wezterm`（Windows は `%USERPROFILE%\.config\wezterm`）に clone して使う。
 
 - 機能・キー操作・シェル統合の仕組みの説明は `README.md`（参照用）
-- 導入の手順は `docs/install.md`（手順書。[setup-notes](https://github.com/ryo-aoki-pc/setup-notes) と同じ書式。下の「docs/install.md の書き方」）
+- 導入の手順は `docs/install.md`（下の「docs/install.md の書き方」）
+- 過去の検証環境・実施日・対象コミット・実出力・結果・未確認事項は `docs/verification/install.md`、選定理由と技術的説明は `docs/reference/install.md`
 
 ビルド・テストフレームワークは無い。ドキュメント・コードのコメント・コミットメッセージは日本語で書く。検証していないことを「動く」と書かない。
-
-2026-10-06 に、新規 AlmaLinux 10.2 / x86_64 VM の共通 bash 分岐で配置・clone・実 GUI・公式シェル統合・Anthy の確定・更新・ロールバックを確認した。全キー操作、SSH / WSL 任意節、aarch64 GUI は今回未実施。版と範囲は `docs/install.md` の「現行版の新規 VM での再検証」に記録した。
 
 ## よく使うコマンド
 
@@ -26,7 +25,7 @@ wezterm --config-file "$PWD/wezterm.lua" show-keys
 bash -n shell/wezterm.sh && zsh -n shell/wezterm.sh
 ```
 
-- 画面の無い環境でシェル統合を試すときは、`wezterm-mux-server --daemonize` を起動し、`wezterm cli spawn` / `send-text --no-paste` / `get-text` / `list` を使う（`docs/install.md` の付録と同じ方法。設定の `set_environment_variables` が効き、シェルはログインシェルで起動する）
+- 画面の無い環境でシェル統合を試すときは、`wezterm-mux-server --daemonize` を起動し、`wezterm cli spawn` / `send-text --no-paste` / `get-text` / `list` を使う（`docs/verification/install.md` のコンテナ記録と同じ方法。設定の `set_environment_variables` が効き、シェルはログインシェルで起動する）
 - AlmaLinux 10 のコンテナで WezTerm を入れるときは、setup-notes の `docs/wezterm-nightly.md` の手順（COPR の `rhel-9-<arch>` を明示）
 
 ## 構成
@@ -46,9 +45,9 @@ bash -n shell/wezterm.sh && zsh -n shell/wezterm.sh
 - コマンドパレットの項目（`lua/palette.lua` の `ENTRIES`）→ README の「コマンドパレットの独自項目」
 - nightly だけの設定を使ったとき → README の「使用している nightly 限定機能」の表
 - よく変える値の場所を動かしたとき → README の「カスタマイズの勘所」、ファイルを足したとき → README の「ファイル構成」
-- 導入のしかたが変わる変更（配置先、シェル統合の読み込み方・環境変数、`lua/shells.lua` の `set_environment_variables`）→ `docs/install.md` の手順と、補足の「状態」行・注意点
-  - AlmaLinux 10 の COPR 版は `/etc/profile.d/wezterm.sh`（公式の統合）が先に読まれる。Bash では公式の cwd・ユーザー変数・bash-preexec を保ち、semantic の 2 callback だけを独自処理へ移して完了通知を補う。`WEZTERM_SHELL_SKIP_ALL=1` は渡さない。公式との担当や確かめ用の関数が変わったら、`docs/install.md` の手順 9 と注意点を合わせる
-  - シェル統合を読む 1 行や置き場所を変えたら、自分用の bash の設定（`ryo-aoki-pc/bash`）の `bashrc`・`migrate/old-lines.txt` も直す。その設定は、starship → この統合 → zoxide の順に読む（`PROMPT_COMMAND`・`PS0` の扱いを変えたら、その README の「読む順番」の実測を取り直す）
+- 導入のしかたが変わる変更（配置先、シェル統合の読み込み方・環境変数、`lua/shells.lua` の `set_environment_variables`）→ `docs/install.md` の手順と `docs/reference/install.md` の注意点。検証を行ったら `docs/verification/install.md` に対象版と結果を追加する
+  - AlmaLinux 10 の COPR 版は `/etc/profile.d/wezterm.sh`（公式の統合）が先に読まれる。Bash では公式の cwd・ユーザー変数・bash-preexec を保ち、semantic の 2 callback だけを独自処理へ移して完了通知を補う。`WEZTERM_SHELL_SKIP_ALL=1` は渡さない。公式との担当や確かめ用の関数が変わったら、`docs/install.md` の手順 9 と `docs/reference/install.md` の注意点を合わせる
+  - シェル統合を読む 1 行や置き場所を変えたら、自分用の bash の設定（`ryo-aoki-pc/bash`）の `bashrc`・`migrate/old-lines.txt` も直す。その設定は、starship → この統合 → zoxide の順に読む（`PROMPT_COMMAND`・`PS0` の扱いを変えたら、bash リポジトリの検証記録にある「読む順番」の実測を取り直す）
 
 ## コードの注意
 
@@ -75,21 +74,14 @@ bash -n shell/wezterm.sh && zsh -n shell/wezterm.sh
 
 ## docs/install.md の書き方
 
-setup-notes の手順書と同じ骨格にする。要点:
-
-- タイトルの直後に `## 実施手順` を置き、手順は**番号付きリスト 1 つ**（マーカーはすべて `1.`、本文は 3 スペース字下げ）
-  - リードの `> [!IMPORTANT]` に実行する場所・前提・対話や切り替えのある手順、続けて読み方の箇条書き、検証範囲の `> [!WARNING]`
-  - 変数は置かない（URL と置き場所は固定）。変える必要の無い値はコマンドに直接書く
-- 各手順は「1 行の説明（「〜する。」）→ コマンドのブロック → 箇条書き（確認・分岐・注意）→ 折り畳み 1 つ（`<details>` / `<summary>補足: 〜</summary>`、前後に空行）」
-  - 箇条書きは 1 項目 1 事実で、末尾に「。」を付けない。理由・実測・出力例は折り畳みへ
-  - 条件付きの手順は 1 行の説明に条件を書き、判定する手順の箇条書きに「〜なら、手順 N は飛ばす」、代わりに行う手順は「（手順 N の代わりに）」
-  - コマンドの無い操作（WezTerm を起動し直す、`~/.ssh/config` をエディタで直す、別のタブで ssh する）も独立した手順にし、次にコマンドを貼る手順の直前に「**次の手順は、〜してから貼る**」を置く
-  - `sudo` の後ろに行が続くブロックは `{` と `}` の行で囲む。`sudo` のパスワードを聞かれうる手順は「**次の手順は、`sudo` のパスワードを聞かれたら答えてから貼る**」で終える
-  - `<...>` を含むコマンドはブロックに置かず、箇条書きのインラインコードにする。出力例の値は `<USER>` / `<HOST>` などのプレースホルダで書く
-- 手順の後ろに任意の節（WSL・ssh 先）・`## 更新`・`## ロールバック`（リード → 番号付きリスト → `---`。節ごとに 1 から数える）、最後に `## 補足`（対象と検証環境・実施前の状態・選択した方針・完了時点の状態・注意点・参照・付録）
-- 手順の参照は、`## 実施手順` の中では「手順 N」、ほかの節からは `[手順 N](#実施手順)`、その節の中は「この節の手順 N」。手順を分けたりまとめたりしたら番号を付け替える（README の `docs/install.md#実施手順` へのリンクの番号も）
-- アラートは本文の最上位にだけ置き（リストや `<details>` の中では描画されない）、1 文書に 5 つまで。取り戻せない削除のある節は `> [!CAUTION]` で手順を名指しし、その手順の説明に「（取り戻せない）」
-- 閉じの `**` を約物に接して閉じない（`**…（…）**を` は太字にならない）
-- 補足の「状態」行は、何を通したか・確認したこと・確認していないことの入れ子の箇条書き。**検証範囲が変わったら、状態行・リードの `> [!WARNING]`・付録を合わせて直す**。付録（検証記録）は書き直さない（手順番号の付け替えだけ）
-- コマンドは実際に実行したものを載せる。手順書のブロックを変えたら、コンテナなどで抜き出して流し直してから「検証済み」と書く
-- パスワード・鍵・トークンは書かない
+- タイトルの下に検証記録と参照情報へのリンクを置き、`## 実施手順`、任意の WSL・ssh、更新、ロールバックの順に並べる。手順書には手順と実行に必要な前提・分岐・注意・期待結果だけを載せる。
+- 過去の検証環境・日付・コミット・実測・失敗・未確認事項は `docs/verification/install.md` に置く。検証記録の既存本文は実施時点のまま保持し、番号やリンクの追従で範囲を広げない。再検証したら対象版と範囲を明記して追加する。
+- 選定理由・仕様・技術的な説明は `docs/reference/install.md` に置く。手順書へ背景説明の折り畳み・補足・検証付録は追加しない。
+- 各節はリード → 番号付きリスト → `---` の順。マーカーはすべて `1.`、本文は 3 スペース字下げ。各手順は「1 行の説明（〜する。）→ bash のブロック → 確認・分岐・注意の箇条書き」にする。
+- リードの `[!IMPORTANT]` に実行する場所・ユーザー・前提・対話や切り替えのある手順を示す。URL と置き場所は固定で、変える必要の無い変数は作らない。
+- 条件付きの手順は説明に条件を書く。判定側に飛ばす手順を示し、代わりの手順は「（手順 N の代わりに）」と書く。コマンドの無いウィンドウ・エディタ・タブの操作も独立した手順にする。
+- 待機や場所の切り替えがある手順の末尾は「**次の手順は、〜してから貼る**」。sudo の後ろに行が続くブロックは `{` と `}` で囲み、パスワード応答が要る手順は応答してから次を貼ることを書く。
+- 箇条書きは 1 項目 1 事実、末尾に「。」を付けない。`<...>` を含むコマンドはブロックに置かずインラインコードにする。出力の期待値は `<USER>` / `<HOST>` などのプレースホルダで書く。
+- 手順の参照は実施手順内では「手順 N」、他の節からは `[手順 N](docs/install.md#実施手順)`、同じ節では「この節の手順 N」。手順を変えたら README・参照情報・検証記録の番号とリンクを追従する。
+- アラートは最上位にだけ置き、1 文書に 5 つまで。取り戻せない削除は節の `[!CAUTION]` と手順の説明で示す。閉じの `**` は約物に接して閉じない。
+- 手順のコマンドを変更したら該当する分岐を実行して記録する。実行していないものを「検証済み」と書かない。パスワード・鍵・トークンは記載しない。
