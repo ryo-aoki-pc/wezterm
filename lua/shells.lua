@@ -5,7 +5,7 @@ local M = {}
 -- シェル統合スクリプト（OSC 7 でカレントディレクトリ、OSC 133 でプロンプト位置を通知）。
 -- bash 系は環境変数 WEZTERM_SHELL_INTEGRATION でパスを渡し、~/.bashrc の 1 行に
 -- 読み込ませる。PowerShell 系は起動引数でドットソースするので追記は不要。
--- 詳細は shell/wezterm.sh / shell/wezterm.ps1 と README を参照
+-- 詳細は shell/wezterm.sh / shell/wezterm.ps1 と docs/reference/shell-integration.md を参照
 local INTEGRATION_SH = wezterm.config_dir .. "/shell/wezterm.sh"
 local INTEGRATION_PS1 = wezterm.config_dir .. "/shell/wezterm.ps1"
 

@@ -6,7 +6,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 [WezTerm](https://wezterm.org/) の nightly 向けの個人設定。Windows 11（既定のシェルは Git Bash）が主で、Linux（GNOME Wayland）と macOS でも同じ設定が動くように書いてある。`~/.config/wezterm`（Windows は `%USERPROFILE%\.config\wezterm`）に clone して使う。
 
-- 機能・キー操作・シェル統合の仕組みの説明は `README.md`（参照用）
+- `README.md` は概要・要件・導入入口・機能早見表、目的別の文書索引は `docs/README.md`
+- 機能・キー操作は `docs/usage.md`、動作確認と症状別の対処は `docs/troubleshooting.md`
+- シェル統合の仕様は `docs/reference/shell-integration.md`、カスタマイズ・構成・nightly 限定機能・見送った設定は `docs/reference/configuration.md`
 - 導入の手順は `docs/install.md`（下の「docs/install.md の書き方」）
 - 過去の検証環境・実施日・対象コミット・実出力・結果・未確認事項は `docs/verification/install.md`、選定理由と技術的説明は `docs/reference/install.md`
 
@@ -38,13 +40,20 @@ bash -n shell/wezterm.sh && zsh -n shell/wezterm.sh
 - `shell/wezterm.sh` — bash / zsh のシェル統合（OSC 7・OSC 133・完了通知のユーザー変数・実行中のコマンドのユーザー変数 `WEZTERM_PROG`・迷子のマウス報告よけ）。`~/.bashrc` の 1 行で読む
 - `shell/wezterm.ps1` — PowerShell のシェル統合。**UTF-8 の BOM 付き**で保存する（Windows PowerShell 5.1 は BOM の無い `.ps1` を ANSI として読み、日本語のコメントで構文エラーになる）
 - `docs/install.md` — 導入の手順書
+- `docs/README.md` — 導入・操作・保守・仕様・検証を目的から探す索引
+- `docs/usage.md` — 機能とキー・マウス操作
+- `docs/troubleshooting.md` — 再実行できる動作確認と症状別の対処
+- `docs/reference/` — 導入の背景、シェル統合の仕様、設定値と実装ファイルの参照
+- `docs/verification/` — 実施済みの検証結果。`readme.md` は旧 README から移した記録
 
 ## 変えたら合わせて直すもの
 
-- キー・マウスの割り当て（`lua/bindings.lua`）→ README の「機能早見表」「キーバインド」の表と、`lua/bindings.lua` の冒頭のコメントの一覧
-- コマンドパレットの項目（`lua/palette.lua` の `ENTRIES`）→ README の「コマンドパレットの独自項目」
-- nightly だけの設定を使ったとき → README の「使用している nightly 限定機能」の表
-- よく変える値の場所を動かしたとき → README の「カスタマイズの勘所」、ファイルを足したとき → README の「ファイル構成」
+- キー・マウスの割り当て（`lua/bindings.lua`）→ README の「機能早見表」、`docs/usage.md` の「キーバインド」の表と、`lua/bindings.lua` の冒頭のコメントの一覧
+- コマンドパレットの項目（`lua/palette.lua` の `ENTRIES`）→ `docs/usage.md` の「コマンドパレットの独自項目」
+- nightly だけの設定を使ったとき → `docs/reference/configuration.md` の「使用している nightly 限定機能」の表
+- よく変える値の場所を動かしたとき → `docs/reference/configuration.md` の「カスタマイズの勘所」、ファイルを足したとき → 同文書の「ファイル構成」
+- シェル統合の仕様・シェルごとの対応が変わったとき → `docs/reference/shell-integration.md` と `docs/usage.md` の関連機能、確認コマンドや対処が変わったとき → `docs/troubleshooting.md`
+- 文書を追加・移動したとき → README の「文書索引」と `docs/README.md`、内部リンク・コードコメント・この文書の参照先を合わせる。導入操作は `docs/install.md` に保ち、検証記録はリンクと参照先以外の既存本文を保持する
 - 導入のしかたが変わる変更（配置先、シェル統合の読み込み方・環境変数、`lua/shells.lua` の `set_environment_variables`）→ `docs/install.md` の手順と `docs/reference/install.md` の注意点。検証を行ったら `docs/verification/install.md` に対象版と結果を追加する
   - AlmaLinux 10 の COPR 版は `/etc/profile.d/wezterm.sh`（公式の統合）が先に読まれる。Bash では公式の cwd・ユーザー変数・bash-preexec を保ち、semantic の 2 callback だけを独自処理へ移して完了通知を補う。`WEZTERM_SHELL_SKIP_ALL=1` は渡さない。公式との担当や確かめ用の関数が変わったら、`docs/install.md` の手順 9 と `docs/reference/install.md` の注意点を合わせる
   - シェル統合を読む 1 行や置き場所を変えたら、自分用の bash の設定（`ryo-aoki-pc/bash`）の `bashrc`・`migrate/old-lines.txt` も直す。その設定は、starship → この統合 → zoxide の順に読む（`PROMPT_COMMAND`・`PS0` の扱いを変えたら、bash リポジトリの検証記録にある「読む順番」の実測を取り直す）

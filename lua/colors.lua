@@ -1,6 +1,6 @@
 local M = {}
 
--- 色は Tokyo Night（night）から選んでいる。役割は README の「配色」の表と同じ
+-- 色は Tokyo Night（night）から選んでいる。役割は docs/usage.md の「配色」の表と同じ
 M.palette = {
 	bg = "#1a1b26",
 	fg = "#c0caf5",

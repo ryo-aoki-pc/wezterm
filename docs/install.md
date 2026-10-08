@@ -15,7 +15,7 @@
 - 上から順にコードブロックを貼る
 - フォントの HackGen Console NF は任意（無くてもほかのフォントで動く）。AlmaLinux 10 は setup-notes の [hackgen.md](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/hackgen.md) で入れる
 - 手順の後: WSL や ssh 先でも使うなら[WSL でもシェル統合を使う（任意）](#wsl-でもシェル統合を使う任意)・[ssh 先でもシェル統合を使う（任意）](#ssh-先でもシェル統合を使う任意)。以後は[更新](#更新)・[ロールバック](#ロールバック)
-- 機能とキー操作は [README](../README.md) にある
+- 機能とキー操作は [操作ガイド](usage.md)、目的別の文書索引は [文書案内](README.md) にある
 
 
 1. 既存の WezTerm の設定があるか確かめる。

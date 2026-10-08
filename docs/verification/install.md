@@ -98,7 +98,7 @@ LeftToRight
 ```
 
 - どちらも終了コードは 0 のままなので、出力の `ERROR` の行で判断する
-- `wezterm show-keys` は、設定を読めなくても何も言わずに既定のキーの一覧を出す（README の「動作確認」）ので、この確かめには使わない
+- `wezterm show-keys` は、設定を読めなくても何も言わずに既定のキーの一覧を出す（旧 README の「[動作確認](../troubleshooting.md#動作確認)」）ので、この確かめには使わない
 - `| head` で切ると、パイプが閉じて終了コードが 101 になる（setup-notes の [wezterm-nightly.md 手順 4](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/wezterm-nightly.md#実施手順) の補足）ので、付けていない
 
 ### 実施手順 — 手順 5: starship の行より後ろ、zoxide の行より前に置く理由
@@ -166,12 +166,12 @@ acceptenv TERM_PROGRAM
 
   - Windows の WezTerm も `%USERPROFILE%\.config\wezterm\wezterm.lua` を読む。2026-10-06 に、既存配置の設定読み込みと新規 GUI の起動を確認した（clone・退避・ロールバックの全手順は未実施）
   - 公式の統合は `WEZTERM_SHELL_SKIP_ALL=1` で止まる。検証コンテナで、この値を付けて起動したシェル（`wezterm cli spawn -- env WEZTERM_SHELL_SKIP_ALL=1 bash -l`）では、この設定の統合がすべて読まれた。この設定の `lua/shells.lua` は、まだこの値を渡していない
-  - stable では、nightly だけの設定（README の「使用している nightly 限定機能」）が `ERROR  wezterm_gui >` になり、組み込みの既定の設定で開く見込み（stable では試していない。存在しない設定名を足したときの出方は、手順 4 の補足）
+  - stable では、nightly だけの設定（旧 README の「[使用している nightly 限定機能](../reference/configuration.md#使用している-nightly-限定機能)」）が `ERROR  wezterm_gui >` になり、組み込みの既定の設定で開く見込み（stable では試していない。存在しない設定名を足したときの出方は、手順 4 の補足）
   - Windows では、`wezterm.exe` と同じフォルダーの `wezterm.lua` も探される（公式の [Configuration Files](https://wezterm.org/config/files.html)。試していない）
   - AlmaLinux 10（COPR の WezTerm）では `D` は公式の統合が送るので、どちらの並びでも失敗したコマンドは `D;1` になる（上流の `wezterm.sh` を読ませた模擬での実測）
   - 2026-09-30 の検証では、どの並びでも Starship が PS1 の OSC 133 A / B を消した。この設定の統合を使う場合は 2026-10-06 の修正で印が戻る。公式統合が先に読まれる環境の制限は[追加検証](#付録-os-通知と外部-ssh-の追加検証2026-10-06)
 - **Git Bash の `~/.bash_profile`**（試していない）
-  - `C:\msys64\home\<WIN_USER>\.bashrc` と `C:\QMK_MSYS\home\<WIN_USER>\.bashrc` にも、手順 6 の 1 行を足す（README の「bash（Git Bash / MSYS2 / QMK MSYS / Linux）と zsh」。試していない）
+  - `C:\msys64\home\<WIN_USER>\.bashrc` と `C:\QMK_MSYS\home\<WIN_USER>\.bashrc` にも、手順 6 の 1 行を足す（旧 README の「[bash（Git Bash / MSYS2 / QMK MSYS / Linux）と zsh](../reference/shell-integration.md#bashgit-bash--msys2--qmk-msys--linuxと-zsh)」。試していない）
 - setup-notes の [wezterm-nightly.md](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/wezterm-nightly.md) — WezTerm nightly の導入と、設定ファイルの探索順序の実測
 
 ### 付録: コンテナでの検証記録（2026-09-30）
@@ -450,7 +450,7 @@ Windows の WezTerm `20260905-153129-092dcf70` から、既存の AlmaLinux 10.2
   - 今のディレクトリ（OSC 7）とプロンプトの位置（OSC 133）は、公式の統合が送る。長いコマンドの完了通知（`__wezterm_notify_done`）は動かない
   - 公式の統合は `WEZTERM_SHELL_SKIP_ALL=1` で止まる。この設定の `lua/shells.lua` は、まだこの値を渡していない
 - **WezTerm は nightly が要る**
-  - stable では、nightly だけの設定（README の「使用している nightly 限定機能」）が `ERROR  wezterm_gui >` になり、組み込みの既定の設定で開く見込み
+  - stable では、nightly だけの設定（旧 README の「[使用している nightly 限定機能](../reference/configuration.md#使用している-nightly-限定機能)」）が `ERROR  wezterm_gui >` になり、組み込みの既定の設定で開く見込み
 - **`~/.wezterm.lua` があると、`~/.config/wezterm` は読まれない**
   - Windows では、`wezterm.exe` と同じフォルダーの `wezterm.lua` も探される（公式の [Configuration Files](https://wezterm.org/config/files.html)）
 - **starship と一緒に使うとき**: シェル統合の行は、starship の行より後ろに置く
@@ -460,6 +460,6 @@ Windows の WezTerm `20260905-153129-092dcf70` から、既存の AlmaLinux 10.2
   - WezTerm は Git Bash をログインシェル（`-l`）で起動するので、`~/.bashrc` は `~/.bash_profile` から読まれる必要がある
   - Git for Windows は、`~/.bashrc` があって `~/.bash_profile` などが無いと、`~/.bashrc` を読む `~/.bash_profile` を作り、`WARNING: Found ~/.bashrc but no ~/.bash_profile` と表示する
 - **MSYS2・QMK MSYS は、ホームが別**
-  - `C:\msys64\home\<WIN_USER>\.bashrc` と `C:\QMK_MSYS\home\<WIN_USER>\.bashrc` にも、手順 6 の 1 行を足す（README の「bash（Git Bash / MSYS2 / QMK MSYS / Linux）と zsh」）
+  - `C:\msys64\home\<WIN_USER>\.bashrc` と `C:\QMK_MSYS\home\<WIN_USER>\.bashrc` にも、手順 6 の 1 行を足す（旧 README の「[bash（Git Bash / MSYS2 / QMK MSYS / Linux）と zsh](../reference/shell-integration.md#bashgit-bash--msys2--qmk-msys--linuxと-zsh)」）
 - **完了通知は、OS の通知の設定にも従う**
-  - Windows は「設定 → システム → 通知」で WezTerm が許されているか、集中モードになっていないかを見る（README の「長いコマンドの完了通知」）
+  - Windows は「設定 → システム → 通知」で WezTerm が許されているか、集中モードになっていないかを見る（旧 README の「[長いコマンドの完了通知](../usage.md#長いコマンドの完了通知)」）

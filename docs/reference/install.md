@@ -1,6 +1,6 @@
 # WezTerm 設定導入の参照情報
 
-[手順書](../install.md) / [検証記録](../verification/install.md) / [機能とキー操作](../../README.md)
+[文書案内](../README.md) / [手順書](../install.md) / [検証記録](../verification/install.md) / [機能とキー操作](../usage.md)
 
 ## 手順の背景と実装の説明
 
@@ -27,7 +27,7 @@
 - 変数が無いとき（tmux や ssh を挟むと届かない）は、`$HOME/.config/wezterm/shell/wezterm.sh` を読む
 - WezTerm は bash をログインシェル（`-l`）で起動するので、`--rcfile` では読ませられない。そのため `~/.bashrc` に書く
 - PowerShell は、`lua/shells.lua` が起動引数（`-Command`）で `shell/wezterm.ps1` を読ませるので、プロファイルに足すものは無い
-- 公式統合が無い場合、WezTerm 以外の端末では迷子のマウス報告よけ（README）だけを動かす。既に有効な公式 Bash 統合がある場合は、それを補完する
+- 公式統合が無い場合、WezTerm 以外の端末では[迷子のマウス報告よけ](shell-integration.md#迷子のマウス報告よけ)だけを動かす。既に有効な公式 Bash 統合がある場合は、それを補完する
 
 ### ssh 先でもシェル統合を使う（任意） — 手順 2: AlmaLinux 10 の sshd の既定と、検証コンテナでの出力
 
@@ -77,7 +77,7 @@
   - 既に有効な公式 Bash 統合があれば、SSH 先で `TERM_PROGRAM` が未設定でも補完する。zsh・ble.sh・tmux、semantic を明示的に無効化した環境は従来どおり公式へ任せる
   - 公式の統合は `WEZTERM_SHELL_SKIP_ALL=1` で止まる。この設定の `lua/shells.lua` は、この値を渡していない
 - **WezTerm は nightly が要る**
-  - stable では、nightly だけの設定（README の「使用している nightly 限定機能」）が `ERROR  wezterm_gui >` になり、組み込みの既定の設定で開く見込み
+  - stable では、nightly だけの設定（設定参照の[使用している nightly 限定機能](configuration.md#使用している-nightly-限定機能)）が `ERROR  wezterm_gui >` になり、組み込みの既定の設定で開く見込み
 - **`~/.wezterm.lua` があると、`~/.config/wezterm` は読まれない**
   - Windows では、`wezterm.exe` と同じフォルダーの `wezterm.lua` も探される（公式の [Configuration Files](https://wezterm.org/config/files.html)）
 - **starship と一緒に使うとき**: シェル統合の行は、starship の行より後ろに置く
@@ -89,13 +89,14 @@
   - WezTerm は Git Bash をログインシェル（`-l`）で起動するので、`~/.bashrc` は `~/.bash_profile` から読まれる必要がある
   - Git for Windows は、`~/.bashrc` があって `~/.bash_profile` などが無いと、`~/.bashrc` を読む `~/.bash_profile` を作り、`WARNING: Found ~/.bashrc but no ~/.bash_profile` と表示する
 - **MSYS2・QMK MSYS は、ホームが別**
-  - `C:\msys64\home\<WIN_USER>\.bashrc` と `C:\QMK_MSYS\home\<WIN_USER>\.bashrc` にも、手順 6 の 1 行を足す（README の「bash（Git Bash / MSYS2 / QMK MSYS / Linux）と zsh」）
+  - `C:\msys64\home\<WIN_USER>\.bashrc` と `C:\QMK_MSYS\home\<WIN_USER>\.bashrc` にも、手順 6 の 1 行を足す（シェル統合の仕様の[bash と zsh](shell-integration.md#bashgit-bash--msys2--qmk-msys--linuxと-zsh)）
 - **完了通知は、OS の通知の設定にも従う**
-  - Windows は「設定 → システム → 通知」で WezTerm が許されているか、集中モードになっていないかを見る（README の「長いコマンドの完了通知」）
+  - Windows は「設定 → システム → 通知」で WezTerm が許されているか、集中モードになっていないかを見る（操作ガイドの[長いコマンドの完了通知](../usage.md#長いコマンドの完了通知)）
 
 ### 参照
 
-- [README](../../README.md) — この設定の機能・キー操作・シェル統合の仕組み
+- [操作ガイド](../usage.md) — この設定の機能・キー操作
+- [シェル統合の仕様](shell-integration.md) — OSC とシェルごとの対応・公式統合との共存
 - setup-notes の [wezterm-nightly.md](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/wezterm-nightly.md) — WezTerm nightly の導入と、設定ファイルの探索順序の実測
 - setup-notes の [git.md](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/git.md)・[hackgen.md](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/hackgen.md)・[almalinux-setup.md](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/almalinux-setup.md)（starship・zoxide。もとは starship.md・zoxide.md）
 - [Configuration Files — WezTerm](https://wezterm.org/config/files.html) — 設定ファイルの置き場所

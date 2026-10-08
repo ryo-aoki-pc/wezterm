@@ -148,7 +148,7 @@ local function find_last_output(pane)
 	return text
 end
 
--- ※ 狭いウィンドウでもステータスバーに収まるよう短くする（詳しい説明は README の
+-- ※ 狭いウィンドウでもステータスバーに収まるよう短くする（詳しい説明は docs/troubleshooting.md の
 --   トラブルシューティング）
 local NO_OUTPUT_MESSAGES = {
 	empty = "直前の出力は空です",
