@@ -84,7 +84,7 @@
    - `WEZTERM_SHELL_INTEGRATION` を含む行が出たら、もう足してある。手順 6・7 は飛ばす
    - `zoxide init` を含む行が出たら（`WEZTERM_SHELL_INTEGRATION` の行が無いとき）、手順 6 は飛ばす
    - `starship init` を含む行だけが出たら、手順 7 は飛ばす
-   - `starship init` の行が、`WEZTERM_SHELL_INTEGRATION` か `zoxide init` の行より後ろに出たら（前の版のこの文書や setup-notes の starship.md の並び）、setup-notes の [starship.md 手順 3〜6](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/starship.md#実施手順) で starship の行を前へ移す（シェル統合の行は動かさなくてよい）
+   - `starship init` の行が、`WEZTERM_SHELL_INTEGRATION` か `zoxide init` の行より後ろに出たら（前の版のこの文書や setup-notes の starship.md の並び）、setup-notes の [AlmaLinux 10 の初期設定の手順 42・43](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/almalinux-setup.md#実施手順)で共通の bash 設定を入れる（既知の追記は控えを取って移され、starship → WezTerm → zoxide の順番はその設定が持つ。starship の行を前へ移していた setup-notes の starship.md は、この初期設定にまとめた）
    - Git Bash で `~/.bashrc` がまだ無ければ、`No such file or directory` と出る。手順 7 は飛ばす（手順 6 で作られる）
    - 自分用の bash の設定（`ryo-aoki-pc/bash`）を入れたホストでは、手順 6・7 は飛ばす（その設定が、starship・zoxide と合わせた順番でシェル統合を読む）
 

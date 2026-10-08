@@ -18,8 +18,8 @@
 
 - starship は、直前の終了コードとパイプ各要素の終了コード（`PIPESTATUS`）を先に保存し、`PS1` を毎回作り直す。統合は `PROMPT_COMMAND` の後ろにフックを足し、starship が保存した終了コードを OSC 133 の `D` と完了通知に使う
 - 統合は `PS1` の OSC 133 の印（`A` / `B`）をプロンプトごとに付け直す。starship のプロンプトとパイプ個別ステータス表示を保ちながら、WezTerm にプロンプト・入力・出力の範囲を伝える
-- zoxide は `~/.bashrc` のいちばん最後に置く（setup-notes の [zoxide.md 手順 6](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/zoxide.md#実施手順)）
-- 前の版のこの文書（2026-09-30 まで）は、この 1 行を starship の行の前に差し込んでいた。そのホストは、setup-notes の starship.md の手順 3〜6 で starship の行を前へ移す（この 1 行は動かさなくてよい）
+- zoxide はいちばん最後に初期化する（共通の bash 設定が starship → WezTerm → zoxide の順に読む。setup-notes の [AlmaLinux 10 の初期設定の注意点](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/almalinux-setup.md#注意点)）
+- 前の版のこの文書（2026-09-30 まで）は、この 1 行を starship の行の前に差し込んでいた。そのホストは、当時の setup-notes の starship.md の手順 3〜6 で starship の行を前へ移した（今は [AlmaLinux 10 の初期設定](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/almalinux-setup.md)にまとめ、順番は共通の bash 設定が持つ）
 
 ### 実施手順 — 手順 6: 1 行の中身
 
@@ -97,7 +97,7 @@
 
 - [README](../../README.md) — この設定の機能・キー操作・シェル統合の仕組み
 - setup-notes の [wezterm-nightly.md](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/wezterm-nightly.md) — WezTerm nightly の導入と、設定ファイルの探索順序の実測
-- setup-notes の [git.md](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/git.md)・[hackgen.md](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/hackgen.md)・[starship.md](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/starship.md)
+- setup-notes の [git.md](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/git.md)・[hackgen.md](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/hackgen.md)・[almalinux-setup.md](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/almalinux-setup.md)（starship・zoxide。もとは starship.md・zoxide.md）
 - [Configuration Files — WezTerm](https://wezterm.org/config/files.html) — 設定ファイルの置き場所
 - [Shell Integration — WezTerm](https://wezterm.org/shell-integration.html) — 公式のシェル統合と `WEZTERM_SHELL_SKIP_ALL`
 - `man sshd_config`（`AcceptEnv`）・`man ssh_config`（`SendEnv`）

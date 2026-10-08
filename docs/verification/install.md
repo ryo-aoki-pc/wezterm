@@ -105,7 +105,7 @@ LeftToRight
 
 - starship は、既にある `PROMPT_COMMAND` を `STARSHIP_PROMPT_COMMAND` に退避して、自分の中から呼ぶ。シェル統合が starship より前にあると、統合の関数がその退避先に入り、呼ばれるときの `$?` がいつも 0 になる
 - starship より後ろなら、統合は `$?` を保つ関数を `starship_precmd` の前に足すので、OSC 133 の `D` に正しい終了コードが入る
-- zoxide は `~/.bashrc` のいちばん最後に置く（setup-notes の [zoxide.md 手順 6](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/zoxide.md#実施手順)）。統合が zoxide より後ろにあっても、結果は同じだった（統合は `PROMPT_COMMAND` の先頭に足すため）
+- zoxide は `~/.bashrc` のいちばん最後に置く（当時の setup-notes の zoxide.md 手順 6。今は [AlmaLinux 10 の初期設定](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/almalinux-setup.md)）。統合が zoxide より後ろにあっても、結果は同じだった（統合は `PROMPT_COMMAND` の先頭に足すため）
 - 自分用の bash の設定（`ryo-aoki-pc/bash`）の検証コンテナで、公式の統合の無い形で、擬似端末の生の出力を見た（2026-09-30）:
   - starship → この 1 行 → zoxide（と starship → zoxide → この 1 行）: `false` の後は `D;1`。`zoxide: detected a possible configuration issue.` は出なかった
   - この 1 行 → starship（前の版のこの文書の手順 7 の並び）: `D` はいつも `D;0`
@@ -438,7 +438,7 @@ Windows の WezTerm `20260905-153129-092dcf70` から、既存の AlmaLinux 10.2
 
 - starship は、既にある `PROMPT_COMMAND` を `STARSHIP_PROMPT_COMMAND` に退避して、自分の中から呼ぶ。シェル統合が starship より前にあると、統合の関数がその退避先に入り、呼ばれるときの `$?` がいつも 0 になる
 - starship より後ろなら、統合は `$?` を保つ関数を `starship_precmd` の前に足すので、OSC 133 の `D` に正しい終了コードが入る
-- zoxide は `~/.bashrc` のいちばん最後に置く（setup-notes の [zoxide.md 手順 6](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/zoxide.md#実施手順)）。統合は `PROMPT_COMMAND` の先頭に足す
+- zoxide は `~/.bashrc` のいちばん最後に置く（当時の setup-notes の zoxide.md 手順 6。今は [AlmaLinux 10 の初期設定](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/almalinux-setup.md)）。統合は `PROMPT_COMMAND` の先頭に足す
 - 前の版のこの文書は、この 1 行を starship の行の前に差し込んでいた。そのホストは、setup-notes の starship.md の手順 3〜6 で starship の行を前へ移す（この 1 行は動かさなくてよい）
 
 
