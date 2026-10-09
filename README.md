@@ -344,10 +344,10 @@ printf '\e]9;4;0;0\e\\'    # 消す
 上から順に、最初に当てはまったものを使います。
 
 1. `Ctrl+Shift+Alt+T` で**手で付けた名前**
-2. ssh 先のシェルが OSC 7 でディレクトリを送っているとき → **`ホスト名:ディレクトリ名`**
-   （例: `myhost:setup-notes`）。送られてきたホスト名が自分のホスト名・`localhost` 以外なら ssh 先とみなす
+2. ssh 先のシェルが OSC 7 でディレクトリを送っているとき → **`ホスト名:ディレクトリ名`**。
+   送られてきたホスト名が自分のホスト名・`localhost` 以外なら ssh 先とみなす
 3. **ssh の実行中** → ペインのタイトル。多くの Linux の既定の bashrc は `user@host:dir` を
-   タイトルに設定するので、`user@` を省いて `myhost:~/setup-notes` のように出る。
+   タイトルに設定するので、`user@` を省いた `host:dir` の形で出る。
    このときディレクトリの情報は接続前のローカルのもののまま残っているので使わない。
    Git Bash・MSYS2・WSL の中で起動した ssh は WezTerm からプロセスが見えないため、
    シェル統合が送る実行中のコマンド（`WEZTERM_PROG`）で ssh 中かどうかを判断する
@@ -594,7 +594,7 @@ make build (1分23秒)          cargo test (12秒)
 起動メニューと分割の一覧に並びます（名前順）。`ssh` と打てば絞り込めます。
 
 ```
-Host myhost
+Host <ホスト名>
   HostName 192.168.1.20
   User foo
 ```
@@ -776,7 +776,7 @@ ssh は `$TERM_PROGRAM` を既定では接続先へ渡しません。公式統�
 - **ssh 先**にもこの設定を置き、ssh 先の `~/.bashrc` に手元と同じ[シェル統合の 1 行](#bashgit-bash--msys2--qmk-msys--linuxと-zsh)を足す
   （Syncthing などで `~/.config/wezterm` を同期していれば、1 行だけでよい）
 
-独自統合が動くと、タブ名が `myhost:setup-notes` のように ssh 先のディレクトリ名になり、
+独自統合が動くと、タブ名が `ホスト名:ディレクトリ名` の形で ssh 先のディレクトリ名になり、
 ssh 先でも `Ctrl+Shift+Alt+↑/↓`・`Ctrl+Shift+Alt+C`・完了通知が効きます。
 確かめるには、ssh 先で `echo $TERM_PROGRAM` が `WezTerm` になるかを見ます。
 ssh 先で tmux を使っている場合、tmux の中では無効です（[tmux の中](#tmux-の中)）。
@@ -794,8 +794,8 @@ lazygit や yazi のような TUI は起動時にマウス報告（DECSET 1003 =
 出してしまった報告は行き場を失い、戻ってきたシェルにこう現れます。
 
 ```
-[foo@myhost setup-notes]$ lazygit
-^[[<35;33;72M[foo@myhost setup-notes]$
+[foo@host setup-notes]$ lazygit
+^[[<35;33;72M[foo@host setup-notes]$
 ```
 
 届くタイミングで見え方が変わります。プロンプト表示前なら端末がそのまま echo するだけ
