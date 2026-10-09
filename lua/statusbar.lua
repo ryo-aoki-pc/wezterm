@@ -1,13 +1,8 @@
 local wezterm = require("wezterm")
 local palette = require("colors").palette
-local ui = require("ui")
 local M = {}
 
 local nf = wezterm.nerdfonts
-
--- ピル型バッジ用の丸キャップ（tabs.lua と共通。定義は ui.lua）
-local LEFT_CAP = ui.LEFT_CAP
-local RIGHT_CAP = ui.RIGHT_CAP
 
 -- 日本語曜日（strftime の %a は英語表記のため手動でマッピング）
 local WDAYS = { "日", "月", "火", "水", "木", "金", "土" }
@@ -64,30 +59,21 @@ local function render(window)
 	local p = palette
 	local segs = {}
 
-	-- 「アイコン + テキスト」のセグメントを追加（アイコンだけ色を付ける）
-	-- ※ wezterm.format の属性は次の指定まで持続する。バッジの太字を
-	--   引きずらないよう、セグメントごとに Intensity をリセットする
-	local function push(icon, icon_color, text)
-		table.insert(segs, { Attribute = { Intensity = "Normal" } })
+	-- 「アイコン + テキスト」のセグメントを追加（text_color を省くと fg）
+	local function push(icon, icon_color, text, text_color)
 		table.insert(segs, { Background = { Color = p.tab_bar_bg } })
 		table.insert(segs, { Foreground = { Color = icon_color } })
 		table.insert(segs, { Text = icon .. " " })
-		table.insert(segs, { Foreground = { Color = p.fg } })
+		table.insert(segs, { Foreground = { Color = text_color or p.fg } })
 		table.insert(segs, { Text = text .. "  " })
 	end
 
-	-- ピル型のバッジ（背景色で塗って太字）
+	-- 知らせのバッジ（一時メッセージ・モード）。アイコンも文字もその色にする。
+	-- ※ 面で塗ったピルにはしない。ステータスは WezTerm が 1.75 行の高さで描くので、
+	--   面が帯の上下いっぱいに広がり、端の半円も縦長になってタブのピルと形が揃わない。
+	--   タブバーは 1 つのフォントで描かれるので、太字にもできない
 	local function badge(icon, text, color)
-		table.insert(segs, { Background = { Color = p.tab_bar_bg } })
-		table.insert(segs, { Foreground = { Color = color } })
-		table.insert(segs, { Text = LEFT_CAP })
-		table.insert(segs, { Background = { Color = color } })
-		table.insert(segs, { Foreground = { Color = p.bg } })
-		table.insert(segs, { Attribute = { Intensity = "Bold" } })
-		table.insert(segs, { Text = icon .. " " .. text })
-		table.insert(segs, { Background = { Color = p.tab_bar_bg } })
-		table.insert(segs, { Foreground = { Color = color } })
-		table.insert(segs, { Text = RIGHT_CAP .. "  " })
+		push(icon, color, text, color)
 	end
 
 	-- バッジを出したか（出している間は下の日付・時刻を省く）
@@ -105,7 +91,7 @@ local function render(window)
 		end
 	end
 
-	-- 2) モード中はピル型バッジで強調
+	-- 2) モード中はバッジで知らせる
 	--    リサイズ (Ctrl+Shift+S) / コピーモード (Ctrl+Shift+X) / 検索 (Ctrl+Shift+F)
 	local mode = MODE_BADGES[window:active_key_table() or ""]
 	if mode then
@@ -122,10 +108,12 @@ local function render(window)
 	-- 4) 日付（日本語曜日）+ 5) 時刻。バッジを出している間は省く
 	--    （ステータスはタブの右に置かれ、狭いウィンドウでは収まらない分がタブの下に隠れる。
 	--    操作の結果・今のモードを時計より優先する）
+	--    日付・時刻・電池の残量は控えめな灰色にし、色は知らせ（一時メッセージ・モード・
+	--    ワークスペース・電池の状態）にだけ使う
 	if not badged then
 		local wday = WDAYS[tonumber(wezterm.strftime("%w")) + 1]
-		push(ICON_DATE, p.accent, wezterm.strftime("%m/%d") .. " (" .. wday .. ")")
-		push(ICON_TIME, p.accent, wezterm.strftime("%H:%M"))
+		push(ICON_DATE, p.dim, wezterm.strftime("%m/%d") .. " (" .. wday .. ")", p.muted)
+		push(ICON_TIME, p.dim, wezterm.strftime("%H:%M"), p.muted)
 	end
 
 	-- 6) バッテリー（ノートPCのみ。デスクトップでは battery_info が空）
@@ -138,7 +126,8 @@ local function render(window)
 		push(
 			battery_icon(b.state_of_charge, charging),
 			color,
-			string.format("%.0f%%", b.state_of_charge * 100)
+			string.format("%.0f%%", b.state_of_charge * 100),
+			p.muted
 		)
 		break -- 複数バッテリー搭載機でも先頭のみ表示
 	end

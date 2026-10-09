@@ -16,8 +16,20 @@
 # WezTerm 以外の端末で読み込まれても無害なように何もせず抜ける
 if ($env:TERM_PROGRAM -ne 'WezTerm') { return }
 
-# 二重ロード防止（プロンプト関数を何重にもラップしないため）
-if ($global:__WezTermIntegrationLoaded) { return }
+# 自分のラッパーが残っていれば二重に包まない。プロファイルの再読み込みなどで
+# prompt / PSReadLine が作り直されたときは、新しい関数を包み直す。
+# 未定義の変数を先に Test-Path で確かめ、Set-StrictMode の初回読み込みにも対応する
+$__wz_prompt_wrapped = (Test-Path Variable:global:__WezTermWrappedPrompt) -and
+	[object]::ReferenceEquals($function:prompt, $global:__WezTermWrappedPrompt)
+$__wz_readline_present = Test-Path Function:\PSConsoleHostReadLine
+$__wz_readline_wrapped = $__wz_readline_present -and
+	(Test-Path Variable:global:__WezTermWrappedReadLine) -and
+	[object]::ReferenceEquals($function:PSConsoleHostReadLine, $global:__WezTermWrappedReadLine)
+if ($__wz_prompt_wrapped -and (-not $__wz_readline_present -or $__wz_readline_wrapped)) { return }
+# 片方だけが作り直された場合、残っているラッパーを元に戻してから両方を登録する。
+# これで元の prompt / 入力関数として自分自身を保存してしまう再帰を防ぐ
+if ($__wz_prompt_wrapped) { $function:prompt = $global:__WezTermOriginalPrompt }
+if ($__wz_readline_wrapped) { $function:PSConsoleHostReadLine = $global:__WezTermOriginalReadLine }
 $global:__WezTermIntegrationLoaded = $true
 
 # 既存の prompt 関数（ユーザープロファイルや oh-my-posh が定義したもの）を保存して
@@ -100,10 +112,14 @@ function global:prompt {
 
 	# OSC 7: ファイルシステム以外のプロバイダ（レジストリ等）では送らない
 	if ($PWD.Provider.Name -eq 'FileSystem') {
-		$p = $PWD.ProviderPath.Replace('\', '/')
-		# file:// URL に載せるため最低限のパーセントエンコードを行う
-		# （% を先に処理しないと後続の置換結果まで壊れる）
-		$p = $p.Replace('%', '%25').Replace(' ', '%20')
+		# file:// URL に載せるため、英数字と - _ . ~ 以外を UTF-8 のパーセントエンコードにする
+		#   - # と ? をそのまま送ると、WezTerm がそこから後ろを捨てる（パスが変わり、タブ名がずれて、
+		#     新しいタブがホームで開く）
+		#   - ASCII 以外の文字は、[Console]::Write がコンソールのコード ページ（日本語版 Windows は
+		#     932）で書き出すため、そこに無い文字（é・ハングル・絵文字など）が化ける
+		# EscapeDataString は / と : もエンコードするので、この 2 つは戻す（C: はドライブ名として
+		# 読まれるよう、そのまま送る必要がある）
+		$p = [Uri]::EscapeDataString($PWD.ProviderPath.Replace('\', '/')).Replace('%2F', '/').Replace('%3A', ':')
 		# "C:/..." には先頭の / が無いので補う（file://host/C:/... が Windows の標準形）
 		if (-not $p.StartsWith('/')) { $p = "/$p" }
 		$out += "$esc]7;file://$global:__WezTermHostName$p$st"
@@ -114,12 +130,18 @@ function global:prompt {
 	# PSReadLine がプロンプト幅を誤らないよう、通知は戻り値に混ぜず直接書き出す
 	[Console]::Write($out)
 
-	# 元の prompt の出力に、入力開始 (B) の通知を付けて返す
+	# 元の prompt の出力に、入力開始 (B) の通知を付けて返す。
+	# 元の prompt が $? で直前の失敗を表示できるよう（oh-my-posh・starship など）、失敗だったときは
+	# $? を偽に戻してから呼ぶ（ここまでの処理で真になっている）。-ErrorAction Ignore のエラーは
+	# $Error に残らない（VS Code のシェル統合と同じ方法）
+	if (-not $ok) { Write-Error -Message 'wezterm' -ErrorAction Ignore }
 	$text = & $global:__WezTermOriginalPrompt
 	# 次の行で新しいエラーが出たかを見分ける印（元の prompt が出したエラーもここで含めておく）
 	$global:__WezTermLastError = if ($global:Error.Count -gt 0) { $global:Error[0] }
 	return "$text$esc]133;B$st"
 }
+
+$global:__WezTermWrappedPrompt = $function:prompt
 
 # 出力の開始位置 (133;C) を送る。これで「直前の出力をコピー」(Ctrl+Shift+Alt+C) が
 # PowerShell でも出力の範囲を取れる。
@@ -138,3 +160,4 @@ if (Test-Path Function:\PSConsoleHostReadLine) {
 		$line
 	}
 }
+$global:__WezTermWrappedReadLine = if (Test-Path Function:\PSConsoleHostReadLine) { $function:PSConsoleHostReadLine }

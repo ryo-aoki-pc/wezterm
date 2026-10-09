@@ -1,0 +1,15 @@
+add_newline = false
+format = "$status$cmd_duration$character"
+
+[status]
+disabled = false
+format = "STATUS=$status "
+
+[cmd_duration]
+min_time = 0
+show_milliseconds = true
+format = "DURATION=$duration "
+
+[character]
+success_symbol = "OK>"
+error_symbol = "ERR>"

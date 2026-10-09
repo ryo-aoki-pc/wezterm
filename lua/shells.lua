@@ -1,4 +1,5 @@
 local wezterm = require("wezterm")
+local procs = require("procs")
 local M = {}
 
 -- シェル統合スクリプト（OSC 7 でカレントディレクトリ、OSC 133 でプロンプト位置を通知）。
@@ -223,23 +224,29 @@ local function discover()
 		-- ※ cmd.exe は Windows なら必ずあるので、powershell.exe と同じく実体パスを
 		--   探さず名前解決に任せる（シェル統合は cmd 向けが無いので付けない）
 		{ ok = true,                label = "  Command Prompt",      args = { "cmd.exe" } },
-		{ ok = vsdevshell ~= nil,   label = vsdevshell_label,        args = vsdevshell_args },
-		{ ok = vsdevcmd ~= nil,     label = vsdevcmd_label,          args = vsdevcmd_args },
-		{ ok = exists(msys2_shell), label = "  MSYS2 UCRT64",        args = { msys2_shell, "-defterm", "-here", "-no-start", "-ucrt64" } },
-		{ ok = exists(msys2_shell), label = "  MSYS2 MSYS",          args = { msys2_shell, "-defterm", "-here", "-no-start", "-msys" } },
+		{ ok = vsdevshell ~= nil,   label = vsdevshell_label,        args = vsdevshell_args, startup_path = vsdevshell },
+		{ ok = vsdevcmd ~= nil,     label = vsdevcmd_label,          args = vsdevcmd_args, startup_path = vsdevcmd },
+		{ ok = exists(msys2_shell), label = "  MSYS2 UCRT64",        args = { msys2_shell, "-defterm", "-here", "-no-start", "-ucrt64" }, startup_path = msys2_shell, startup_flag = "-ucrt64" },
+		{ ok = exists(msys2_shell), label = "  MSYS2 MSYS",          args = { msys2_shell, "-defterm", "-here", "-no-start", "-msys" }, startup_path = msys2_shell, startup_flag = "-msys" },
 		-- ※ env を指定するエントリでは、全体設定 (M.apply の set_environment_variables) に
 		--   頼らず WEZTERM_SHELL_INTEGRATION を明示的に含めておく
 		{ ok = exists(qmk_bash),    label = "  QMK MSYS",            args = { qmk_bash, "-l", "-i" }, env = { MSYSTEM = "MINGW64", MSYS2_PATH_TYPE = "inherit", WEZTERM_SHELL_INTEGRATION = INTEGRATION_SH } },
 	}
 
-	local list = {}
+	-- ※ domain = "DefaultDomain": どれも Windows のプログラムなので、手元（ローカル）で起動する。
+	--   省くと既定の CurrentPaneDomain になり、WSL のペインから起動メニューや分割ピッカーで選ぶと
+	--   WSL の中で起動しようとして、タブ・ペインがすぐ閉じる
+	local list, restarts = {}, {}
 	for _, c in ipairs(candidates) do
 		if c.ok then
-			table.insert(list, {
+			local entry = {
 				label = c.label,
 				args = c.args,
+				domain = "DefaultDomain",
 				set_environment_variables = c.env,
-			})
+			}
+			table.insert(list, entry)
+			table.insert(restarts, { entry = entry, startup_path = c.startup_path, startup_flag = c.startup_flag })
 		end
 	end
 
@@ -260,6 +267,7 @@ local function discover()
 		default_prog = git_bash_args,
 		list = list,
 		wsl_domains = wsl_domains,
+		restarts = restarts,
 	}
 	return cache
 end
@@ -268,6 +276,97 @@ end
 -- launch_menu と「分割して起動」の両方から再利用する。
 function M.list()
 	return discover().list
+end
+
+-- 分割元のシェルを安全な起動定義に対応付ける。実行中の vim / ssh や任意の -Command / /c
+-- は複製しない。既知の開発者シェル・MSYS2 だけ、起動時の引数から対応する定義を選ぶ。
+local function restart_command(info)
+	local executable = info.executable or ""
+	local name = procs.basename(executable)
+	local d = discover()
+	if not is_windows then
+		for _, entry in ipairs(d.list) do
+			if entry.args and entry.args[1] == executable and not procs.REMOTE[name] then
+				return entry
+			end
+		end
+		return nil
+	end
+
+	local function norm(value)
+		return (value:gsub("\\", "/")):lower()
+	end
+	local argv = {}
+	for _, value in ipairs(info.argv or {}) do
+		table.insert(argv, norm(value))
+	end
+	local command_line = table.concat(argv, " ")
+	for _, r in ipairs(d.restarts) do
+		local startup_program = procs.basename(r.entry.args[1])
+		if startup_program:match("%.cmd$") then
+			startup_program = "cmd"
+		end
+		if name == startup_program and r.startup_path and command_line:find(norm(r.startup_path), 1, true)
+			and (not r.startup_flag or command_line:find(r.startup_flag, 1, true)) then
+			return r.entry
+		end
+	end
+	-- 起動用の bin/bash.exe ラッパーの下では usr/bin/bash.exe が見えることもある。
+	-- どちらも Git Bash の定義へ戻す（MSYSTEM 等をラッパーに設定させる）。
+	local path = norm(executable):gsub("/bin/%.%./usr/bin/", "/usr/bin/")
+	for _, r in ipairs(d.restarts) do
+		if not r.startup_path then
+			local target = norm(r.entry.args[1])
+			if path == target or (name == "bash" and path == target:gsub("/bin/bash%.exe$", "/usr/bin/bash.exe")) then
+				return r.entry
+			end
+		end
+	end
+	-- Store 版 pwsh の実体はバージョン入りパスなので、起動エイリアスと一致しない。
+	-- PowerShell / cmd は種類で対応付け、統合付きの既知の引数だけを使う。
+	if name == "pwsh" or name == "powershell" or name == "cmd" then
+		for _, r in ipairs(d.restarts) do
+			if not r.startup_path and procs.basename(r.entry.args[1]) == name then
+				return r.entry
+			end
+		end
+	end
+	return nil
+end
+
+-- 通常分割用の SpawnCommand。WSL・SSH 等のドメインはその既定を使い、ローカルでは
+-- フォアグラウンドから親へたどって、ペインを起動した一番外側の既知のシェルを選ぶ。
+-- WezTerm 自身の親（GUI を起動した別の端末）まではたどらない。
+function M.for_split(pane)
+	local fallback = { domain = "CurrentPaneDomain" }
+	if pane:get_domain_name() ~= "local" then
+		return fallback
+	end
+	local info = pane:get_foreground_process_info()
+	local chosen, seen = nil, {}
+	for _ = 1, 16 do
+		if not info or not info.pid or seen[info.pid] then
+			break
+		end
+		seen[info.pid] = true
+		local name = procs.basename(info.executable ~= "" and info.executable or info.name)
+		if name == "wezterm" or name == "wezterm-gui" or name == "wezterm-mux-server" then
+			break
+		end
+		chosen = restart_command(info) or chosen
+		if not info.ppid or info.ppid == 0 or not wezterm.procinfo then
+			break
+		end
+		info = wezterm.procinfo.get_info_for_pid(info.ppid)
+	end
+	if not chosen then
+		return fallback
+	end
+	return {
+		args = chosen.args,
+		set_environment_variables = chosen.set_environment_variables,
+		domain = "CurrentPaneDomain",
+	}
 end
 
 function M.apply(config)

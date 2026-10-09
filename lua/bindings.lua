@@ -25,8 +25,8 @@
 --    Ctrl+Shift+Alt+H/L  前 / 次のワークスペースへ
 --    Ctrl+Shift+S        リサイズモード開始 → h/j/k/l または矢印で調整
 --                        （Esc または Enter で終了 / 2秒で自動終了）
---    右クリック          クリップボードから貼り付け
---    Ctrl+ホイール       フォント拡大 / 縮小
+--    右クリック          OS のクリップボードから貼り付け（SSH 先の Neovim 内でも）
+--    Ctrl+ホイール       フォント拡大 / 縮小（Neovim / tmux 内でも）
 --    ※ ワークスペース名変更・ペインを新しいタブ/ウィンドウへ・設定フォルダを開く
 --      などキーの無い操作はコマンドパレット（palette.lua）にある
 --
@@ -89,13 +89,27 @@ function M.apply(config)
 		})
 	end
 
+	local function split_current_shell(direction)
+		return wezterm.action_callback(function(window, pane)
+			window:perform_action(act.SplitPane({ direction = direction, command = shells.for_split(pane) }), pane)
+		end)
+	end
+
 	-- ※ 左クリックでのコピー / リンクオープンは WezTerm のデフォルトと同一のため
 	--   ここでは定義しない（mouse_bindings はデフォルトを置き換えず追記される）
 	config.mouse_bindings = {
 		{
-			-- 右クリックでペースト
+			-- マウス報告が無いシェルなどでの右クリック
 			event = { Down = { streak = 1, button = "Right" } },
 			mods = "NONE",
+			action = act.PasteFrom("Clipboard"),
+		},
+		{
+			-- Neovim / tmux がマウス報告を要求していても、右クリックは端末で貼り付ける。
+			-- mouse_reporting の既定は false なので、両方の状態に割り当てが必要。
+			event = { Down = { streak = 1, button = "Right" } },
+			mods = "NONE",
+			mouse_reporting = true,
 			action = act.PasteFrom("Clipboard"),
 		},
 		-- Ctrl+ホイールでフォント拡大 / 縮小（ブラウザと同じ操作。Ctrl + +/- と同じ動作）
@@ -109,12 +123,25 @@ function M.apply(config)
 			mods = "CTRL",
 			action = act.DecreaseFontSize,
 		},
+		-- マウス報告中も Ctrl+ホイールはフォントを変える（通常のホイールはアプリへ渡す）
+		{
+			event = { Down = { streak = 1, button = { WheelUp = 1 } } },
+			mods = "CTRL",
+			mouse_reporting = true,
+			action = act.IncreaseFontSize,
+		},
+		{
+			event = { Down = { streak = 1, button = { WheelDown = 1 } } },
+			mods = "CTRL",
+			mouse_reporting = true,
+			action = act.DecreaseFontSize,
+		},
 	}
 
 	config.keys = {
 		-- ペイン分割（現在と同じシェル）
-		{ key = "d", mods = "CTRL|SHIFT", action = act.SplitHorizontal({ domain = "CurrentPaneDomain" }) },
-		{ key = "e", mods = "CTRL|SHIFT", action = act.SplitVertical({ domain = "CurrentPaneDomain" }) },
+		{ key = "d", mods = "CTRL|SHIFT", action = split_current_shell("Right") },
+		{ key = "e", mods = "CTRL|SHIFT", action = split_current_shell("Down") },
 
 		-- ペイン分割（シェルを一覧から選んで起動）
 		{ key = "d", mods = "CTRL|SHIFT|ALT", action = split_with_shell("Right") },
