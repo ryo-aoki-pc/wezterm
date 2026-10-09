@@ -101,7 +101,7 @@ local LOCAL_HOST = short_host(wezterm.hostname())
 
 -- ペインが OSC 7 で報告したカレントディレクトリを短い表示名にする。
 -- 例: "C:/Users/foo/dev/myapp" -> "myapp"、ホームそのものなら "~"。
--- 報告元が別のホスト（ssh 先のシェルが OSC 7 を送っている）なら "myhost:myapp" のように
+-- 報告元が別のホスト（ssh 先のシェルが OSC 7 を送っている）なら "host:myapp" のように
 -- ホスト名を付け、2 つ目の戻り値で true を返す。
 -- 報告が無いシェル（シェル統合を入れていない / WSL など）では nil を返し、
 -- 呼び出し側が従来どおりペインのタイトルへフォールバックする
