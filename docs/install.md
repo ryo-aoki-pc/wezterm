@@ -8,12 +8,12 @@
 > - **自分のユーザーのシェルで貼る**。`sudo -i` した root のシェルでは貼らない（設定と `~/.bashrc` が root のホームに置かれるため）
 > - **Windows 11 では、Git for Windows の Git Bash に同じブロックを貼る**。PowerShell や cmd には貼らない（bash の構文のため）
 > - **前提**: WezTerm の nightly と git が入っていること
->   - AlmaLinux 10: setup-notes の [wezterm-nightly.md](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/wezterm-nightly.md) と [git.md](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/git.md)
->   - Windows 11: WezTerm の [nightly のリリース](https://github.com/wezterm/wezterm/releases/tag/nightly)のインストーラと、[Git for Windows](https://gitforwindows.org/)
+>   - AlmaLinux 10: setup-notes の [AlmaLinux 10 の初期設定の「WezTerm」](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/almalinux-setup.md#wezterm)の手順 1〜4 と[「Git」](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/almalinux-setup.md#git)（この文書は、同書の「WezTerm」の手順 5 から通す）
+>   - Windows 11: WezTerm の [nightly のリリース](https://github.com/wezterm/wezterm/releases/tag/nightly)のインストーラと、[Git for Windows](https://gitforwindows.org/)（setup-notes の [Windows 11 の初期設定の「WezTerm」](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/windows-setup.md#wezterm)・[「Git for Windows」](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/windows-setup.md#git-for-windows)。この文書は、同書の「Git Bash と WezTerm の設定」の手順 5 から通す）
 > - **手順 8 は、WezTerm を閉じて起動し直す操作**。手順 9 は、起動し直した WezTerm のタブで貼る
 
 - 上から順にコードブロックを貼る
-- フォントの HackGen Console NF は任意（無くてもほかのフォントで動く）。AlmaLinux 10 は setup-notes の [hackgen.md](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/hackgen.md) で入れる
+- フォントの HackGen Console NF は任意（無くてもほかのフォントで動く）。setup-notes の [AlmaLinux 10 の初期設定の「HackGen Console NF」](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/almalinux-setup.md#hackgen-console-nf)・[Windows 11 の初期設定の「HackGen Console NF」](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/windows-setup.md#hackgen-console-nf)で入れる
 - 手順の後: WSL や ssh 先でも使うなら[WSL でもシェル統合を使う（任意）](#wsl-でもシェル統合を使う任意)・[ssh 先でもシェル統合を使う（任意）](#ssh-先でもシェル統合を使う任意)。以後は[更新](#更新)・[ロールバック](#ロールバック)
 - 機能とキー操作は [README](../README.md) にある
 
@@ -84,7 +84,7 @@
    - `WEZTERM_SHELL_INTEGRATION` を含む行が出たら、もう足してある。手順 6・7 は飛ばす
    - `zoxide init` を含む行が出たら（`WEZTERM_SHELL_INTEGRATION` の行が無いとき）、手順 6 は飛ばす
    - `starship init` を含む行だけが出たら、手順 7 は飛ばす
-   - `starship init` の行が、`WEZTERM_SHELL_INTEGRATION` か `zoxide init` の行より後ろに出たら（前の版のこの文書や setup-notes の starship.md の並び）、setup-notes の [AlmaLinux 10 の初期設定の手順 42・43](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/almalinux-setup.md#実施手順)で共通の bash 設定を入れる（既知の追記は控えを取って移され、starship → WezTerm → zoxide の順番はその設定が持つ。starship の行を前へ移していた setup-notes の starship.md は、この初期設定にまとめた）
+   - `starship init` の行が、`WEZTERM_SHELL_INTEGRATION` か `zoxide init` の行より後ろに出たら（前の版のこの文書や setup-notes の starship.md の並び）、setup-notes の [AlmaLinux 10 の初期設定の「共通の bash 設定」の手順 1・2](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/almalinux-setup.md#共通の-bash-設定)で共通の bash 設定を入れる（既知の追記は控えを取って移され、starship → WezTerm → zoxide の順番はその設定が持つ。starship の行を前へ移していた setup-notes の starship.md は、この初期設定にまとめた）
    - Git Bash で `~/.bashrc` がまだ無ければ、`No such file or directory` と出る。手順 7 は飛ばす（手順 6 で作られる）
    - 自分用の bash の設定（`ryo-aoki-pc/bash`）を入れたホストでは、手順 6・7 は飛ばす（その設定が、starship・zoxide と合わせた順番でシェル統合を読む）
 
@@ -233,7 +233,7 @@
 
 ## 更新
 
-- この設定を新しくするだけ。WezTerm 本体の更新は、setup-notes の [wezterm-nightly.md の更新](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/wezterm-nightly.md#更新)
+- この設定を新しくするだけ。WezTerm 本体の更新は、setup-notes の [AlmaLinux 10 の初期設定の更新](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/almalinux-setup.md#更新)（Windows 11 は[「Git for Windows・Firefox・WezTerm を上げる」](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/windows-setup.md#git-for-windowsfirefoxwezterm-を上げる)）
 
 1. 設定のリポジトリを pull する。
 
@@ -251,7 +251,7 @@
 
 ## ロールバック
 
-- この文書で足したものを外す。WezTerm 本体は消さない（消すなら setup-notes の [wezterm-nightly.md のロールバック](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/extra/wezterm-nightly.md#ロールバック)）
+- この文書で足したものを外す。WezTerm 本体は消さない（消すなら setup-notes の [AlmaLinux 10 の初期設定のロールバックの「端末とエディタを消す」](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/extra/almalinux-setup.md#端末とエディタを消す)。Windows 11 は[「OpenSSH・Git for Windows・Firefox・WezTerm を外す」](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/extra/windows-setup.md#opensshgit-for-windowsfirefoxwezterm-を外す)）
 
 > [!CAUTION]
 > **この節の手順 3 は、`~/.config/wezterm` を消す**。手元で変えて commit・push していないものは取り戻せない。この節の手順 2 で確かめてから貼る。
