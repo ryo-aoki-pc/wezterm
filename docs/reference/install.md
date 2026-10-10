@@ -6,7 +6,7 @@
 
 ### 実施手順 — 手順 1: 2 つの置き場所
 
-- WezTerm は `~/.wezterm.lua` を `~/.config/wezterm/wezterm.lua` より先に探し、見つけた 1 つだけを読む（setup-notes の [wezterm-nightly.md の「設定ファイルの探索順序（実測）」](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/verification/wezterm-nightly.md#設定ファイルの探索順序実測)）
+- WezTerm は `~/.wezterm.lua` を `~/.config/wezterm/wezterm.lua` より先に探し、見つけた 1 つだけを読む（setup-notes の [WezTerm の記録の「設定ファイルの探索順序（実測）」](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/verification/almalinux-setup.md#wezterm-設定ファイルの探索順序実測)。もとは wezterm-nightly.md の記録）
 - `~/.wezterm.lua` が残っていると、この設定は読まれない
 
 ### 実施手順 — 手順 3: `~/.config/wezterm` に置く理由
@@ -55,7 +55,7 @@
   - [ロールバック](../install.md#ロールバック)の手順 4 で戻せる
 - **AlmaLinux 10 の公式のシェル統合は止めない**
   - 公式 Bash 統合の cwd・ユーザー変数・bash-preexec を保ち、semantic の 2 フックだけを独自処理へ移す。`WEZTERM_SHELL_SKIP_ALL=1` を渡す設定は加えない（[注意点](#注意点)）
-- **Windows は、Git Bash に同じ bash のブロックを貼る**（setup-notes の git.md と同じ）
+- **Windows は、Git Bash に同じ bash のブロックを貼る**（setup-notes の初期設定の「Git」と同じ）
 
 ### 完了時点の状態
 
@@ -96,8 +96,8 @@
 ### 参照
 
 - [README](../../README.md) — この設定の機能・キー操作・シェル統合の仕組み
-- setup-notes の [wezterm-nightly.md](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/wezterm-nightly.md) — WezTerm nightly の導入と、設定ファイルの探索順序の実測
-- setup-notes の [git.md](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/git.md)・[hackgen.md](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/hackgen.md)・[almalinux-setup.md](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/almalinux-setup.md)（starship・zoxide。もとは starship.md・zoxide.md）
+- setup-notes の [AlmaLinux 10 の初期設定の「WezTerm」](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/almalinux-setup.md#wezterm)・[Windows 11 の初期設定の「WezTerm」](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/windows-setup.md#wezterm) — WezTerm nightly の導入（設定ファイルの探索順序の実測は、その検証記録の「統合前の記録: WezTerm」）
+- setup-notes の [almalinux-setup.md](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/almalinux-setup.md)の「Git」「HackGen Console NF」と starship・zoxide（もとは git.md・hackgen.md・starship.md・zoxide.md）
 - [Configuration Files — WezTerm](https://wezterm.org/config/files.html) — 設定ファイルの置き場所
 - [Shell Integration — WezTerm](https://wezterm.org/shell-integration.html) — 公式のシェル統合と `WEZTERM_SHELL_SKIP_ALL`
 - `man sshd_config`（`AcceptEnv`）・`man ssh_config`（`SendEnv`）

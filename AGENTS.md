@@ -26,7 +26,7 @@ bash -n shell/wezterm.sh && zsh -n shell/wezterm.sh
 ```
 
 - 画面の無い環境でシェル統合を試すときは、`wezterm-mux-server --daemonize` を起動し、`wezterm cli spawn` / `send-text --no-paste` / `get-text` / `list` を使う（`docs/verification/install.md` のコンテナ記録と同じ方法。設定の `set_environment_variables` が効き、シェルはログインシェルで起動する）
-- AlmaLinux 10 のコンテナで WezTerm を入れるときは、setup-notes の `docs/wezterm-nightly.md` の手順（COPR の `rhel-9-<arch>` を明示）
+- AlmaLinux 10 のコンテナで WezTerm を入れるときは、setup-notes の `docs/almalinux-setup.md` の「WezTerm」の手順 1〜4（COPR の `rhel-9-<arch>` を明示。もとは `docs/wezterm-nightly.md`）
 
 ## 構成
 
