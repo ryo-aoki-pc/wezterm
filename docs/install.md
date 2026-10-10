@@ -251,7 +251,7 @@
 
 ## ロールバック
 
-- この文書で足したものを外す。WezTerm 本体は消さない（消すなら setup-notes の [wezterm-nightly.md のロールバック](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/wezterm-nightly.md#ロールバック)）
+- この文書で足したものを外す。WezTerm 本体は消さない（消すなら setup-notes の [wezterm-nightly.md のロールバック](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/extra/wezterm-nightly.md#ロールバック)）
 
 > [!CAUTION]
 > **この節の手順 3 は、`~/.config/wezterm` を消す**。手元で変えて commit・push していないものは取り戻せない。この節の手順 2 で確かめてから貼る。
