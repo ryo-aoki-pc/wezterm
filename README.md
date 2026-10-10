@@ -878,7 +878,8 @@ gui:
 | `docs/install.md` | 導入の手順書（操作・前提・期待結果） |
 | `docs/verification/install.md` | 導入・GUI・シェル統合の検証記録 |
 | `docs/reference/install.md` | 導入の選定理由と技術的説明 |
-| `CLAUDE.md` | Claude Code 向けの、このリポジトリの構成と書き方の決まり |
+| `AGENTS.md` | コーディングエージェント（Claude Code・Codex・Grok Build）向けの、このリポジトリの構成と書き方の決まり |
+| `CLAUDE.md` | Claude Code に `AGENTS.md` を読ませる 1 行（`@AGENTS.md`） |
 
 ## 使用している nightly 限定機能
 
