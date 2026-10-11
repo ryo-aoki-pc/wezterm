@@ -6,9 +6,12 @@
 
 ## 導入手順の正本
 
-Windows 11・AlmaLinux 10 の導入・利用・更新・任意操作は、setup-notes の [windows-setup.md](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/windows-setup.md) と [almalinux-setup.md](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/almalinux-setup.md) に集約する。既存の手順も対象とし、このリポジトリには移動先の案内・設定仕様・開発者検査・参考資料・検証記録・ロールバックを残す。
+Windows 11・AlmaLinux 10 の導入・利用・更新・任意操作は、setup-notes の [windows-setup.md](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/windows-setup.md) と [almalinux-setup.md](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/almalinux-setup.md) に集約する。既存の手順も対象とする。
 
-以下の旧手順書を参照する規則は、実行手順については上の正本へ適用する。操作を変えたら正本・案内・参照情報を同期し、過去の検証本文は保持する。共通 bash 設定が読むツールの初期化を `~/.bashrc` に直接追記しない。
+- 固有の仕様・他 OS の手順・開発者検査・理由・注意・検証記録・ロールバックが残る文書は保持する
+- 案内だけになった旧文書は削除する。README から上の2冊と[集約対応表](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/dev/consolidation-map.md)へ案内する
+
+文書規則は、Windows・AlmaLinux の実行手順には上の正本へ適用する。操作や移動先を変えたら正本・README・集約対応表・参照情報を同期し、過去の検証本文は保持する。共通 bash 設定が読むツールの初期化を `~/.bashrc` に直接追記しない。
 
 ## このリポジトリは何か
 
@@ -83,7 +86,7 @@ bash -n shell/wezterm.sh && zsh -n shell/wezterm.sh
 ## docs/install.md の書き方
 
 
-Windows・AlmaLinux の操作は setup-notes の2冊を正本にする。執筆規則は setup-notes の `docs/dev/writing-rules.md` に従う。旧手順書は見出し・アンカーを残して新正本へ案内し、開発者検査・他OS操作・ロールバックはこのリポジトリで管理する。操作を変えたら正本と参照情報を同期する。検証記録の既存本文は実施時点のまま保持し、新しい対象版・環境・範囲を追記する。
+Windows・AlmaLinux の操作は setup-notes の2冊を正本にする。執筆規則は setup-notes の `docs/dev/writing-rules.md` に従う。文書の保持・削除と README の案内は[導入手順の正本](#導入手順の正本)に従う。操作を変えたら正本と参照情報を同期する。検証記録の既存本文は実施時点のまま保持し、新しい対象版・環境・範囲を追記する。
 
 ## 共同作業の規則
 
