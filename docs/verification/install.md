@@ -430,6 +430,71 @@ Windows の WezTerm `20260905-153129-092dcf70` から、既存の AlmaLinux 10.2
 条件別の集計、ソースハッシュ、配置前の控えと反映後の確認、制限は [SSH の修正後の検証記録](../../tests/starship/SSH-FIX-REPORT.md)に保存した。修正前の記録は上の付録と [SSH-REPORT.md](../../tests/starship/SSH-REPORT.md)にそのまま残している。
 
 
+## 2026-10-11 の PowerShell 貼り付け修正に伴う追加記録
+
+対象は `9cb9f771df782199c79f5cf13fb4ded930759b21` を基にした
+`codex/fix-powershell-paste` の変更。右クリックと Ctrl+Shift+V を共有操作へ移し、
+Windows のローカル PowerShell が PSReadLine で入力を待っている間だけ `Paste` を呼ぶ。
+元からある空行を保持し、貼り付け後に Enter を押して実行する。
+
+検証環境は Windows 11、WezTerm `20260905-153129-092dcf70`、Windows PowerShell
+`5.1.26100.9444` / PSReadLine `2.0.0`、PowerShell `7.6.5` / PSReadLine `2.4.5`。
+ユーザープロファイルと通常の WezTerm 設定は変更していない。
+
+通常プロファイルの関連する設定は、両 PowerShell とも Emacs 編集モードと
+`Ctrl+Enter → AddLine`。この割り当てを専用ペインに再現すると、旧 `PasteFrom` で
+4 行のスクリプトブロックを貼った入力バッファが、両版・LF/CRLF とも 7 行になり、
+各行の境界に空行が増えた。
+画面の描画だけでなく、PSReadLine の `GetBufferState` で余分な LF を確認した。
+同じ文字列を修正後の操作で貼ると 4 行のまま保持し、Enter 前は実行回数 0、Enter 後は 1 だった。
+`Ctrl+Enter → AddLine` を設定しない最小構成では、この空行増加は再現しなかった。
+
+コピー元は利用者の申告では GitHub の Markdown コードブロックのコピーボタン。
+試験には生成した無害なコードを使い、元のクリップボードや通常ペインの履歴は採取していない。
+
+内部の経路は、Windows 既定の [CRLF 正規化](https://wezterm.org/config/lua/config/canonicalize_pasted_newlines.html)、
+[ConPTY の CR とほかの制御文字のキー変換](https://github.com/microsoft/terminal/blob/7d06b26f73ef4bcb78b56647c395251eeee4c2bc/src/terminal/parser/InputStateMachineEngine.cpp#L150-L211)、
+PSReadLine 2.0.0 の [未完入力での AcceptLine](https://github.com/PowerShell/PSReadLine/blob/v2.0.0/PSReadLine/BasicEditing.cs#L215-L222) と
+[AddLine](https://github.com/PowerShell/PSReadLine/blob/v2.0.0/PSReadLine/BasicEditing.cs#L464-L467)
+の実装と整合する。この Windows で `VkKeyScanW` を読み取り専用で比較すると、CR は
+`0x000D`、LF は `0x0A0D`（両方 Enter、LF は Ctrl 修飾も含む）だった。
+CR の Enter と LF の Ctrl+Enter がそれぞれ LF を挿入するという説明は、公式ソースと
+API 比較に基づく推定であり、入力バッファの 4 行 → 7 行は実測で確認した結果である。
+
+- 設定を `ls-fonts` で読み込み、`ERROR` が無いことを確認した。`show-keys` でも右クリックの
+  2 経路と Ctrl+Shift+V が同じ共有操作を参照することを確認した
+- `tests/paste/lua-behavior.lua` は 24/24 通過。入力待機、実行中、統合なし、古いマーカー、
+  SSH・WSL・TUI・別ドメイン・alternate screen・キーテーブル・Linux/macOS の分岐を模擬した
+- `tests/paste/check-powershell.ps1` は両 PowerShell で各 21/21 通過。実 PSReadLine の
+  Emacs モードへのキー登録、EditMode 再設定と再読み込み、登録失敗、元入力関数の例外、
+  待機マーカーの解除、C 印と戻り値の保持、StrictMode、UTF-8 BOM と構文を確認した
+- `tests/paste/live-run.py --shared-clipboard` の修正後の 96/96 ケースが通過した。
+  6 種類のコード（通常の 2 行・block・元からある空行・日本語・here-string・末尾改行）×
+  LF/CRLF × 4 経路（共有操作・右クリック 2 設定・Ctrl+Shift+V）×両 PowerShell の組み合わせで、
+  入力バッファの完全一致、Enter 前の実行回数 0、Enter 後の 1 回実行と期待値、空バッファを確認した
+- 同じ試験に含めた旧 `PasteFrom` の比較 24 件は、いずれも「入力保持かつ Enter 前に未実行」
+  の条件を満たさなかった。block では実空行が増え、通常の 2 行では先頭行が貼り付け中に実行された
+- 入力待機中のマーカー `1`、コマンド実行中の解除、再待機の復帰を両版で確認した。
+  統合を読み直した後も、Windows PowerShell の右クリックと PowerShell 7 の Ctrl+Shift+V の
+  block 貼り付けが各 1/1 通過した
+- 実ペインの effective config は `allow_win32_input_mode=true`、
+  `canonicalize_pasted_newlines=platform-default`。この 2 設定は変更していない。
+  最終全件結果は `tests/paste/results/20261011-200508/summary.json` に保存した
+- 二重 CR を意図的に作った補足試験も、両版の修正後の 8/8 ケースが通過した。
+  旧 block は 7 行、修正後は 4 行であり、二重 CR は元症状の再現に必須ではない。
+  結果は `tests/paste/results/20261011-200804/summary.json` に保存した
+- 既存の `tests/starship/lua-behavior.lua` は 49/49 通過。PowerShell の既存検証は
+  74 プロセスケース、34 callback チェック、標準チェック 494/494 が通過し、予期しない失敗は 0。
+  既知失敗として分類する 4 件（各版の `integration-first` と `threshold-large`）は今回の変更で扱わない
+- Lua の読み込み、両 PowerShell の構文解析、Python の構文解析、`git diff --check` を通した。
+  詳細結果は `tests/paste/results/` に保存し、Git の管理対象には含めない
+
+再実行の方法と実ペイン比較用の試験コードは
+[PowerShell の貼り付け検証](../../tests/paste/README.md)にある。
+実ペインの試験では設定の各 action を `window:perform_action` で呼び出した。
+SSH・WSL・Neovim・PSReadLine なしなどの切り替えは Lua の模擬 API で確認し、実セッションへは接続していない。
+クリップボードは無害な試験コードで置換し、元の内容を読まないため復元せず、試験後もコードが残る。
+
 ## 共存修正前の説明
 
 以下は元の固定コミット `92f799a6ee6f45d1648db622760ffeea2ed5ad98` の説明。現行の実装は[参照情報](../reference/install.md)を参照。
