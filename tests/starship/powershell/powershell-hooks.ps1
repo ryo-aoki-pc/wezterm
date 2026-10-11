@@ -38,9 +38,11 @@ foreach ($line in @('', ' ', "`t", 'echo hello', "line1`nline2", '日本語')) {
     $writer.GetStringBuilder().Clear() | Out-Null
     $value = PSConsoleHostReadLine
     $osc = $writer.ToString()
+    # 貼り付けの入力待機マーカーは tests/paste で検査し、ここでは既存の C 印を比べる。
+    $semanticOsc = [regex]::Replace($osc, '\x1b\]1337;SetUserVar=WEZTERM_PSREADLINE_PASTE=[A-Za-z0-9+/=]*\x1b\\', '')
     $expected = if ($line.Trim()) { "$([char]27)]133;C$([char]27)\" } else { '' }
     $checks += [pscustomobject]@{ Name="readline 戻り値 [$line]"; Pass=($value -ceq $line) }
-    $checks += [pscustomobject]@{ Name="readline C 通知 [$line]"; Pass=($osc -ceq $expected -and $global:ReadLineCalls -eq ($before+1)) }
+    $checks += [pscustomobject]@{ Name="readline C 通知 [$line]"; Pass=($semanticOsc -ceq $expected -and $global:ReadLineCalls -eq ($before+1)) }
     $readlineDetails += [pscustomobject]@{ Input=$line; Output=$value; Osc=$osc }
 }
 [Console]::SetOut($oldWriter)

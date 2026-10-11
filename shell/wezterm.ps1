@@ -16,6 +16,22 @@
 # WezTerm 以外の端末で読み込まれても無害なように何もせず抜ける
 if ($env:TERM_PROGRAM -ne 'WezTerm') { return }
 
+# Windows の貼り付けは PSReadLine にクリップボードを読ませる。端末から改行を
+# 送る経路を避けるため、Emacs モードでも Ctrl+v に Paste を明示的に割り当てる。
+# 再読み込みでラッパーが残っていても更新できるよう、早期 return より前に置く。
+function global:__WezTermEnablePSReadLinePaste {
+	if ($env:OS -ne 'Windows_NT' -or -not (Get-Module PSReadLine) -or
+		-not (Test-Path Function:\PSConsoleHostReadLine)) { return $false }
+	try {
+		Set-PSReadLineKeyHandler -Chord 'Ctrl+v' -Function Paste -ErrorAction Stop
+		return $true
+	} catch {
+		# 対応していない環境や登録失敗では端末の通常貼り付けに任せる
+		return $false
+	}
+}
+$null = __WezTermEnablePSReadLinePaste
+
 # 自分のラッパーが残っていれば二重に包まない。プロファイルの再読み込みなどで
 # prompt / PSReadLine が作り直されたときは、新しい関数を包み直す。
 # 未定義の変数を先に Test-Path で確かめ、Set-StrictMode の初回読み込みにも対応する
@@ -152,7 +168,19 @@ if (Test-Path Function:\PSConsoleHostReadLine) {
 	$global:__WezTermOriginalReadLine = $function:PSConsoleHostReadLine
 
 	function global:PSConsoleHostReadLine {
-		$line = & $global:__WezTermOriginalReadLine
+		# EditMode を後から設定するとキー割り当てが消えるため、入力のたびに登録する。
+		# マーカーは PSReadLine の入力待機中だけに限定し、Read-Host や実行中の
+		# コマンドへ Ctrl+v を送らない。読み取りが例外になっても finally で解除する。
+		$pasteReady = __WezTermEnablePSReadLinePaste
+		$pasteValue = if ($pasteReady) { 'MQ==' } else { '' }
+		$esc = [char]27
+		try {
+			# 対応していないときも空を送り、前のプログラムが残したマーカーを消す。
+			[Console]::Write("$esc]1337;SetUserVar=WEZTERM_PSREADLINE_PASTE=$pasteValue$esc\")
+			$line = & $global:__WezTermOriginalReadLine
+		} finally {
+			[Console]::Write("$esc]1337;SetUserVar=WEZTERM_PSREADLINE_PASTE=$esc\")
+		}
 		# 空 Enter はコマンドを実行しないので送らない（空の出力範囲を作らない）
 		if ($line -and $line.Trim()) {
 			[Console]::Write("$([char]27)]133;C$([char]27)\")

@@ -25,13 +25,14 @@
 --    Ctrl+Shift+Alt+H/L  前 / 次のワークスペースへ
 --    Ctrl+Shift+S        リサイズモード開始 → h/j/k/l または矢印で調整
 --                        （Esc または Enter で終了 / 2秒で自動終了）
---    右クリック          OS のクリップボードから貼り付け（SSH 先の Neovim 内でも）
+--    Ctrl+Shift+V / 右クリック OS のクリップボードから貼り付け
+--                        （Windows の PowerShell 入力待ちでは PSReadLine の Paste）
 --    Ctrl+ホイール       フォント拡大 / 縮小（Neovim / tmux 内でも）
 --    ※ ワークスペース名変更・ペインを新しいタブ/ウィンドウへ・設定フォルダを開く
 --      などキーの無い操作はコマンドパレット（palette.lua）にある
 --
 --  ▼ 主要デフォルト（WezTerm 標準。この設定でも有効）
---    Ctrl+Shift+C / V         コピー / 貼り付け
+--    Ctrl+Shift+C             コピー
 --    Ctrl+Shift+F             検索
 --    Ctrl+Shift+X             コピーモード（vim風カーソル選択）
 --    Ctrl+Shift+Z             ペインのズーム切替（タブの虫眼鏡アイコンはこの状態）
@@ -102,7 +103,7 @@ function M.apply(config)
 			-- マウス報告が無いシェルなどでの右クリック
 			event = { Down = { streak = 1, button = "Right" } },
 			mods = "NONE",
-			action = act.PasteFrom("Clipboard"),
+			action = actions.paste_clipboard,
 		},
 		{
 			-- Neovim / tmux がマウス報告を要求していても、右クリックは端末で貼り付ける。
@@ -110,7 +111,7 @@ function M.apply(config)
 			event = { Down = { streak = 1, button = "Right" } },
 			mods = "NONE",
 			mouse_reporting = true,
-			action = act.PasteFrom("Clipboard"),
+			action = actions.paste_clipboard,
 		},
 		-- Ctrl+ホイールでフォント拡大 / 縮小（ブラウザと同じ操作。Ctrl + +/- と同じ動作）
 		{
@@ -139,6 +140,9 @@ function M.apply(config)
 	}
 
 	config.keys = {
+		-- 右クリックと同じ貼り付け経路を使う。
+		{ key = "v", mods = "CTRL|SHIFT", action = actions.paste_clipboard },
+
 		-- ペイン分割（現在と同じシェル）
 		{ key = "d", mods = "CTRL|SHIFT", action = split_current_shell("Right") },
 		{ key = "e", mods = "CTRL|SHIFT", action = split_current_shell("Down") },
