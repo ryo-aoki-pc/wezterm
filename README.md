@@ -711,7 +711,7 @@ WezTerm からは `bash.exe` しか見えず、vim の編集中でも確認な�
 SSH では `Ctrl+Shift+F12` に専用受信ハンドラー `WezTermSshPaste` を登録します。
 `WEZTERM_PSREADLINE_SSH_PASTE` は入力待機中の識別子、`WEZTERM_PSREADLINE_SSH_READY` は受信準備完了、
 `WEZTERM_PSREADLINE_SSH_RESULT` は受信結果を通知します。`lua/paste.lua` はペインごとに応答を照合し、
-改行のない Base64 フレームを一度だけ送ります。受信側は UTF-8・長さ・識別子を確認し、
+ヘッダーの受信確認後に、改行のない Base64 本文を一度だけ送ります。配送の終端にも識別子を付けます。受信側は UTF-8・長さ・識別子を確認し、
 PSReadLine の `Insert` または選択範囲の `Replace` で入力欄へ挿入します。
 終了・例外・コマンド実行開始で印を消し、親 Bash / zsh のプロンプトでも残った印を消します。
 `Ctrl+C` による取消は配送の終端まで読み捨てます。配送が止まった受信待機は、接続元からペインを閉じて接続し直します。

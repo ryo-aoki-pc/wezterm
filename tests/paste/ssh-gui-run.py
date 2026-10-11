@@ -207,7 +207,7 @@ paste_key_present=[bool](@(Get-PSReadLineKeyHandler -Bound | Where-Object Functi
             deadline = time.monotonic() + 15
             while time.monotonic() < deadline:
                 value = request(pane, "snapshot")
-                if value["marker"].startswith("1:") and value["marker"] != previous:
+                if value["marker"].startswith("2:") and value["marker"] != previous:
                     return value
             raise TimeoutError("SSH receiver 入力待機")
 

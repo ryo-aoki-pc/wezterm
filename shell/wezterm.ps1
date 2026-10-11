@@ -52,11 +52,13 @@ function global:__WezTermReceiveSshPaste {
 	$nonce = [Guid]::NewGuid().ToString('N')
 	$result = 'error:invalid'
 	try {
-		__WezTermSshVar WEZTERM_PSREADLINE_SSH_READY "1:${epoch}:$nonce"
-		$received = [WezTermSshPasteV1.Reader]::Read(87480, 5000)
+		__WezTermSshVar WEZTERM_PSREADLINE_SSH_READY "2:${epoch}:$nonce"
+		$bodyReady = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes("2:${epoch}:${nonce}:body"))
+		$bodyReadyOsc = "$([char]27)]1337;SetUserVar=WEZTERM_PSREADLINE_SSH_READY=$bodyReady$([char]27)\"
+		$received = [WezTermSshPasteV2.Reader]::Read(87480, 5000, "WZP2:${nonce}:", $bodyReadyOsc, "~WZE2:${nonce}~")
 		if ($received.Status -ne 'complete') { $result = "error:$($received.Status)"; return }
 		$frame = $received.Frame
-		if ($frame -cnotmatch '\AWZP1:([0-9a-f]{32}):([0-9]{1,7}):([A-Za-z0-9+/]*={0,2})\z') { return }
+		if ($frame -cnotmatch '\AWZP2:([0-9a-f]{32}):([0-9]{1,7}):([A-Za-z0-9+/]*={0,2})\z') { return }
 		if ($Matches[1] -cne $nonce) { return }
 		$payload = $Matches[3]
 		if ([int]$Matches[2] -ne $payload.Length -or $payload.Length % 4 -ne 0) { return }
@@ -80,57 +82,96 @@ function global:__WezTermReceiveSshPaste {
 		$result = 'error:invalid'
 	} finally {
 		__WezTermSshVar WEZTERM_PSREADLINE_SSH_READY ''
-		__WezTermSshVar WEZTERM_PSREADLINE_SSH_RESULT "1:${epoch}:$result"
+		__WezTermSshVar WEZTERM_PSREADLINE_SSH_RESULT "2:${epoch}:$result"
 		# 使った応答は再利用させず、同じ入力待機内でも新しい epoch に切り替える。
 		$global:__WezTermSshPasteEpoch = [Guid]::NewGuid().ToString('N')
-		__WezTermSshVar WEZTERM_PSREADLINE_SSH_PASTE "1:$global:__WezTermSshPasteEpoch"
+		__WezTermSshVar WEZTERM_PSREADLINE_SSH_PASTE "2:$global:__WezTermSshPasteEpoch"
 	}
 }
-# 1 文字ごとの PowerShell 解釈を避ける。本文が始まった後は必ず終端まで読む。
+# 1 文字ごとの PowerShell 解釈を避ける。正しい prefix の受信後にだけ本文を許可し、
+# 本文が始まった後は取消・不正データでも必ず nonce 付き終端まで読む。
+# 手入力の ~ や偽の終端では復帰せず、接続元から届く本文の尾部を排出する。
+# 端末の入出力例外も不正として保持し、本文の尾部を親の入力へ戻さない。
 # 型は SSH の初回読み込みだけで作り、再読み込み時は再利用する。
 function global:__WezTermLoadSshReader {
-	if ('WezTermSshPasteV1.Reader' -as [type]) { return }
+	if ('WezTermSshPasteV2.Reader' -as [type]) { return }
 	Add-Type -TypeDefinition @'
 using System;
 using System.Diagnostics;
+using System.IO;
 using System.Text;
 using System.Threading;
-namespace WezTermSshPasteV1 {
+namespace WezTermSshPasteV2 {
     public class FrameResult {
         public string Status;
         public string Frame;
     }
     public static class Reader {
-        public static FrameResult Read(int maximum, int timeout) {
+        public static FrameResult Read(int maximum, int timeout, string prefix, string bodyReadyOsc, string terminator) {
             bool previous = Console.TreatControlCAsInput;
-            bool started = false, cancelled = false, oversize = false;
+            bool started = false, cancelled = false, invalid = false, oversize = false;
+            int matched = 0, endMatched = 0;
             var buffer = new StringBuilder();
             var watch = Stopwatch.StartNew();
             try {
                 Console.TreatControlCAsInput = true;
                 while (true) {
-                    if (!Console.KeyAvailable) {
-                        if (!started && watch.ElapsedMilliseconds >= timeout)
-                            return new FrameResult { Status = cancelled ? "cancelled" : "timeout" };
-                        Thread.Sleep(10);
-                        continue;
-                    }
-                    var key = Console.ReadKey(true);
-                    if (key.Key == ConsoleKey.C && (key.Modifiers & ConsoleModifiers.Control) != 0) {
-                        cancelled = true;
-                        buffer.Clear();
-                        continue;
-                    }
-                    char c = key.KeyChar;
-                    if (c == '~')
+                    if (!started && watch.ElapsedMilliseconds >= timeout)
                         return new FrameResult {
-                            Status = cancelled ? "cancelled" : oversize ? "oversize" : "complete",
-                            Frame = cancelled || oversize ? null : buffer.ToString()
+                            Status = cancelled ? "cancelled" : invalid ? "invalid" : "timeout"
                         };
-                    if (c == '\0') continue;
-                    started = true;
-                    if (buffer.Length >= maximum) { oversize = true; buffer.Clear(); }
-                    if (!cancelled && !oversize) buffer.Append(c);
+                    try {
+                        if (!Console.KeyAvailable) {
+                            Thread.Sleep(10);
+                            continue;
+                        }
+                        var key = Console.ReadKey(true);
+                        if (key.Key == ConsoleKey.C && (key.Modifiers & ConsoleModifiers.Control) != 0) {
+                            cancelled = true;
+                            buffer.Clear();
+                            continue;
+                        }
+                        char c = key.KeyChar;
+                        if (c == '\0') continue;
+                        if (!started) {
+                            if (c == prefix[matched]) {
+                                matched++;
+                            } else {
+                                invalid = true;
+                                matched = c == prefix[0] ? 1 : 0;
+                            }
+                            if (matched == prefix.Length) {
+                                started = true;
+                                buffer.Append(prefix);
+                                Console.Write(bodyReadyOsc);
+                            }
+                            continue;
+                        }
+                        if (endMatched > 0 || c == terminator[0]) {
+                            if (c == terminator[endMatched]) {
+                                endMatched++;
+                                if (endMatched == terminator.Length)
+                                    return new FrameResult {
+                                        Status = cancelled ? "cancelled" : invalid ? "invalid" : oversize ? "oversize" : "complete",
+                                        Frame = cancelled || invalid || oversize ? null : buffer.ToString()
+                                    };
+                                continue;
+                            }
+                            invalid = true;
+                            buffer.Clear();
+                            endMatched = c == terminator[0] ? 1 : 0;
+                        }
+                        if (buffer.Length >= maximum) { oversize = true; buffer.Clear(); }
+                        if (!cancelled && !invalid && !oversize) buffer.Append(c);
+                    } catch (IOException) {
+                        invalid = true;
+                        buffer.Clear();
+                        Thread.Sleep(10);
+                    } catch (InvalidOperationException) {
+                        invalid = true;
+                        buffer.Clear();
+                        Thread.Sleep(10);
+                    }
                 }
             } finally { Console.TreatControlCAsInput = previous; }
         }
@@ -302,7 +343,7 @@ if (Test-Path Function:\PSConsoleHostReadLine) {
 				__WezTermClearSshPaste
 				if ($sshReady) {
 					$global:__WezTermSshPasteEpoch = [Guid]::NewGuid().ToString('N')
-					__WezTermSshVar WEZTERM_PSREADLINE_SSH_PASTE "1:$global:__WezTermSshPasteEpoch"
+					__WezTermSshVar WEZTERM_PSREADLINE_SSH_PASTE "2:$global:__WezTermSshPasteEpoch"
 				} else {
 					# 統合の登録失敗を通常貼り付けと区別し、本文を端末キーとして送らせない。
 					__WezTermSshVar WEZTERM_PSREADLINE_SSH_PASTE 'unavailable'

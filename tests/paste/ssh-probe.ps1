@@ -13,6 +13,10 @@ $global:SSHPasteProbeIntegration = $IntegrationPath
 $global:SSHPasteProbeLabel = $Label
 $global:SSHPasteProbeGroups = @(& "$env:WINDIR\System32\whoami.exe" /groups)
 function global:prompt { 'SSH_PASTE_TEST> ' }
+# 旧版の型がキャッシュされているプロセスでも、新しい V2 の型を作ることを確かめる。
+if (-not ('WezTermSshPasteV1.Reader' -as [type])) {
+    Add-Type 'namespace WezTermSshPasteV1 { public static class Reader { public static object Read(int maximum, int timeout) { throw new System.Exception(); } } }' -ErrorAction Stop
+}
 function global:Write-SSHPasteProbe {
     param([string]$Kind = 'buffer')
     [string]$buffer = ''
@@ -41,6 +45,8 @@ function global:Write-SSHPasteProbe {
         process_id = $PID
         ssh_connection_present = [bool]$env:SSH_CONNECTION
         shell_integration_loaded = [bool](Test-Path Function:\__WezTermEnableSshPaste)
+        reader_v1_loaded = [bool]('WezTermSshPasteV1.Reader' -as [type])
+        reader_v2_loaded = [bool]('WezTermSshPasteV2.Reader' -as [type])
     }
     $encoded = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes(($capture | ConvertTo-Json -Compress -Depth 5)))
     [Console]::Write("$([char]27)]1337;SetUserVar=WEZTERM_SSH_PASTE_TEST=$encoded$([char]27)\")

@@ -41,7 +41,7 @@ function Capture {
 }
 . $IntegrationPath
 $capture = Capture
-Check 'SSH入力中だけ有効epochを通知する' ($capture.observed.WEZTERM_PSREADLINE_SSH_PASTE -cmatch '^1:[0-9a-f]{32}$')
+Check 'SSH入力中だけ有効epochを通知する' ($capture.observed.WEZTERM_PSREADLINE_SSH_PASTE -cmatch '^2:[0-9a-f]{32}$')
 Check 'SSHはlocal clipboard能力を通知しない' ($capture.observed.WEZTERM_PSREADLINE_PASTE -ceq '')
 Check 'ReadLine戻り値と呼出し回数を保つ' ($capture.value -ceq 'controlled line' -and $global:SshStateCalls -eq 1)
 foreach ($name in @('WEZTERM_PSREADLINE_SSH_PASTE','WEZTERM_PSREADLINE_SSH_READY','WEZTERM_PSREADLINE_SSH_RESULT')) {
@@ -71,7 +71,7 @@ try {
 Set-StrictMode -Version Latest
 . $IntegrationPath
 $capture = Capture
-Check 'StrictModeでもepochを通知して解除する' (-not $capture.failure -and $capture.observed.WEZTERM_PSREADLINE_SSH_PASTE -cmatch '^1:[0-9a-f]{32}$' -and $capture.final.WEZTERM_PSREADLINE_SSH_PASTE -ceq '')
+Check 'StrictModeでもepochを通知して解除する' (-not $capture.failure -and $capture.observed.WEZTERM_PSREADLINE_SSH_PASTE -cmatch '^2:[0-9a-f]{32}$' -and $capture.final.WEZTERM_PSREADLINE_SSH_PASTE -ceq '')
 Set-StrictMode -Off
 Remove-Module PSReadLine
 $capture = Capture

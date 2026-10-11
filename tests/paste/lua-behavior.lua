@@ -127,8 +127,9 @@ local function fixture(options)
 	process_calls, timers = {}, {}
 	clock_now = 1000
 	environment.WAYLAND_DISPLAY, environment.DISPLAY = "wayland-test", ":test"
-	local vars = { WEZTERM_PSREADLINE_SSH_PASTE = options.marker or "1:" .. epoch, WEZTERM_PROG = options.prog }
-	local sent, frames, notifications = {}, {}, {}
+	local vars = { WEZTERM_PSREADLINE_SSH_PASTE = options.marker or "2:" .. epoch, WEZTERM_PROG = options.prog }
+	local sent, frames, writes, notifications = {}, {}, {}, {}
+	local prefix, prefix_nonce
 	local id = next_id
 	local pane = {
 		pane_id = function() return id end,
@@ -136,7 +137,22 @@ local function fixture(options)
 		is_alt_screen_active = function() return options.alt or false end,
 		get_foreground_process_name = function() return options.fg or "/usr/bin/ssh" end,
 		get_user_vars = function() return vars end,
-		send_text = function(_, text) table.insert(frames, text) end,
+		send_text = function(_, text)
+			table.insert(writes, text)
+			if text:match("^WZP2:[0-9a-f]+:$") then
+				prefix = text
+				prefix_nonce = text:match("^WZP2:([0-9a-f]+):$")
+			elseif text:match("^~WZE2:[0-9a-f]+~$") then
+				equal(text, "~WZE2:" .. prefix_nonce .. "~")
+				prefix = nil
+			elseif prefix then
+				equal(text:sub(-39), "~WZE2:" .. prefix_nonce .. "~")
+				table.insert(frames, prefix .. text)
+				prefix = nil
+			else
+				error("識別子なしの本文送信")
+			end
+		end,
 	}
 	local selected = pane
 	local window = {
@@ -151,11 +167,18 @@ local function fixture(options)
 		for _, callback in ipairs(events["user-var-changed"]) do callback(window, pane, name, value) end
 	end
 	return {
-		pane = pane, window = window, vars = vars, sent = sent, frames = frames, notifications = notifications,
+		pane = pane, window = window, vars = vars, sent = sent, frames = frames, writes = writes, notifications = notifications,
 		paste = function() actions.paste_clipboard(window, pane) end,
 		emit = emit,
-		ready = function(value) emit("WEZTERM_PSREADLINE_SSH_READY", value or "1:" .. epoch .. ":" .. nonce) end,
-		result = function(value) emit("WEZTERM_PSREADLINE_SSH_RESULT", value or "1:" .. epoch .. ":ok") end,
+		prefix_ready = function(value) emit("WEZTERM_PSREADLINE_SSH_READY", value or vars.WEZTERM_PSREADLINE_SSH_PASTE .. ":" .. nonce) end,
+		body_ready = function(value) emit("WEZTERM_PSREADLINE_SSH_READY", value or vars.WEZTERM_PSREADLINE_SSH_PASTE .. ":" .. nonce .. ":body") end,
+		ready = function(value)
+			value = value or vars.WEZTERM_PSREADLINE_SSH_PASTE .. ":" .. nonce
+			emit("WEZTERM_PSREADLINE_SSH_READY", value)
+			emit("WEZTERM_PSREADLINE_SSH_READY", value .. ":body")
+		end,
+		result = function(value) emit("WEZTERM_PSREADLINE_SSH_RESULT", value or vars.WEZTERM_PSREADLINE_SSH_PASTE .. ":ok") end,
+		next_prompt = function(value) emit("WEZTERM_PSREADLINE_SSH_PASTE", "2:" .. (value or other)) end,
 		select = function(value) selected = value end,
 		update = function() for _, callback in ipairs(events["update-status"]) do callback(window, pane) end end,
 	}
@@ -170,11 +193,12 @@ test("SSH の複数行・CRLF・日本語・絵文字・タブは改行のない
 	equal(f.sent[1].value.mods, "CTRL|SHIFT")
 	equal(#f.frames, 0)
 	f.ready()
-	equal(f.frames[1], "WZP1:" .. nonce .. ":28:YQ0KCuaXpeacrOiqnvCfmIAJCg==~")
+	equal(f.frames[1], "WZP2:" .. nonce .. ":28:YQ0KCuaXpeacrOiqnvCfmIAJCg==" .. "~WZE2:" .. nonce .. "~")
 	assert(not f.frames[1]:find("[\r\n]"))
 	f.ready()
 	equal(#f.frames, 1)
 	f.result()
+	f.next_prompt()
 	f.paste()
 	equal(#f.sent, 2)
 end)
@@ -190,7 +214,7 @@ test("X11 は xclip の UTF8_STRING を引数配列で取得する", function()
 	environment.WAYLAND_DISPLAY = nil
 	f.paste(); f.ready()
 	equal(table.concat(process_calls[1], "|"), "xclip|-selection|clipboard|-out|-target|UTF8_STRING")
-	equal(f.frames[1], "WZP1:" .. nonce .. ":4:YWJj~")
+	equal(f.frames[1], "WZP2:" .. nonce .. ":4:YWJj" .. "~WZE2:" .. nonce .. "~")
 end)
 
 test("Windows はシステム PowerShell を NoProfile/STA で起動し ASCII の取得結果を送る", function()
@@ -201,7 +225,7 @@ test("Windows はシステム PowerShell を NoProfile/STA で起動し ASCII �
 	equal(process_calls[1][5], "-STA")
 	assert(process_calls[1][7]:find("ContainsText", 1, true))
 	assert(process_calls[1][7]:find("Get-Clipboard -Raw", 1, true))
-	equal(f.frames[1], "WZP1:" .. nonce .. ":4:YWJj~")
+	equal(f.frames[1], "WZP2:" .. nonce .. ":4:YWJj" .. "~WZE2:" .. nonce .. "~")
 end)
 
 for _, text in ipairs({ "a", "ab", "abc" }) do
@@ -209,7 +233,7 @@ for _, text in ipairs({ "a", "ab", "abc" }) do
 		local expected = ({ "YQ==", "YWI=", "YWJj" })[#text]
 		local f = fixture({ text = text })
 		f.paste(); f.ready()
-		equal(f.frames[1], "WZP1:" .. nonce .. ":4:" .. expected .. "~")
+		equal(f.frames[1], "WZP2:" .. nonce .. ":4:" .. expected .. "~WZE2:" .. nonce .. "~")
 	end)
 end
 
@@ -223,8 +247,8 @@ test("64 KiB ちょうどの UTF-8 本文を送れる", function()
 	local f = fixture({ text = string.rep("a", 64 * 1024) })
 	f.paste(); f.ready()
 	equal(#f.sent, 1); equal(#f.frames, 1)
-	equal(#f.frames[1], #("WZP1:" .. nonce .. ":87384:~") + 87384)
-	equal(f.frames[1]:sub(-5), "YQ==~")
+	equal(#f.frames[1], #("WZP2:" .. nonce .. ":87384:~WZE2:" .. nonce .. "~") + 87384)
+	equal(f.frames[1]:sub(-43), "YQ==~WZE2:" .. nonce .. "~")
 end)
 
 test("クリップボードの取得中に入力待機が終われば chord も送らない", function()
@@ -296,11 +320,169 @@ test("送信後は READY タイマーで待機を解除せず RESULT を待つ",
 	local f = fixture()
 	f.paste(); f.ready(); timers[1].callback(); f.paste()
 	equal(#f.sent, 1); equal(#f.frames, 1); equal(#f.notifications, 1)
-	f.result(); f.paste()
+	f.result(); f.next_prompt(); f.paste()
 	equal(#f.sent, 2)
 end)
 
-for _, value in ipairs({ "1:" .. other .. ":" .. nonce, "1:" .. epoch .. ":short", "2:" .. epoch .. ":" .. nonce, "1:" .. epoch .. ":" .. nonce .. ":extra" }) do
+test("最初の READY は識別子だけを送り、本文 READY 後に本文を一度だけ送る", function()
+	local f = fixture({ text = "abc" })
+	f.paste(); f.prefix_ready()
+	equal(#f.writes, 1); equal(f.writes[1], "WZP2:" .. nonce .. ":")
+	equal(#f.frames, 0)
+	f.prefix_ready(); equal(#f.writes, 1)
+	f.body_ready(); f.body_ready()
+	equal(#f.writes, 2); equal(f.writes[2], "4:YWJj" .. "~WZE2:" .. nonce .. "~"); equal(#f.frames, 1)
+	assert(not table.concat(f.writes):find("[\r\n]"))
+end)
+
+test("本文と取消の終端は今回受信した nonce を使い単独の ~ を送らない", function()
+	local f = fixture({ text = "abc" })
+	f.paste(); f.prefix_ready("2:" .. epoch .. ":" .. other)
+	f.body_ready("2:" .. epoch .. ":" .. other .. ":body")
+	equal(f.writes[2], "4:YWJj~WZE2:" .. other .. "~")
+	local g = fixture()
+	g.paste(); g.prefix_ready("2:" .. epoch .. ":" .. other); timers[2].callback()
+	equal(g.writes[2], "~WZE2:" .. other .. "~")
+	for _, writes in ipairs({ f.writes, g.writes }) do
+		for _, value in ipairs(writes) do assert(value ~= "~" and not value:find("[\r\n]")) end
+	end
+end)
+
+test("識別子送信前の本文 READY は本文も識別子も送らない", function()
+	local f = fixture()
+	f.paste(); f.body_ready()
+	equal(#f.writes, 0)
+	f.ready(); equal(#f.frames, 1)
+end)
+
+for _, value in ipairs({
+	"2:" .. other .. ":" .. nonce .. ":body",
+	"2:" .. epoch .. ":" .. other .. ":body",
+	"1:" .. epoch .. ":" .. nonce .. ":body",
+	"2:" .. epoch .. ":" .. nonce,
+	"2:" .. epoch .. ":" .. nonce .. ":body:extra",
+	"2:" .. epoch .. ":" .. nonce:upper() .. ":body",
+}) do
+	test("古い・偽・不正 phase の本文 READY を無視する: " .. value, function()
+		local f = fixture()
+		f.paste(); f.prefix_ready(); f.body_ready(value)
+		equal(#f.writes, 1); equal(#f.frames, 0)
+		f.body_ready(); equal(#f.frames, 1)
+	end)
+end
+
+test("最初の READY timer は本文準備 phase を取り消さない", function()
+	local f = fixture()
+	f.paste(); f.prefix_ready(); timers[1].callback()
+	equal(#f.writes, 1); equal(#f.notifications, 0)
+	f.body_ready(); timers[2].callback()
+	equal(#f.frames, 1); equal(#f.notifications, 0)
+end)
+
+test("本文準備 timer は本文なしの終端だけを送り、遅い本文 READY を破棄する", function()
+	local f = fixture()
+	f.paste(); f.prefix_ready(); timers[2].callback(); f.body_ready()
+	equal(#f.writes, 2); equal(f.writes[2], "~WZE2:" .. nonce .. "~"); equal(#f.frames, 0); equal(#f.notifications, 1)
+	timers[1].callback(); timers[2].callback(); f.body_ready()
+	equal(#f.writes, 2); equal(#f.notifications, 1)
+end)
+
+for _, elapsed in ipairs({ 3, 5.5, -0.001 }) do
+	test("timer 未処理でも本文 READY の期限・時刻後戻りは終端だけで取消: " .. elapsed, function()
+		local f = fixture()
+		f.paste(); f.prefix_ready(); clock_now = clock_now + elapsed; f.body_ready()
+		equal(#f.writes, 2); equal(f.writes[2], "~WZE2:" .. nonce .. "~"); equal(#f.frames, 0); equal(#f.notifications, 1)
+	end)
+end
+
+test("本文準備の 3 秒期限は最初の READY 到着時から数える", function()
+	local f = fixture()
+	f.paste(); clock_now = clock_now + 2.9; f.prefix_ready()
+	clock_now = clock_now + 2.9; f.body_ready()
+	equal(#f.frames, 1); equal(#f.notifications, 0)
+end)
+
+test("本文準備中のペイン切替は終端だけで取消し同じ epoch の再発火を拒否する", function()
+	local f = fixture()
+	f.paste(); f.prefix_ready(); f.select({ pane_id = function() return -1 end }); f.update()
+	equal(#f.writes, 2); equal(f.writes[2], "~WZE2:" .. nonce .. "~"); equal(#f.notifications, 1)
+	f.select(f.pane); f.paste(); f.body_ready(); equal(#f.sent, 1); equal(#f.frames, 0)
+	f.next_prompt(); f.paste(); f.ready(); equal(#f.sent, 2); equal(#f.frames, 1)
+end)
+
+test("最初の READY 前のペイン切替でも本文なしで取消し同じ epoch を再発火しない", function()
+	local f = fixture()
+	f.paste(); f.select({ pane_id = function() return -1 end }); f.update()
+	equal(#f.writes, 0); equal(#f.notifications, 1)
+	f.select(f.pane); f.paste(); f.ready()
+	equal(#f.sent, 1); equal(#f.writes, 0)
+end)
+
+test("本文準備中のキー表開始は終端で取消し marker 失効では追加送信しない", function()
+	local f = fixture()
+	f.paste(); f.prefix_ready()
+	f.window.active_key_table = function() return "copy_mode" end
+	f.update(); equal(f.writes[2], "~WZE2:" .. nonce .. "~"); equal(#f.frames, 0); equal(#f.notifications, 1)
+	local g = fixture()
+	g.paste(); g.prefix_ready(); g.next_prompt()
+	equal(#g.writes, 1); equal(#g.frames, 0); equal(#g.notifications, 1)
+end)
+
+test("本文準備中の失敗 RESULT では終端を送らず遅い本文 READY を無視する", function()
+	local f = fixture()
+	f.paste(); f.prefix_ready(); f.result("2:" .. epoch .. ":error:cancelled"); f.body_ready()
+	equal(#f.writes, 1); equal(#f.frames, 0); equal(#f.notifications, 1)
+	timers[2].callback(); equal(#f.writes, 1); equal(#f.notifications, 1)
+end)
+
+test("終端の best-effort 送信例外でも本文を破棄する", function()
+	local f = fixture()
+	f.paste(); f.prefix_ready()
+	f.pane.send_text = function() error("終了したペイン") end
+	timers[2].callback(); f.body_ready()
+	equal(#f.frames, 0); equal(#f.notifications, 1)
+end)
+
+test("識別子送信の例外は終端で取消し本文を送らない", function()
+	local f = fixture()
+	local send = f.pane.send_text
+	f.pane.send_text = function(pane, text)
+		send(pane, text)
+		if text:match("^WZP2:") then error("識別子送信失敗") end
+	end
+	f.paste(); f.prefix_ready(); f.body_ready()
+	equal(#f.writes, 2); equal(f.writes[2], "~WZE2:" .. nonce .. "~"); equal(#f.frames, 0); equal(#f.notifications, 1)
+end)
+
+for _, partial in ipairs({ false, true }) do
+	test("本文送信の例外は未送信状態から終端で取り消す: partial=" .. tostring(partial), function()
+		local f = fixture({ text = "abc" })
+		local send = f.pane.send_text
+		f.pane.send_text = function(pane, text)
+			if text:match("^%d+:") then
+				if partial then table.insert(f.writes, text:sub(1, 3)) end
+				error("本文送信失敗")
+			end
+			send(pane, text)
+		end
+		f.paste(); f.prefix_ready(); f.body_ready()
+		equal(f.writes[#f.writes], "~WZE2:" .. nonce .. "~"); equal(#f.writes, partial and 3 or 2)
+		equal(#f.frames, 0); equal(#f.notifications, 1)
+		f.body_ready(); timers[2].callback()
+		equal(#f.writes, partial and 3 or 2); equal(#f.notifications, 1)
+		f.paste(); equal(#f.sent, 1)
+	end)
+end
+
+test("準備 timeout の後も同一 epoch は再発火せず次の prompt でだけ開始する", function()
+	local f = fixture()
+	f.paste(); timers[1].callback(); f.paste(); f.ready()
+	equal(#f.sent, 1); equal(#f.writes, 0)
+	f.next_prompt(); f.paste(); f.ready()
+	equal(#f.sent, 2); equal(#f.frames, 1)
+end)
+
+for _, value in ipairs({ "2:" .. other .. ":" .. nonce, "2:" .. epoch .. ":short", "3:" .. epoch .. ":" .. nonce, "2:" .. epoch .. ":" .. nonce .. ":extra" }) do
 	test("不正・古い READY を無視する: " .. value, function()
 		local f = fixture()
 		f.paste(); f.ready(value)
@@ -310,13 +492,15 @@ end
 
 test("貼り付け開始前の READY と既に使った nonce を再利用しない", function()
 	local f = fixture()
-	f.vars.WEZTERM_PSREADLINE_SSH_READY = "1:" .. epoch .. ":" .. nonce
+	f.vars.WEZTERM_PSREADLINE_SSH_READY = "2:" .. epoch .. ":" .. nonce
 	f.paste(); f.ready(); equal(#f.frames, 0)
-	f.ready("1:" .. epoch .. ":" .. other); equal(#f.frames, 1)
-	f.result(); f.paste(); f.ready("1:" .. epoch .. ":" .. other); equal(#f.frames, 1)
+	f.ready("2:" .. epoch .. ":" .. other); equal(#f.frames, 1)
+	f.result(); f.paste(); f.ready("2:" .. epoch .. ":" .. other); equal(#f.frames, 1)
+	equal(#f.sent, 1)
+	f.next_prompt(); f.paste(); f.ready("2:" .. other .. ":" .. other); equal(#f.frames, 2)
 end)
 
-for _, changed in ipairs({ "", "1:" .. other, "2:" .. epoch }) do
+for _, changed in ipairs({ "", "2:" .. other, "3:" .. epoch }) do
 	test("epoch の解除・変更では本文を破棄する: " .. changed, function()
 		local f = fixture()
 		f.paste(); f.emit("WEZTERM_PSREADLINE_SSH_PASTE", changed); f.ready()
@@ -362,18 +546,18 @@ end)
 
 test("RESULT error は本文を再送せず固定の通知を出す", function()
 	local f = fixture()
-	f.paste(); f.result("1:" .. epoch .. ":error:cancelled"); f.ready()
+	f.paste(); f.result("2:" .. epoch .. ":error:cancelled"); f.ready()
 	equal(#f.frames, 0); equal(#f.notifications, 1)
 	assert(not f.notifications[1].body:find("cancelled", 1, true))
 end)
 
 test("古い RESULT と送信前の ok は待機を解除しない", function()
 	local f = fixture()
-	f.paste(); f.result("1:" .. other .. ":error:cancelled"); f.result(); f.ready()
+	f.paste(); f.result("2:" .. other .. ":error:cancelled"); f.result(); f.ready()
 	equal(#f.frames, 1); equal(#f.notifications, 0)
 end)
 
-for _, marker in ipairs({ "true", "1:short", "2:" .. epoch }) do
+for _, marker in ipairs({ "true", "2:short", "3:" .. epoch, "1:" .. epoch }) do
 	test("未知 remote marker は通常貼り付けへ戻らない: " .. marker, function()
 		local f = fixture({ marker = marker })
 		f.paste()

@@ -2,7 +2,8 @@
 
 Linux の PTY から ssh を起動する。接続元クリップボードと Lua action の検証は
 別途実 WezTerm GUI で行う。この検証だけをクライアント全体の試験と扱わない。
-利用者のプロファイルを読まず、履歴を保存せず、通常設定を変更しない。
+基本試験は利用者のプロファイルを読まず、履歴を保存せず、通常設定を変更しない。
+親へ戻るオプションは子の通常プロファイルを読み、専用 probe で履歴保存を止める。
 """
 from __future__ import annotations
 
@@ -42,6 +43,10 @@ def ps_literal(value: str) -> str:
     return "'" + value.replace("'", "''") + "'"
 
 
+def frame_terminator(nonce: str) -> bytes:
+    return ("~WZE2:" + nonce + "~").encode("ascii")
+
+
 def remote_powershell(host: str, script: str) -> str:
     result = subprocess.run(
         ["ssh", "-o", "BatchMode=yes", "-o", "ConnectTimeout=10", host,
@@ -79,7 +84,7 @@ class Session:
         self.records = []
         try:
             if remote_command is None:
-                self.wait(lambda: self.vars.get("WEZTERM_PSREADLINE_SSH_PASTE", "").startswith("1:"), 20, "initial marker")
+                self.wait(lambda: self.vars.get("WEZTERM_PSREADLINE_SSH_PASTE", "").startswith("2:"), 20, "initial marker")
             else:
                 self.wait(lambda: b"SSH_BASH_TEST> " in self.output, 20, "Bash initial prompt")
         except Exception:
@@ -154,36 +159,66 @@ class Session:
         self.wait(lambda: any(name == "WEZTERM_SSH_PASTE_TEST" for name, _ in self.events[before:]), label="F11 probe")
         return json.loads(next(value for name, value in self.events[before:] if name == "WEZTERM_SSH_PASTE_TEST"))
 
-    def receive(self, data: bytes, mutate=None, cancel=False, omit=False):
-        start = time.monotonic()
+    def begin_receive(self):
         epoch = self.vars["WEZTERM_PSREADLINE_SSH_PASTE"].split(":")[1]
         before = len(self.events)
+        start = time.monotonic()
         self.key("receive")
-        self.wait(lambda: any(name == "WEZTERM_PSREADLINE_SSH_READY" and value.startswith("1:" + epoch + ":") for name, value in self.events[before:]), label="receiver READY")
-        ready = next(value for name, value in self.events[before:] if name == "WEZTERM_PSREADLINE_SSH_READY" and value.startswith("1:" + epoch + ":"))
+        self.wait(lambda: any(name == "WEZTERM_PSREADLINE_SSH_READY" and re.fullmatch("2:" + epoch + ":[0-9a-f]{32}", value) for name, value in self.events[before:]), label="receiver prefix READY")
+        ready = next(value for name, value in self.events[before:] if name == "WEZTERM_PSREADLINE_SSH_READY" and re.fullmatch("2:" + epoch + ":[0-9a-f]{32}", value))
         nonce = ready.split(":")[2]
+        return {"epoch": epoch, "nonce": nonce, "before": before, "start": start}
+
+    def has_result(self, transaction):
+        return any(name == "WEZTERM_PSREADLINE_SSH_RESULT" and value.startswith("2:" + transaction["epoch"] + ":") for name, value in self.events[transaction["before"]:])
+
+    def has_body_ready(self, transaction):
+        expected = "2:" + transaction["epoch"] + ":" + transaction["nonce"] + ":body"
+        return any(name == "WEZTERM_PSREADLINE_SSH_READY" and value == expected for name, value in self.events[transaction["before"]:])
+
+    def prepare_body(self, transaction, prefix=None):
+        if prefix is None:
+            prefix = ("WZP2:" + transaction["nonce"] + ":").encode("ascii")
+        self.send(prefix)
+        self.wait(lambda: self.has_body_ready(transaction) or self.has_result(transaction), 10, "receiver body READY")
+        return self.has_body_ready(transaction)
+
+    def finish_receive(self, transaction, frame_length=0):
+        self.wait(lambda: self.has_result(transaction), max(30, frame_length / 600), "receiver RESULT")
+        result = next(value for name, value in self.events[transaction["before"]:] if name == "WEZTERM_PSREADLINE_SSH_RESULT" and value.startswith("2:" + transaction["epoch"] + ":"))
+        self.last_receive_seconds = round(time.monotonic() - transaction["start"], 3)
+        return result, self.probe()
+
+    def receive(self, data: bytes, mutate=None, cancel=False, omit=False, cancel_before_body=False):
+        transaction = self.begin_receive()
+        nonce = transaction["nonce"]
         payload = base64.b64encode(data).decode("ascii")
-        frame = f"WZP1:{nonce}:{len(payload)}:{payload}~".encode("ascii")
+        terminator = frame_terminator(nonce)
+        frame = f"WZP2:{nonce}:{len(payload)}:{payload}".encode("ascii") + terminator
         if mutate:
             frame = mutate(frame, nonce)
-        if cancel:
-            middle = min(len(frame) - 1, 60)
-            self.send(frame[:middle])
-            self.key("cancel")
-            self.send(frame[middle:])
-        elif not omit:
-            if frame.endswith(b"\n~"):
+        parts = frame.split(b":", 2)
+        prefix = b":".join(parts[:2]) + b":"
+        body = parts[2]
+        # 誤った nonce や未開始 timeout の後には本文を一切送らない。
+        if not omit and self.prepare_body(transaction, prefix):
+            if cancel_before_body:
+                self.key("cancel")
+                self.send(terminator)
+            elif cancel:
+                middle = min(len(body) - 1, 12)
+                self.send(body[:middle])
+                self.key("cancel")
+                self.send(body[middle:])
+            elif body.endswith(b"\n" + terminator):
                 # 生 LF は Windows の端末入力変換を通るため、U+000A のキー通知で
                 # 受信データ末尾の LF を正確に再現する。
-                self.send(frame[:-2])
+                self.send(body[:-len(terminator) - 1])
                 self.send(b"\x1b[13;28;10;1;0;1_")
-                self.send(b"~")
+                self.send(terminator)
             else:
-                self.send(frame)
-        self.wait(lambda: any(name == "WEZTERM_PSREADLINE_SSH_RESULT" and value.startswith("1:" + epoch + ":") for name, value in self.events[before:]), max(30, len(frame) / 600), "receiver RESULT")
-        result = next(value for name, value in self.events[before:] if name == "WEZTERM_PSREADLINE_SSH_RESULT" and value.startswith("1:" + epoch + ":"))
-        self.last_receive_seconds = round(time.monotonic() - start, 3)
-        return result, self.probe()
+                self.send(body)
+        return self.finish_receive(transaction, len(frame))
 
     def cancel_buffer(self):
         epoch = self.vars["WEZTERM_PSREADLINE_SSH_PASTE"]
@@ -201,9 +236,10 @@ def bash_return_case(host: str, shell: str, remote_dir: str):
         body = '. "$env:WEZTERM_SSH_PASTE_TEST_PROBE" -IntegrationPath "$env:WEZTERM_SSH_PASTE_TEST_INTEGRATION" -Label "' + shell + '-from-bash"'
         command = shell + ".exe -NoLogo -NoExit -Command " + ps_literal(body)
         session.send(command.encode() + b"\r")
-        session.wait(lambda: session.vars.get("WEZTERM_PSREADLINE_SSH_PASTE", "").startswith("1:"), 30, "PowerShell from Bash marker")
+        session.wait(lambda: session.vars.get("WEZTERM_PSREADLINE_SSH_PASTE", "").startswith("2:"), 30, "PowerShell from Bash marker")
         child = session.probe()
         cancelled, capture = session.receive(b"known cancelled input" * 10, cancel=True)
+        body_cancelled, body_capture = session.receive(b"must never reach parent", cancel_before_body=True)
         result, _ = session.receive(b"exit")
         before = len(session.events)
         session.output = b""
@@ -215,6 +251,7 @@ def bash_return_case(host: str, shell: str, remote_dir: str):
         checks = {
             "powershell_administrator": child["administrator"] is True,
             "cancel_not_inserted": ":error:" in cancelled and capture["buffer"] == "" and capture["executed"] == 0,
+            "before_body_cancelled_not_inserted": body_cancelled.endswith(":error:cancelled") and body_capture["buffer"] == "" and body_capture["executed"] == 0,
             "exit_inserted": result.endswith(":ok"),
             "bash_markers_cleared": all(session.vars.get(name) == "" for name in ("WEZTERM_PSREADLINE_SSH_PASTE", "WEZTERM_PSREADLINE_SSH_READY", "WEZTERM_PSREADLINE_SSH_RESULT")),
             "bash_buffer_empty": buffer == "",
@@ -236,6 +273,7 @@ def drop_return_case(session: Session, shell: str):
     session.wait(lambda: session.vars.get("WEZTERM_PSREADLINE_SSH_PASTE", "") not in ("", old_epoch), 30, "drop child marker")
     child = session.probe()
     cancelled, captured = session.receive(b"cancelled known child input" * 10, cancel=True)
+    body_cancelled, body_capture = session.receive(b"must never reach administrator parent", cancel_before_body=True)
     child_exit, _ = session.receive(b"exit")
     old_events = len(session.events)
     old_epoch = session.vars["WEZTERM_PSREADLINE_SSH_PASTE"]
@@ -249,6 +287,7 @@ def drop_return_case(session: Session, shell: str):
         "child_medium": any("S-1-16-8192" in line for line in child["groups"]),
         "child_admin_sid_deny_only": any("S-1-5-32-544" in line and re.search(r"deny|拒否", line, re.IGNORECASE) for line in child["groups"]),
         "cancelled_not_inserted": ":error:" in cancelled and captured["buffer"] == "" and captured["executed"] == 0,
+        "before_body_cancelled_not_inserted": body_cancelled.endswith(":error:cancelled") and body_capture["buffer"] == "" and body_capture["executed"] == 0,
         "child_exit_inserted": child_exit.endswith(":ok"),
         "parent_administrator": returned["administrator"] is True,
         "parent_buffer_empty": returned["buffer"] == "",
@@ -315,8 +354,8 @@ def run_cases(session: Session, large: bool, large_size: int):
     invalid = [
         ("wrong-nonce", b"known", lambda frame, nonce: frame.replace(nonce.encode(), b"0" * 32, 1)),
         ("wrong-length", b"known", lambda frame, nonce: frame.replace(b":8:", b":7:", 1)),
-        ("invalid-base64", b"known", lambda frame, nonce: frame[:-2] + b"?~"),
-        ("newline-before-terminator", b"known", lambda frame, nonce: frame[:-1] + b"\n~"),
+        ("invalid-base64", b"known", lambda frame, nonce: frame.replace(b":a25vd24=", b":a25vd24?", 1)),
+        ("newline-before-terminator", b"known", lambda frame, nonce: frame[:-len(frame_terminator(nonce))] + b"\n" + frame_terminator(nonce)),
         ("invalid-utf8", b"\xff", None),
         ("nul", b"a\0b", None),
     ]
@@ -330,18 +369,108 @@ def run_cases(session: Session, large: bool, large_size: int):
     result, capture = session.receive(b"", omit=True)
     record("receiver-no-frame-timeout", {"result_error": ":error:" in result, "empty_buffer": capture["buffer"] == "", "not_executed": capture["executed"] == count}, result=result.rsplit(":", 1)[-1])
 
+    # 最初の READY は本文の送信許可ではない。前置不正・取消があっても
+    # 正しい prefix の確認までは本文を送らず、確認後は終端まで排出する。
+    for name, noise in (("terminator-before-prefix", b"~"), ("ordinary-character-before-prefix", b"x")):
+        transaction = session.begin_receive()
+        session.send(noise)
+        session.pump(0.3)
+        premature_result = session.has_result(transaction)
+        premature_ready = session.has_body_ready(transaction)
+        body_ready = session.prepare_body(transaction)
+        if body_ready:
+            session.send(b"8:a25vd24=" + frame_terminator(transaction["nonce"]))
+        result, capture = session.finish_receive(transaction)
+        record(name, {"no_early_result": not premature_result, "no_early_body_ready": not premature_ready, "body_ready_after_prefix": body_ready, "result_invalid": result.endswith(":error:invalid"), "empty_buffer": capture["buffer"] == "", "not_executed": capture["executed"] == count})
+
+    transaction = session.begin_receive()
+    session.key("cancel")
+    body_ready = session.prepare_body(transaction)
+    if body_ready:
+        session.send(b"8:a25vd24=" + frame_terminator(transaction["nonce"]))
+    result, capture = session.finish_receive(transaction)
+    record("cancel-before-prefix-with-prefix", {"body_ready_after_prefix": body_ready, "result_cancelled": result.endswith(":error:cancelled"), "empty_buffer": capture["buffer"] == "", "not_executed": capture["executed"] == count})
+
+    transaction = session.begin_receive()
+    session.key("cancel")
+    result, capture = session.finish_receive(transaction)
+    record("cancel-before-prefix-timeout", {"result_cancelled": result.endswith(":error:cancelled"), "body_not_requested": not session.has_body_ready(transaction), "absolute_deadline": 4.5 <= session.last_receive_seconds < 8, "empty_buffer": capture["buffer"] == "", "not_executed": capture["executed"] == count}, receive_seconds=session.last_receive_seconds)
+
+    transaction = session.begin_receive()
+    session.send(b"WZP2:")
+    result, capture = session.finish_receive(transaction)
+    record("partial-prefix-timeout", {"result_timeout": result.endswith(":error:timeout"), "body_not_requested": not session.has_body_ready(transaction), "absolute_deadline": 4.5 <= session.last_receive_seconds < 8, "empty_buffer": capture["buffer"] == "", "not_executed": capture["executed"] == count}, receive_seconds=session.last_receive_seconds)
+
+    transaction = session.begin_receive()
+    while time.monotonic() - transaction["start"] < 4.6 and not session.has_result(transaction):
+        session.send(b"x")
+        session.pump(0.1)
+    result, capture = session.finish_receive(transaction)
+    record("continuous-prefix-noise-deadline", {"result_invalid": result.endswith(":error:invalid"), "body_not_requested": not session.has_body_ready(transaction), "absolute_deadline": 4.5 <= session.last_receive_seconds < 8, "empty_buffer": capture["buffer"] == "", "not_executed": capture["executed"] == count}, receive_seconds=session.last_receive_seconds)
+
+    transaction = session.begin_receive()
+    prefix = ("WZP2:" + transaction["nonce"] + ":").encode("ascii")
+    session.send(prefix[:-1])
+    session.pump(0.3)
+    premature_ready = session.has_body_ready(transaction)
+    premature_result = session.has_result(transaction)
+    body_ready = session.prepare_body(transaction, prefix[-1:])
+    # 完全 prefix 後の待機は取消後の尾部排出を守る。本文は送らずに
+    # 5 秒を過ぎても復帰しないことを確かめ、最後に終端だけを送る。
+    end = time.monotonic() + 5.5
+    while time.monotonic() < end and not session.has_result(transaction):
+        session.pump(0.1)
+    premature_body_result = session.has_result(transaction)
+    if body_ready and not premature_body_result:
+        session.send(frame_terminator(transaction["nonce"]))
+    result, capture = session.finish_receive(transaction)
+    record("prefix-only-waits-for-terminator", {"no_partial_body_ready": not premature_ready, "no_partial_result": not premature_result, "body_ready_after_complete_prefix": body_ready, "no_body_deadline_return": not premature_body_result, "result_invalid": result.endswith(":error:invalid"), "empty_buffer": capture["buffer"] == "", "not_executed": capture["executed"] == count}, receive_seconds=session.last_receive_seconds)
+
+    result, capture = session.receive(b"must never be sent", cancel_before_body=True)
+    record("cancel-after-prefix-before-body", {"result_cancelled": result.endswith(":error:cancelled"), "empty_buffer": capture["buffer"] == "", "not_executed": capture["executed"] == count})
+
+    # 本文 ACK 後の手入力 ~ や偽・途中の終端でも親の入力へ戻らない。
+    # 遅れて届く既知の本文まで含め、正しい nonce の終端まで排出する。
+    for name, make_noise in (
+        ("bare-terminator-before-delayed-body", lambda nonce: b"~"),
+        ("wrong-nonce-terminator-before-body", lambda nonce: frame_terminator("0" * 32)),
+        ("broken-partial-terminator-before-body", lambda nonce: frame_terminator(nonce)[:10] + b"!"),
+    ):
+        transaction = session.begin_receive()
+        body_ready = session.prepare_body(transaction)
+        session.send(make_noise(transaction["nonce"]))
+        session.pump(0.3)
+        premature_result = session.has_result(transaction)
+        if body_ready and not premature_result:
+            session.send(b"8:a25vd24=" + frame_terminator(transaction["nonce"]))
+        result, capture = session.finish_receive(transaction)
+        record(name, {"body_ready": body_ready, "no_early_result": not premature_result, "result_invalid": result.endswith(":error:invalid"), "late_body_not_in_buffer": capture["buffer"] == "", "not_executed": capture["executed"] == count})
+
+    transaction = session.begin_receive()
+    body_ready = session.prepare_body(transaction)
+    terminator = frame_terminator(transaction["nonce"])
+    session.send(b"8:a25vd24=" + terminator[:-1])
+    session.pump(0.3)
+    premature_result = session.has_result(transaction)
+    if body_ready and not premature_result:
+        session.send(terminator[-1:])
+    result, capture = session.finish_receive(transaction)
+    record("fragmented-valid-terminator", {"body_ready": body_ready, "no_partial_result": not premature_result, "result_ok": result.endswith(":ok"), "buffer_equal": capture["buffer"] == "known", "not_executed": capture["executed"] == count})
+    session.cancel_buffer()
+
     session.receive(b"existing known buffer")
     result, capture = session.receive(b"\xff")
     record("invalid-data-preserves-existing-buffer", {"result_error": ":error:" in result, "existing_buffer_unchanged": capture["buffer"] == "existing known buffer", "not_executed": capture["executed"] == count})
     session.cancel_buffer()
 
+    # 旧版の Add-Type キャッシュが残っていても V2 を呼ぶことを確認する。
     reload_command = ". $global:SSHPasteProbeIntegration; . $global:SSHPasteProbeIntegration"
     result, capture = session.receive(reload_command.encode())
     old_epoch = session.vars["WEZTERM_PSREADLINE_SSH_PASTE"]
     session.key("enter")
     session.wait(lambda: session.vars.get("WEZTERM_PSREADLINE_SSH_PASTE", "") not in ("", old_epoch), label="reload new epoch")
     result, capture = session.receive("日本語 reload\n".encode())
-    record("reload", {"result_ok": result.endswith(":ok"), "buffer_equal": capture["buffer"] == "日本語 reload\n", "not_executed": capture["executed"] == count})
+    record("reload", {"result_ok": result.endswith(":ok"), "buffer_equal": capture["buffer"] == "日本語 reload\n", "not_executed": capture["executed"] == count, "v1_cache_present": capture["reader_v1_loaded"], "v2_reader_present": capture["reader_v2_loaded"]})
     session.cancel_buffer()
     return {"environment": environment, "passed": all(row["passed"] for row in records), "cases": records}
 

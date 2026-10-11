@@ -1,5 +1,5 @@
 -- ローカル PowerShell と SSH 先の PSReadLine への貼り付けをまとめる。
--- SSH では受信準備を確認してから ASCII のフレームを一度だけ送り、Enter は送らない。
+-- SSH では識別子の受信と本文の受信を確認してから送り、Enter は送らない。
 local wezterm = require("wezterm")
 local procs = require("procs")
 local M = {}
@@ -11,6 +11,7 @@ local RESULT = "WEZTERM_PSREADLINE_SSH_RESULT"
 local MAX_BYTES = 64 * 1024
 local MAX_BASE64 = 4 * math.ceil(MAX_BYTES / 3)
 local pending = {}
+local attempts = {}
 local nonces = {}
 local alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
 local digits = {}
@@ -31,7 +32,7 @@ local function guid(value)
 end
 
 local function epoch_of(value)
-	local epoch = type(value) == "string" and value:match("^1:([0-9a-f]+)$") or nil
+	local epoch = type(value) == "string" and value:match("^2:([0-9a-f]+)$") or nil
 	return guid(epoch) and epoch or nil
 end
 
@@ -133,18 +134,44 @@ local function usable(window, pane, epoch)
 	return ok and result
 end
 
-local function forget(id)
-	if pending[id] then pending[id].payload = nil end
+local function forget(id, abort)
+	local state = pending[id]
 	pending[id] = nil
+	if state then
+		state.payload = nil
+		-- 識別子を送った後に中断した場合は、本文を送らず受信待機だけを終える。
+		if abort and state.prefix_sent and not state.sent then
+			pcall(function()
+				if epoch_of((state.pane:get_user_vars() or {})[MARKER]) == state.epoch then
+					state.pane:send_text("~WZE2:" .. state.nonce .. "~")
+				end
+			end)
+		end
+	end
 end
 
 local function now()
 	return tonumber(wezterm.time.now():format("%s%.f"))
 end
 
+local function invalidate(id, abort)
+	local state = pending[id]
+	forget(id, abort ~= false)
+	if state and not state.sent then notify(state.window, "SSH 先の貼り付け待機を取り消しました") end
+end
+
 local function timeout(window, id)
-	forget(id)
+	forget(id, true)
 	notify(window, "SSH 先の貼り付け準備が時間切れになりました")
+end
+
+local function prepare_phase(id, state, phase, started)
+	state.phase = phase
+	state.started_at = started
+	state.ready_deadline = started + 3
+	wezterm.time.call_after(3, function()
+		if pending[id] == state and state.phase == phase then timeout(state.window, id) end
+	end)
 end
 
 local function remote(window, pane, epoch)
@@ -154,7 +181,11 @@ local function remote(window, pane, epoch)
 		notify(window, "貼り付けの応答を待っています")
 		return
 	end
-	forget(id)
+	invalidate(id)
+	if attempts[id] == epoch then
+		notify(window, "SSH 先の入力待機の更新を待っています")
+		return
+	end
 	if not active(window, pane) then return end
 	local payload, reason = clipboard()
 	if not payload then notify(window, reason); return end
@@ -164,20 +195,17 @@ local function remote(window, pane, epoch)
 	local started = now()
 	if not started then notify(window, "貼り付けの待機時刻を確認できません"); return end
 	local state = { epoch = epoch, payload = payload, prior_ready = (pane:get_user_vars() or {})[READY], window = window, pane = pane,
-		started_at = started, ready_deadline = started + 3 }
+		phase = "ready" }
 	pending[id] = state
+	prepare_phase(id, state, "ready", started)
+	attempts[id] = epoch
 	window:perform_action(act.SendKey({ key = "F12", mods = "CTRL|SHIFT" }), pane)
-	wezterm.time.call_after(3, function()
-		if pending[id] == state and not state.sent then
-			timeout(window, id)
-		end
-	end)
 end
 
 function M.clipboard(window, pane)
 	local fallback = act.PasteFrom("Clipboard")
 	if pane:is_alt_screen_active() or window:active_key_table() ~= nil then
-		forget(pane:pane_id())
+		invalidate(pane:pane_id())
 		window:perform_action(fallback, pane)
 		return
 	end
@@ -196,7 +224,8 @@ function M.clipboard(window, pane)
 		remote(window, pane, epoch)
 		return
 	end
-	forget(pane:pane_id())
+	invalidate(pane:pane_id())
+	attempts[pane:pane_id()] = nil
 	-- PR #39 のローカル Windows 経路は、引き続き PSReadLine の Paste を使う。
 	if wezterm.target_triple:find("windows") and pane:get_domain_name() == "local" then
 		local name = procs.basename(pane:get_foreground_process_name())
@@ -213,13 +242,14 @@ function M.apply(_config)
 		local state = pending[id]
 		if name == MARKER then
 			local epoch = epoch_of(value)
-			if state and state.epoch ~= epoch then forget(id) end
+			if state and state.epoch ~= epoch then invalidate(id, false) end
+			if attempts[id] ~= epoch then attempts[id] = nil end
 			if nonces[id] and nonces[id].epoch ~= epoch then nonces[id] = nil end
 			return
 		end
 		if not state then return end
-		if not usable(window, pane, state.epoch) then forget(id); return end
-		if name == READY and not state.sent and type(value) == "string" then
+		if not usable(window, pane, state.epoch) then invalidate(id); return end
+		if name == READY and state.phase ~= "result" and type(value) == "string" then
 			-- UI が止まり、期限の timer より READY が先に処理されても本文を送らない。
 			-- 実時刻を使うので、開始時刻より時計が戻った場合も失効させる。
 			local current = now()
@@ -227,19 +257,34 @@ function M.apply(_config)
 				timeout(window, id)
 				return
 			end
-			local epoch, nonce = value:match("^1:([0-9a-f]+):([0-9a-f]+)$")
-			if epoch ~= state.epoch or not guid(nonce) or value == state.prior_ready then return end
-			local seen = nonces[id]
-			if seen and seen.epoch == epoch and seen[nonce] then return end
-			if not seen or seen.epoch ~= epoch then seen = { epoch = epoch }; nonces[id] = seen end
-			seen[nonce] = true
-			local frame = string.format("WZP1:%s:%d:%s~", nonce, #state.payload, state.payload)
-			state.sent = true
-			state.payload = nil
+			local frame, body
+			if state.phase == "ready" then
+				local epoch, nonce = value:match("^2:([0-9a-f]+):([0-9a-f]+)$")
+				if epoch ~= state.epoch or not guid(nonce) or value == state.prior_ready then return end
+				local seen = nonces[id]
+				if seen and seen.epoch == epoch and seen[nonce] then return end
+				if not seen or seen.epoch ~= epoch then seen = { epoch = epoch }; nonces[id] = seen end
+				seen[nonce] = true
+				state.nonce = nonce
+				state.prefix_sent = true
+				prepare_phase(id, state, "body", current)
+				frame = "WZP2:" .. nonce .. ":"
+			else
+				if value ~= "2:" .. state.epoch .. ":" .. state.nonce .. ":body" then return end
+				frame = string.format("%d:%s~WZE2:%s~", #state.payload, state.payload, state.nonce)
+				state.phase = "result"
+				body = true
+			end
 			local ok = pcall(function() pane:send_text(frame) end)
-			if not ok then forget(id); notify(window, "SSH 先への貼り付け送信に失敗しました") end
+			if not ok then
+				forget(id, true)
+				notify(window, "SSH 先への貼り付け送信に失敗しました")
+			elseif body then
+				state.sent = true
+				state.payload = nil
+			end
 		elseif name == RESULT and type(value) == "string" then
-			local epoch, result = value:match("^1:([0-9a-f]+):(.+)$")
+			local epoch, result = value:match("^2:([0-9a-f]+):(.+)$")
 			if epoch ~= state.epoch or not guid(epoch) then return end
 			if result == "ok" and state.sent then
 				forget(id)
@@ -252,7 +297,7 @@ function M.apply(_config)
 	end)
 	wezterm.on("update-status", function(_window, _pane)
 		for id, state in pairs(pending) do
-			if not usable(state.window, state.pane, state.epoch) then forget(id) end
+			if not usable(state.window, state.pane, state.epoch) then invalidate(id) end
 		end
 	end)
 end

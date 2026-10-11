@@ -530,7 +530,7 @@ SSH・WSL・Neovim・PSReadLine なしなどの切り替えは Lua の模擬 API
   - Windows は「設定 → システム → 通知」で WezTerm が許されているか、集中モードになっていないかを見る（README の「長いコマンドの完了通知」）
 
 
-### 付録: Windows の SSH 先の PowerShell へ貼り付ける修正（2026-10-12）
+### 付録: Windows の SSH 先の PowerShell へ貼り付ける修正（2026-10-12、V1 の記録）
 
 [PR #39](https://github.com/ryo-aoki-pc/wezterm/pull/39) のローカル Windows 用経路を保ち、SSH 先の PSReadLine 入力待機中に専用キーで受信を始める経路を追加した。接続元で取得したテキストを改行なしの Base64 フレームで配送し、受信側の公開 `Insert` / `Replace` API でバッファへ挿入する。Enter は送らない。
 
@@ -565,3 +565,65 @@ UI の処理が止まり、期限の timer より古い READY が先に処理さ
 Windows からの実 SSH は未検証。一時的な `ssh -A surface` の agent 転送は許可を受けて試したが、Windows 側で転送 agent を利用できず、実 SSH 認証まで進めなかった。鍵ファイル・SSH 設定・通常プロファイルは作成・変更していない。Linux の実 GUI → SSH → PowerShell 7 から起動した Neovim の alternate screen と `Read-Host` 待機を追加で確認し、2/2 が成功した。3 マーカーが空の Neovim へ右クリックで通常貼り付けし、日本語・絵文字・空行を含む UTF-8 27 バイトを専用 TEMP に保存して完全一致を確認した。PowerShell に戻ると待機マーカーも復帰した。初回は GUI 内の clipboard 更新直後の貼り付けが空になったため、専用 Wayland の `wl-copy` で既知データを提供して再検証した。結果は `routing-gui-20261012-025707/summary.json`。入れ子 SSH と tmux の実セッションも未検証。Lua の alternate screen / キーテーブルなどの送り分け確認は API stub の結果であり、実機の結果とは分けて扱う。
 
 Bash と zsh の構文、両 PowerShell の構文と UTF-8 BOM、Python の構文、文書リンクと手順順序、`git diff --check` を確認した。zsh は公式 AlmaLinux RPM を専用 TEMP に展開し、システムへインストールせず構文だけを検証した。WezTerm の実設定読み込みは終了コードだけでなく stderr の `ERROR` が無いことを確認した。 ShellCheck 0.11.0 は main と今回の Bash ソースに同じ 16 診断を出した。行番号以外の診断内容・該当ソースを比較して追加診断が無いことを確認し、既存の `SC1007` / `SC2178` / `SC2128` / `SC1003` / `SC2016` を除外したチェックは成功した。Lua / Markdown の専用リンターと PSScriptAnalyzer は未導入で、構文・実設定・手順とリンクの確認で補った。クリップボードは既知の無害な試験コードだけを使い、元の内容を読まないため復元していない。試験の専用 GUI / TEMP / 接続は終了時に片付けた。
+
+
+### 付録: Grok Build レビュー後の V2 初回追試（2026-10-12）
+
+上の V1 記録を採取後、Grok Build（`grok-4.7`）が差分をレビューした。受信側が早期の `~` やヘッダー前の Ctrl+C で終了すると、遅れて届いた本文が管理者親の入力欄へ残り得ること、通常文字で無期限待機に入ること、ペイン切替で待機を破棄した後に同じ epoch の専用キーを再送できることを指摘した。
+
+V2 は最初の READY の後に `WZP2:<nonce>:` ヘッダーだけを送り、受信側が完全なヘッダーを読んで BODYREADY を返した場合だけ Base64 本文を送る。ヘッダー前の余分な文字・早期終端・Ctrl+C では絶対 5 秒の期限を延ばさない。本文前のクライアント取消は本文を破棄して終端だけを送り、RESULT やマーカー解除後には追加送信しない。同じ epoch で再発火させず、新しい入力待機の通知を待つ。本文の受信開始後は、遅延した残りが親の入力へ漏れないよう、取消後も終端まで読み捨てる。
+
+対象の SHA-256 は PowerShell `334beaa83d8f87f816c8446bc9aed6ee5304f3125b16e758fb14a1f06e672787`、Lua `8de4a8e5a4f43da4b47d33aab036ec53171e05a65354c8f41a423285a543a225`。Bash は V1 試験時から変更していない。
+
+| 検証 | 結果 | 実施範囲 |
+| --- | --- | --- |
+| Linux の実 WezTerm → SSH → Windows | 12/12 | 5.1 / 7 × 管理者 / 非管理者、共有操作・右クリック・Ctrl+Shift+V。バッファ一致、Enter 前の未実行、Enter 後一度だけの実行 |
+| Linux の実 SSH / ConPTY で受信を直接検証 | 108/108 | 5.1 / 7 × 管理者 / 非管理者の各 26 ケース、通常プロファイルの子から管理者親へ復帰 2 件、PowerShell から専用 Git Bash へ復帰 2 件 |
+| SSH マーカーと既存ローカル貼り付けの単体検証 | 各版 16/16 と 21/21 | PS5 / PS7 の専用 NoProfile プロセス。パーサーのエラーも両版 0 |
+| Lua の状態検証 | Linux / Windows 各 100/100 | 実 WezTerm の時刻 API と stub。二段 READY、古い / 偽 / 重複 BODYREADY、準備期限・時計の後戻り、取消、同じ epoch の再送抑止、RESULT 後の終端非送信、旧版混在、既存経路 |
+
+Linux GUI の結果は `tests/paste/results/linux-gui-ssh-20261012-032011-ce8e32e7/summary.json`、Windows Lua は当初 `tests/paste/results/windows-lua-v2/lua.json` に採取した。このファイルは後の 102 件の追試で上書きされ、最終結果を別のファイルへ退避した。Windows の実 SSH GUI は未検証で、V1 のローカル ConPTY 48/48 と 6/6 は V2 の GUI 試験とは区別する。
+
+実 SSH の結果は `tests/paste/results/ssh-20261012-032034-430fdfbf/summary.json`。追加 8 回帰を全 4 条件で試し、元の入力バッファが空で Enter 前の実行も無かった。ヘッダー前の取消・部分ヘッダー・連続不正文字は約 5.03 秒で終了し、BODYREADY を発行しなかった。完全なヘッダー後は 5 秒を超えても終端まで待ち、本文前に取消した後の管理者親と Git Bash には本文が残らなかった。SSH 状態・ローカル単体の結果は `/tmp/codex-ssh-v2-state-00efd734c29b4fb89a2bf3ed0fedb8b8/` に採取した。すべて専用接続と TEMP を片付けた。
+
+
+### 付録: V2 の送信失敗・入出力例外の追試（2026-10-12、nonce 終端追加前）
+
+Grok Build（`grok-4.7`）の V2 再レビューで、送信完了の記録が `send_text` より前だったため、送信例外で終端取消を送れないことと、受信の Console 入出力例外が終端の読み捨てを中断することを指摘された。送信成功後にだけ完了を記録するよう直し、受信側は `IOException` / `InvalidOperationException` を不正として終端まで読む。持続した入力故障でも本文の受信後に入力欄へ戻さず、接続元からペインを閉じて復旧する。
+
+「ヘッダー前の期限到達時に未読本文が残る」という別の指摘は採用しなかった。V2 の接続元は BODYREADY 前に本文を保持し、受信側は `started=true` にしてから BODYREADY を発行する。`started=true` ではヘッダー期限は適用しないため、ヘッダー期限で戻る時点にこの接続元が送った本文は存在しない。前節の実機回帰と、Lua の二段待機を照合する試験で確認した。
+
+最終ソースの SHA-256 は PowerShell `b79886ec05c756f5c6ef01acde5ac996170f107351d030c862c19d43f0d4dfa4`、Lua `e08ef96636a3d1eab0c6371e49ed3995550612f272a8765086aebc2d626144ac`。
+
+| 検証 | 結果 | 実施範囲 |
+| --- | --- | --- |
+| Lua の状態検証 | Linux / Windows 各 102/102 | 100 件に完全送信失敗・部分送信失敗を追加。終端だけで取消し、本文再送と同じ epoch の再発火をしない |
+| Linux の実 WezTerm → SSH → Windows | 代表 3/3 | 最終両ソースの PowerShell 7 管理者で共有操作・右クリック・Ctrl+Shift+V。バッファ一致、Enter 前未実行、Enter 後一度だけの実行 |
+
+結果は `tests/paste/results/windows-lua-v2-body-failure/lua.json` と `linux-gui-ssh-20261012-033356-d523a110/summary.json`。初回 V2 の上限・型キャッシュ追加試験は `ssh-20261012-032350-f7469421/summary.json` の 112/112。PowerShell `334beaa…` で 65,536 バイトを保持し、65,537 バイトは両版・両権限で拒否した。正常受信は PS5 管理者 34.287 秒・非管理者 53.101 秒、PS7 管理者 37.009 秒・非管理者 56.204 秒。旧 V1 型を試験用プロセスに先に作ってから V2 の初回読み込みと再読み込みも確認した。同名 V2 型を更新する試験ではなく、更新時には新しいプロセスを使う。
+
+専用 tmux `next-3.4` サーバーを `-L` と空の設定で起動し、PowerShell 7 管理者・右クリックの 1 条件を試した。既定 `allow-passthrough=off` は outer pane の alternate screen が有効、SSH の 3 マーカーは空、専用受信呼び出し 0 で通常 `PasteFrom` になり、LF・日本語・絵文字・末尾 LF の一致、Enter 前 0 回・後 1 回が成功した。追加の `allow-passthrough=on` と TEMP 統合だけの DCS ラップでも同じ通常経路だった。専用配送や DCS 通過の成功とは扱わない。結果は `tmux-gui-20261012-032930-default/summary.json` と `tmux-gui-20261012-032822-wrapped/summary.json`。通常設定を変えず専用サーバー・GUI・TEMP を片付けた。
+
+
+### 付録: nonce 付き終端の追試（2026-10-12）
+
+本文の受信確認後、手入力の `~` が先に届くと、入力欄へ復帰した後に遅延した本文が残ることを専用 PTY で再現した。PowerShell `b79886ec…` の試験で入力欄に既知の `8:a25vd24=~` が残り、実行は 0 回だった。結果は `tests/paste/results/early-body-terminator-20261012-033544-ac43ae59/summary.json`。通常のデータと配送の終端を区別するため、完全な `~WZE2:<nonce>~` だけを終端として認めるよう変更した。手入力の `~`、偽の nonce、部分終端では復帰せず、本物の終端まで読み捨てる。本文前の取消も同じ識別子付き終端を送る。
+
+
+nonce 終端版の PowerShell SHA-256 は `2ee03930cbe59d08c244b124b4c07dab8f16963fe921d17cc609697cefe46a7b`。Console shim の両版 21/21 は通常受信、`KeyAvailable` / `ReadKey` / ACK 書き込みの 2 種の例外、持続障害、Ctrl+C 設定復元、早い `~`、偽 nonce、部分終端、本文なし取消を含む。SSH 状態は両版 16/16、ローカル貼り付けは両版 21/21、パーサーはエラー 0。結果は `/tmp/codex-ssh-v2-state-376f34ffb0bc42f3b0d49935a84af0f3/` に採取し、専用 TEMP を削除した。
+
+実証と同じ早い `~` の試験は、修正後に入力バッファが空・実行 0 で成功した。`tests/paste/results/early-body-terminator-fixed-20261012-034019-f1fb633e/summary.json` に保存した。最終 PowerShell の既存 Starship 標準回帰も 74 プロセスケース・34 callback・494/494、既知 4 件・予期しない失敗 0。結果は `starship-20261012-034025-2196716b/regression-summary.json`。
+
+
+最終 Lua の SHA-256 は `b1c701930fe2f00caf509d541f69f54bc17e86b8d92993d87b87552804916e4b`。Linux / Windows は各 103/103（実時刻 API 1 件と状態の stub 102 件）成功し、正常送信と本文前取消の終端が READY の nonce を使うことも確認した。Windows の結果は `tests/paste/results/windows-lua-v2-nonce/lua.json`。
+
+最終両ソースの fresh Linux GUI → SSH は 5.1 / 7 × 管理者 / 非管理者の 4 条件で共有操作・右クリック・Ctrl+Shift+V の 12/12。入力バッファ一致、Enter 前未実行、Enter 後一度だけの実行が成功した。`linux-gui-ssh-20261012-034501-0cdaaeb6/summary.json` に保存し、専用 GUI・接続・TEMP を片付けた。Windows の実 SSH と最終版の Windows GUI は未検証のまま。
+
+Grok Build（`grok-4.7`）へ最終の PowerShell / Lua ソースと検証結果を渡して再レビューした。正常・取消の同じ nonce 終端、完全終端の照合、偽 / 部分終端と入出力例外後の読み捨てについて、追加指摘なしだった。過去の指摘と採用・不採用の根拠は各追試に記載した。
+
+
+nonce 終端版の実 SSH は `tests/paste/results/ssh-20261012-034151-07712eee/summary.json` の 128/128。5.1 / 7 × 管理者 / 非管理者が各 31 件、子から管理者親への復帰 2 件、PowerShell から Git Bash への復帰 2 件。64 KiB の入力一致、Enter 前未実行・後一度だけの実行、65,537 バイトの拒否、旧 V1 型から V2 の読み込みと再読み込み、準備期限、早い / 偽 / 部分終端と正常終端の分割、取消後の親の空バッファが成功した。65,536 バイトの受信は PS5 管理者 51.102 秒・非管理者 67.589 秒、PS7 管理者 55.017 秒・非管理者 70.672 秒だった。
+
+終端の途中の 2 種の入出力例外も追加で注入し、照合位置を保って終端まで読み捨てることを確認した。受信の shim は最終の両版 23/23。結果は `/tmp/codex-ssh-v2-state-c4680a62b7f84d119750faf9be318ac2/`。この追試では製品ソースを変えていない。両版の構文エラー 0、専用 TEMP の削除も確認した。
+
+最終 SSH 試験の `cleanup.json` で専用 TEMP が無く、試験用 PowerShell の残留プロセスが 0 件であることを確認した。nonce 付き終端版の構文・UTF-8 BOM・実 WezTerm 設定・文書リンク・`git diff --check` も成功した。Bash / zsh と ShellCheck の対象ソースは前の試験から変えていない。
