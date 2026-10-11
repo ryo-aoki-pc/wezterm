@@ -14,6 +14,10 @@ Windows 11・AlmaLinux 10 の導入・利用・更新手順は setup-notes の2�
 
 [AlmaLinux 10](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/almalinux-setup.md#wezterm-のシェル統合を-ssh-先で使う任意)
 
+## Windows の SSH 先で PowerShell に貼り付ける（任意）
+
+接続元に合わせて [AlmaLinux 10](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/almalinux-setup.md#wezterm-windows-の-ssh-先で-powershell-に貼り付ける任意) / [Windows 11](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/windows-setup.md#ssh-で管理者非管理者の-powershell-を使う任意) の手順を使う。接続元・Windows 接続先の設定更新、PSReadLine の確認と貼り付け、終了までを正本で案内する。
+
 ## 更新
 
 [AlmaLinux 10](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/almalinux-setup.md#wezterm-の設定を更新する) / [Windows 11](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/windows-setup.md#wezterm-の設定を更新する)

@@ -4,30 +4,14 @@
 local wezterm = require("wezterm")
 local statusbar = require("statusbar")
 local procs = require("procs")
+local paste = require("paste")
 local M = {}
 
 local act = wezterm.action
 local nf = wezterm.nerdfonts
 
--- Windows の PowerShell が PSReadLine で入力を待っている間は、端末から文字を
--- 送らず Paste を呼ぶ。CR/LF が個々のキーとして処理される空行と途中実行を防ぐ。
--- SSH・TUI・コマンド実行中・統合なしでは、従来どおり端末から貼り付ける。
-M.paste_clipboard = wezterm.action_callback(function(window, pane)
-	local paste = act.PasteFrom("Clipboard")
-	if
-		wezterm.target_triple:find("windows")
-		and pane:get_domain_name() == "local"
-		and not pane:is_alt_screen_active()
-		and window:active_key_table() == nil
-	then
-		local vars = pane:get_user_vars() or {}
-		local name = procs.basename(pane:get_foreground_process_name())
-		if vars.WEZTERM_PSREADLINE_PASTE == "1" and (name == "powershell" or name == "pwsh") then
-			paste = act.SendKey({ key = "v", mods = "CTRL" })
-		end
-	end
-	window:perform_action(paste, pane)
-end)
+-- 接続元のクリップボードを、ローカル／SSH の PSReadLine に合った経路へ送る。
+M.paste_clipboard = wezterm.action_callback(paste.clipboard)
 
 -- タブ名を変更: 現在の名前を初期値にして編集する（空欄で確定するとデフォルト名に戻る）。
 -- prompt / initial_value は nightly 限定のため、押した時点のタブ名を

@@ -191,7 +191,12 @@ Windows のローカル PowerShell が PSReadLine で入力を待っている間
 端末貼り付けで CR と LF が別々のキー入力になる経路を避け、元からある空行は残します。
 PSReadLine の仕様により、タブ文字は 4 個の空白になります。
 設定の更新後は PowerShell のタブを開き直してください（[PowerShell の統合](#powershell)）。
-PSReadLine なし・コマンド実行中・SSH・WSL・別のアプリでは、従来どおり端末から貼り付けます。
+Linux / Windows の WezTerm から Windows の SSH 先へも、同じ操作で貼り付けられます。
+接続先の PowerShell を統合付きで起動してください（[AlmaLinux 10 の接続元](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/almalinux-setup.md#wezterm-windows-の-ssh-先で-powershell-に貼り付ける任意) / [Windows 11 の接続元](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/windows-setup.md#ssh-で管理者非管理者の-powershell-を使う任意)）。
+SSH 用の取得・応答・検証が失敗した場合は通知し、本文を挿入しません。通常貼り付けへの自動切り替えはしません。
+SSH 用の上限は UTF-8 で 64 KiB、Linux は Wayland の `wl-paste` または X11 の `xclip` が必要です。
+SSH 用統合で PSReadLine や専用キーを準備できない場合も、通知して停止します。
+コマンド実行中・統合のない SSH・WSL・別のアプリでは、従来どおり端末から貼り付けます。
 
 SSH 先の Neovim に手元でコピーしたテキストを入れるときは、貼り付け位置にカーソルを置いて
 `i` で挿入モードにし、右クリックします。`Ctrl+Shift+V` でも貼り付けられます。
@@ -669,7 +674,7 @@ WezTerm からは `bash.exe` しか見えず、vim の編集中でも確認な�
 | OSC 133 D（終了コード） | コマンドが終わったとき | 出力の範囲の終わり |
 | ユーザー変数 `wezterm_cmd_done` | 長いコマンドが終わったとき | [完了通知](#長いコマンドの完了通知) |
 | ユーザー変数 `WEZTERM_PROG`（実行中のコマンド行） | コマンドが動く直前（プロンプトで空に戻す）。Git Bash・MSYS2・WSL の bash / zsh だけ | WezTerm から見えないプログラムのアイコン・ssh 中のタブ名（[タブ名の決まり方](#タブ名の決まり方)） |
-| ユーザー変数 `WEZTERM_PSREADLINE_PASTE` | Windows の PSReadLine 入力待ちだけ `1`、入力終了・例外時は空 | 右クリック / `Ctrl+Shift+V` を PSReadLine の貼り付けへ渡す |
+| ユーザー変数 `WEZTERM_PSREADLINE_PASTE` | ローカル Windows の PSReadLine 入力待ちだけ `1`、入力終了・例外時は空 | 右クリック / `Ctrl+Shift+V` を PSReadLine の貼り付けへ渡す |
 
 シェルごとの対応:
 
@@ -681,7 +686,7 @@ WezTerm からは `bash.exe` しか見えず、vim の編集中でも確認な�
 | 完了通知 | ○（zsh は `base64` コマンドが必要） | ○ | × |
 | 実行中のコマンドを送る（`WEZTERM_PROG`） | ○（Git Bash・MSYS2・WSL のみ） | 不要（WezTerm がプロセスを見られる） | × |
 | 迷子のマウス報告よけ | ○ | — | — |
-| コード全体を貼り付け、Enter で実行 | — | ○（Windows・ローカル・PSReadLine 入力待ち） | — |
+| コード全体を貼り付け、Enter で実行 | — | ○（Windows・ローカルまたは統合付き SSH・PSReadLine 入力待ち） | — |
 
 公式統合が無い環境では、`$TERM_PROGRAM` が `WezTerm` のときだけ統合を有効にし、ほかの端末では
 「迷子のマウス報告よけ」だけを動かします。既に有効な公式 Bash 統合がある場合は、それを補完します。
@@ -707,6 +712,14 @@ WezTerm からは `bash.exe` しか見えず、vim の編集中でも確認な�
 - プロファイルで `Set-StrictMode` を有効にしていても、プロンプトの中では切るので壊れません
 - `shell/wezterm.ps1` は **UTF-8 BOM 付き**で保存してください。Windows PowerShell 5.1 は
   BOM の無い `.ps1` を ANSI として読むため、日本語コメントが化けて構文エラーになります
+
+SSH では `Ctrl+Shift+F12` に専用受信ハンドラー `WezTermSshPaste` を登録します。
+`WEZTERM_PSREADLINE_SSH_PASTE` は入力待機中の識別子、`WEZTERM_PSREADLINE_SSH_READY` は受信準備完了、
+`WEZTERM_PSREADLINE_SSH_RESULT` は受信結果を通知します。`lua/paste.lua` はペインごとに応答を照合し、
+ヘッダーの受信確認後に、改行のない Base64 本文を一度だけ送ります。配送の終端にも識別子を付けます。受信側は UTF-8・長さ・識別子を確認し、
+PSReadLine の `Insert` または選択範囲の `Replace` で入力欄へ挿入します。
+終了・例外・コマンド実行開始で印を消し、親 Bash / zsh のプロンプトでも残った印を消します。
+`Ctrl+C` による取消は配送の終端まで読み捨てます。配送が止まった受信待機は、接続元からペインを閉じて接続し直します。
 
 ### bash（Git Bash / MSYS2 / QMK MSYS / Linux）と zsh
 
@@ -867,6 +880,7 @@ gui:
 | ssh 中とみなすプログラム | `lua/procs.lua` | `REMOTE` |
 | コマンド行で読み飛ばす前置き（`sudo` など） | `lua/procs.lua` | `PREFIXES` |
 | キー / マウス | `lua/bindings.lua` | `config.keys` / `config.mouse_bindings` |
+| PowerShell の貼り付け | `lua/paste.lua` | クリップボード取得・SSH の応答と送信待ちの管理 |
 | コマンドパレットの独自項目 | `lua/palette.lua` | `ENTRIES` |
 
 キーを足すときは WezTerm の既定の割り当てと重ならないか `wezterm show-keys` で確かめてください
@@ -887,6 +901,7 @@ gui:
 | `lua/shells.lua` | シェル・SSH ホストの探索と `launch_menu` / `default_prog` / WSL ドメイン |
 | `lua/bindings.lua` | キーバインドとマウスバインド |
 | `lua/actions.lua` | キーとコマンドパレットの両方から使う操作（出力コピー・URL を開く など）。`apply` は持たない |
+| `lua/paste.lua` | ローカル PowerShell の貼り付けと、SSH 用クリップボード取得・応答と送信待ちの管理 |
 | `lua/palette.lua` | コマンドパレットの独自項目 |
 | `lua/notify.lua` | 長いコマンドの完了通知 |
 | `lua/ui.lua` | 共有定数（パワーライン区切り・フォント候補）。`apply` は持たない |

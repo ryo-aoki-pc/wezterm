@@ -3,6 +3,8 @@
 # -NoProfile の別プロセスで実行する。クリップボードとユーザープロファイルは変更しない。
 # 実 PSReadLine の割り当てと、再現入力による入力待機マーカー・既存の C 印を検査する。
 $ErrorActionPreference = 'Stop'
+# ローカル経路の検証は SSH から起動しても同じ条件にする。
+$env:SSH_CONNECTION = ''
 $root = (Resolve-Path (Join-Path $PSScriptRoot '../..')).Path
 $integration = Join-Path $root 'shell/wezterm.ps1'
 $script:checks = @()
