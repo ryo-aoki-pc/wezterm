@@ -528,3 +528,40 @@ SSH・WSL・Neovim・PSReadLine なしなどの切り替えは Lua の模擬 API
   - `C:\msys64\home\<WIN_USER>\.bashrc` と `C:\QMK_MSYS\home\<WIN_USER>\.bashrc` にも、手順 6 の 1 行を足す（README の「bash（Git Bash / MSYS2 / QMK MSYS / Linux）と zsh」）
 - **完了通知は、OS の通知の設定にも従う**
   - Windows は「設定 → システム → 通知」で WezTerm が許されているか、集中モードになっていないかを見る（README の「長いコマンドの完了通知」）
+
+
+### 付録: Windows の SSH 先の PowerShell へ貼り付ける修正（2026-10-12）
+
+[PR #39](https://github.com/ryo-aoki-pc/wezterm/pull/39) のローカル Windows 用経路を保ち、SSH 先の PSReadLine 入力待機中に専用キーで受信を始める経路を追加した。接続元で取得したテキストを改行なしの Base64 フレームで配送し、受信側の公開 `Insert` / `Replace` API でバッファへ挿入する。Enter は送らない。
+
+接続元は AlmaLinux 10.2 / aarch64、WezTerm `20261010_083911_e2a98e1b`、専用 headless Mutter と Wayland clipboard。接続先は Windows 11 の `surface`、既定シェル Git Bash、WezTerm `20260917-114457-b09b56c2`、Windows PowerShell `5.1.26100.9444` / PSReadLine `2.0.0` と PowerShell `7.6.6` / PSReadLine `2.4.5`。SSH で起動した親は管理者だった。同じユーザーの非管理者子は SHA-256 を確認した busybox-w32 `FRP-6075-g169694ebd` の `drop --` で開いた。
+
+| 検証 | 結果 | 実施範囲 |
+| --- | --- | --- |
+| Linux の実 WezTerm → SSH → Windows | 最終 12/12、起動診断付き追加 3/3 | 5.1 / 7 × 管理者 / 非管理者、共有操作・右クリック・Ctrl+Shift+V。入力バッファ一致、Enter 前の未実行、Enter 後の一度だけの実行 |
+| Windows の実 WezTerm → ローカル ConPTY に SSH 環境を再現 | 期限確認追加前の 48/48 と 6/6 | 実クリップボードと共有操作の 3 経路。`real_ssh=false`、Windows からの実 SSH 接続とは区別 |
+| Linux の実 SSH / ConPTY で受信を直接検証 | 最終 76/76 | 5.1 / 7 × 管理者 / 非管理者、正常・不正・取消・無応答・再読み込み・親 PowerShell / Git Bash へ戻る経路 |
+| 64 KiB の上限付近 | 74/74 | `unavailable` の追加前の受信処理で 65,536 バイトを保持し、65,537 バイトを拒否。両 PowerShell と両権限 |
+| Lua の API stub による状態検証 | 78/78 | 取得失敗・不正・大きさ・無応答・古い / 偽 / 重複 READY・ペイン切替・状態失効・`unavailable`・既存経路 |
+| SSH の入力関数・マーカーの単体検証 | 各版 16/16 | 解除・戻り値・例外・再読み込み・EditMode の再設定・キー登録失敗・StrictMode・PSReadLine 無効化 |
+| 既存ローカル PowerShell の単体検証 | 各版 21/21 | PR #39 のキー登録・待機マーカー・失敗経路を維持 |
+| 既存 PowerShell / Starship の標準回帰 | 74 プロセスケース、34 callback、494/494 | 既知失敗 4 件（両版の `integration-first` / `threshold-large`）、予期しない失敗 0 |
+| Git Bash / Starship の回帰検証 | control 26/26、nounset 34/34、array-before 35/35、最終単独 37/37 | 終了コード・プロンプト・フック・通知と新しいマーカー解除の共存 |
+
+UI の処理が止まり、期限の timer より古い READY が先に処理される競合を見つけた。Lua の待機状態に開始時刻と 3 秒の期限を保存し、READY 処理でも期限の到達・超過・時計の後戻りを確認するように修正した。timer 未処理の期限境界・5.5 秒遅延・時計の後戻りを拒否し、期限直前の正常応答は一度だけ送る回帰を追加した。実 WezTerm の時刻 API は Linux / Windows で検証し、Lua は両環境で 78/78 が成功した。 修正後の Lua SHA-256 は `613b50588dd3bfd43a346b130a6892cf6e366b22bc8790bebac0b7245e3f9e44`。Linux の実 SSH GUI は修正後も 12/12 が成功した。
+
+正常入力は LF / CRLF、空行、日本語・絵文字、here-string、タブ、末尾改行と選択範囲を含めた。CR を取り除き、タブを 4 空白にする PSReadLine の既存 `Paste` と同じ結果を比較した。不正入力は nonce、長さ、Base64、UTF-8、NUL、終端直前 LF を送り、元のバッファが変わらないことを確認した。受信途中の Ctrl+C は終端まで読み捨て、本文を挿入しなかった。本文の無応答は受信側で約 5 秒後に解除した。
+
+通常プロファイルの子シェルを起動した試験でも、非管理者では同じユーザー、`IsInRole(Administrator)=False`、Medium、管理者 SID が拒否専用だった。取消後に子を終了すると、管理者の親のバッファは空、実行カウンターは増えず、子の READY / RESULT / 待機マーカーが消えた。親 PowerShell を終了して Git Bash へ戻る試験でも 3 マーカーと `READLINE_LINE` が空だった。専用 TEMP の統合を起動コマンドから読み、通常プロファイルには追記していない。
+
+最終の PowerShell ソース SHA-256 は `5f4b84bc493adb9a948983c0ffebe8f0719ef01b6ee7e5cfd2649e98c0858f07`、Bash は `13eb17a4a95ce98700c6c0f1b28c26aae84b394d433409f7196b6f584665f7d9`。上限付近の 74/74 は PowerShell `48e0d22f04aaa31fd9b195f97f22564f016ed8b57d56c9162c72708a9af99e7e` を試した。最終版との差は、SSH のキー準備に失敗した場合に `unavailable` を通知する処理で、配送・復号処理は同じ。
+
+結果は Git 管理外の `tests/paste/results/` に保存した。最終受信は `ssh-20261012-024201-1d6123d1/summary.json`、上限付近は `ssh-20261012-023414-600be936/summary.json`、Linux GUI は期限確認追加後の `linux-gui-ssh-20261012-025903-69ea2a7c/summary.json` と、追加前の診断 `linux-gui-ssh-20261012-024149-502b8789/summary.json`、Windows は `windows-gui-local-final/summary.json` と `windows-gui-local-latest/summary.json`。再実行するコードと条件は [貼り付け検証](../../tests/paste/README.md)にある。
+
+試験途中には、当初の 1 MiB が数分以内に完了せず中断したため、上限を UTF-8 64 KiB に下げた。64 KiB の READY から RESULT まで約 40〜55 秒だった。Linux GUI の初回では PowerShell 7 の非管理者の待機マーカーが空のまま時間切れになったが、同条件の 12/12 と最終の 12/12、起動診断付き 3/3 では再現しなかった。初回原因は未特定。Bash の同時実行ではタイムアウトや短い通知閾値の不成立が出たが、main の比較と最終版の単独実行は 37/37 だった。 PowerShell / Starship の初回 PS5 集計では、既存 checker が BOM なしの callback JSON を ANSI として読み集計が崩れた。採取済み JSON を既存の PS7 checker で読み直し、34 callback を含む 494/494 を確定した。結果は `starship-20261012-025404-937ae999/regression-summary.json` に保存した。
+
+期限確認追加後の Windows GUI は、既存の Python が WindowsApps のエイリアスで起動を拒否され、再実行できなかった。Windows の実 API を含む Lua 78/78 と、追加前の GUI 48/48 と 6/6 を区別する。追加インストールは行っていない。
+
+Windows からの実 SSH は未検証。一時的な `ssh -A surface` の agent 転送は許可を受けて試したが、Windows 側で転送 agent を利用できず、実 SSH 認証まで進めなかった。鍵ファイル・SSH 設定・通常プロファイルは作成・変更していない。Linux の実 GUI → SSH → PowerShell 7 から起動した Neovim の alternate screen と `Read-Host` 待機を追加で確認し、2/2 が成功した。3 マーカーが空の Neovim へ右クリックで通常貼り付けし、日本語・絵文字・空行を含む UTF-8 27 バイトを専用 TEMP に保存して完全一致を確認した。PowerShell に戻ると待機マーカーも復帰した。初回は GUI 内の clipboard 更新直後の貼り付けが空になったため、専用 Wayland の `wl-copy` で既知データを提供して再検証した。結果は `routing-gui-20261012-025707/summary.json`。入れ子 SSH と tmux の実セッションも未検証。Lua の alternate screen / キーテーブルなどの送り分け確認は API stub の結果であり、実機の結果とは分けて扱う。
+
+Bash と zsh の構文、両 PowerShell の構文と UTF-8 BOM、Python の構文、文書リンクと手順順序、`git diff --check` を確認した。zsh は公式 AlmaLinux RPM を専用 TEMP に展開し、システムへインストールせず構文だけを検証した。WezTerm の実設定読み込みは終了コードだけでなく stderr の `ERROR` が無いことを確認した。 ShellCheck 0.11.0 は main と今回の Bash ソースに同じ 16 診断を出した。行番号以外の診断内容・該当ソースを比較して追加診断が無いことを確認し、既存の `SC1007` / `SC2178` / `SC2128` / `SC1003` / `SC2016` を除外したチェックは成功した。Lua / Markdown の専用リンターと PSScriptAnalyzer は未導入で、構文・実設定・手順とリンクの確認で補った。クリップボードは既知の無害な試験コードだけを使い、元の内容を読まないため復元していない。試験の専用 GUI / TEMP / 接続は終了時に片付けた。

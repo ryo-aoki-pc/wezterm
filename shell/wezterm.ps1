@@ -32,6 +32,125 @@ function global:__WezTermEnablePSReadLinePaste {
 }
 $null = __WezTermEnablePSReadLinePaste
 
+# SSH の貼り付けは接続元のクリップボードを ASCII フレームで受け取る。
+# PSReadLine の入力中だけ能力を通知し、Enter を送らず公開 API で挿入する。
+function global:__WezTermSshVar([string]$Name, [string]$Value) {
+	$encoded = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($Value))
+	[Console]::Write("$([char]27)]1337;SetUserVar=$Name=$encoded$([char]27)\")
+}
+function global:__WezTermClearSshPaste {
+	$global:__WezTermSshPasteEpoch = ''
+	foreach ($name in @('WEZTERM_PSREADLINE_SSH_PASTE', 'WEZTERM_PSREADLINE_SSH_READY', 'WEZTERM_PSREADLINE_SSH_RESULT')) {
+		__WezTermSshVar $name ''
+	}
+}
+if (-not (Test-Path Variable:global:__WezTermSshPasteEpoch)) { $global:__WezTermSshPasteEpoch = '' }
+
+function global:__WezTermReceiveSshPaste {
+	if (-not $global:__WezTermSshPasteEpoch) { return }
+	$epoch = $global:__WezTermSshPasteEpoch
+	$nonce = [Guid]::NewGuid().ToString('N')
+	$result = 'error:invalid'
+	try {
+		__WezTermSshVar WEZTERM_PSREADLINE_SSH_READY "1:${epoch}:$nonce"
+		$received = [WezTermSshPasteV1.Reader]::Read(87480, 5000)
+		if ($received.Status -ne 'complete') { $result = "error:$($received.Status)"; return }
+		$frame = $received.Frame
+		if ($frame -cnotmatch '\AWZP1:([0-9a-f]{32}):([0-9]{1,7}):([A-Za-z0-9+/]*={0,2})\z') { return }
+		if ($Matches[1] -cne $nonce) { return }
+		$payload = $Matches[3]
+		if ([int]$Matches[2] -ne $payload.Length -or $payload.Length % 4 -ne 0) { return }
+		$bytes = [Convert]::FromBase64String($payload)
+		if ($bytes.Length -gt 65536) { $result = 'error:oversize'; return }
+		$text = (New-Object Text.UTF8Encoding($false, $true)).GetString($bytes)
+		if ($text.IndexOf([char]0) -ge 0) { return }
+		# PSReadLine の Paste と同じ CR・タブ処理。LF・空行・末尾改行は保つ。
+		$text = $text.Replace("`r", '').Replace("`t", '    ')
+		$selectionStart = 0
+		$selectionLength = 0
+		[Microsoft.PowerShell.PSConsoleReadLine]::GetSelectionState([ref]$selectionStart, [ref]$selectionLength)
+		if ($selectionStart -ge 0 -and $selectionLength -gt 0) {
+			[Microsoft.PowerShell.PSConsoleReadLine]::Replace($selectionStart, $selectionLength, $text)
+		} else {
+			[Microsoft.PowerShell.PSConsoleReadLine]::Insert($text)
+		}
+		$result = 'ok'
+	} catch {
+		# 復号・挿入失敗で本文をコマンドとして出力しない。
+		$result = 'error:invalid'
+	} finally {
+		__WezTermSshVar WEZTERM_PSREADLINE_SSH_READY ''
+		__WezTermSshVar WEZTERM_PSREADLINE_SSH_RESULT "1:${epoch}:$result"
+		# 使った応答は再利用させず、同じ入力待機内でも新しい epoch に切り替える。
+		$global:__WezTermSshPasteEpoch = [Guid]::NewGuid().ToString('N')
+		__WezTermSshVar WEZTERM_PSREADLINE_SSH_PASTE "1:$global:__WezTermSshPasteEpoch"
+	}
+}
+# 1 文字ごとの PowerShell 解釈を避ける。本文が始まった後は必ず終端まで読む。
+# 型は SSH の初回読み込みだけで作り、再読み込み時は再利用する。
+function global:__WezTermLoadSshReader {
+	if ('WezTermSshPasteV1.Reader' -as [type]) { return }
+	Add-Type -TypeDefinition @'
+using System;
+using System.Diagnostics;
+using System.Text;
+using System.Threading;
+namespace WezTermSshPasteV1 {
+    public class FrameResult {
+        public string Status;
+        public string Frame;
+    }
+    public static class Reader {
+        public static FrameResult Read(int maximum, int timeout) {
+            bool previous = Console.TreatControlCAsInput;
+            bool started = false, cancelled = false, oversize = false;
+            var buffer = new StringBuilder();
+            var watch = Stopwatch.StartNew();
+            try {
+                Console.TreatControlCAsInput = true;
+                while (true) {
+                    if (!Console.KeyAvailable) {
+                        if (!started && watch.ElapsedMilliseconds >= timeout)
+                            return new FrameResult { Status = cancelled ? "cancelled" : "timeout" };
+                        Thread.Sleep(10);
+                        continue;
+                    }
+                    var key = Console.ReadKey(true);
+                    if (key.Key == ConsoleKey.C && (key.Modifiers & ConsoleModifiers.Control) != 0) {
+                        cancelled = true;
+                        buffer.Clear();
+                        continue;
+                    }
+                    char c = key.KeyChar;
+                    if (c == '~')
+                        return new FrameResult {
+                            Status = cancelled ? "cancelled" : oversize ? "oversize" : "complete",
+                            Frame = cancelled || oversize ? null : buffer.ToString()
+                        };
+                    if (c == '\0') continue;
+                    started = true;
+                    if (buffer.Length >= maximum) { oversize = true; buffer.Clear(); }
+                    if (!cancelled && !oversize) buffer.Append(c);
+                }
+            } finally { Console.TreatControlCAsInput = previous; }
+        }
+    }
+}
+'@ -ErrorAction Stop
+}
+function global:__WezTermEnableSshPaste {
+	if ($env:OS -ne 'Windows_NT' -or -not $env:SSH_CONNECTION -or
+		-not (Get-Module PSReadLine) -or -not (Test-Path Function:\PSConsoleHostReadLine)) { return $false }
+	try {
+		__WezTermLoadSshReader
+		Set-PSReadLineKeyHandler -Chord 'Ctrl+Shift+F12' -BriefDescription WezTermSshPaste -ScriptBlock {
+			__WezTermReceiveSshPaste
+		} -ErrorAction Stop
+		return $true
+	} catch { return $false }
+}
+$null = __WezTermEnableSshPaste
+
 # 自分のラッパーが残っていれば二重に包まない。プロファイルの再読み込みなどで
 # prompt / PSReadLine が作り直されたときは、新しい関数を包み直す。
 # 未定義の変数を先に Test-Path で確かめ、Set-StrictMode の初回読み込みにも対応する
@@ -171,14 +290,27 @@ if (Test-Path Function:\PSConsoleHostReadLine) {
 		# EditMode を後から設定するとキー割り当てが消えるため、入力のたびに登録する。
 		# マーカーは PSReadLine の入力待機中だけに限定し、Read-Host や実行中の
 		# コマンドへ Ctrl+v を送らない。読み取りが例外になっても finally で解除する。
-		$pasteReady = __WezTermEnablePSReadLinePaste
+		$sshSession = [bool]$env:SSH_CONNECTION
+		$sshReady = __WezTermEnableSshPaste
+		$pasteReady = (__WezTermEnablePSReadLinePaste) -and -not $sshSession
 		$pasteValue = if ($pasteReady) { 'MQ==' } else { '' }
 		$esc = [char]27
 		try {
 			# 対応していないときも空を送り、前のプログラムが残したマーカーを消す。
 			[Console]::Write("$esc]1337;SetUserVar=WEZTERM_PSREADLINE_PASTE=$pasteValue$esc\")
+			if ($sshSession) {
+				__WezTermClearSshPaste
+				if ($sshReady) {
+					$global:__WezTermSshPasteEpoch = [Guid]::NewGuid().ToString('N')
+					__WezTermSshVar WEZTERM_PSREADLINE_SSH_PASTE "1:$global:__WezTermSshPasteEpoch"
+				} else {
+					# 統合の登録失敗を通常貼り付けと区別し、本文を端末キーとして送らせない。
+					__WezTermSshVar WEZTERM_PSREADLINE_SSH_PASTE 'unavailable'
+				}
+			}
 			$line = & $global:__WezTermOriginalReadLine
 		} finally {
+			if ($sshSession) { __WezTermClearSshPaste }
 			[Console]::Write("$esc]1337;SetUserVar=WEZTERM_PSREADLINE_PASTE=$esc\")
 		}
 		# 空 Enter はコマンドを実行しないので送らない（空の出力範囲を作らない）

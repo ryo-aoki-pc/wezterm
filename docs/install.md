@@ -14,7 +14,7 @@
 
 - 上から順にコードブロックを貼る
 - フォントの HackGen Console NF は任意（無くてもほかのフォントで動く）。setup-notes の [AlmaLinux 10 の初期設定の「HackGen Console NF」](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/almalinux-setup.md#hackgen-console-nf)・[Windows 11 の初期設定の「HackGen Console NF」](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/windows-setup.md#hackgen-console-nf)で入れる
-- 手順の後: WSL や ssh 先でも使うなら[WSL でもシェル統合を使う（任意）](#wsl-でもシェル統合を使う任意)・[ssh 先でもシェル統合を使う（任意）](#ssh-先でもシェル統合を使う任意)。以後は[更新](#更新)・[ロールバック](#ロールバック)
+- 手順の後: WSL や ssh 先でも使うなら[WSL でもシェル統合を使う（任意）](#wsl-でもシェル統合を使う任意)・[ssh 先でもシェル統合を使う（任意）](#ssh-先でもシェル統合を使う任意)。[Windows の SSH 先で PowerShell に貼り付ける（任意）](#windows-の-ssh-先で-powershell-に貼り付ける任意)も参照。以後は[更新](#更新)・[ロールバック](#ロールバック)
 - 機能とキー操作は [README](../README.md) にある
 
 
@@ -228,6 +228,102 @@
    - 1 行目が `WezTerm` ならよい。公式 Bash 統合が有効なら、空でも補完処理は動く。公式統合が無ければ、この節の手順 1・2 を見直す
    - 2 つ目の見方は[手順 9](#実施手順) と同じ（ssh 先に COPR の WezTerm が入っていれば、公式の統合が読まれる）
    - tmux の中では `TERM_PROGRAM` が `tmux` になり、マウス報告よけのほかは動かない
+
+---
+
+## Windows の SSH 先で PowerShell に貼り付ける（任意）
+
+> [!IMPORTANT]
+> 接続元は Linux または Windows の WezTerm、接続先は Windows OpenSSH と Git Bash。接続元と接続先の両方に、この版の設定を配置する。SSH のログイン後に Git Bash から PowerShell を開き、終了すると Git Bash へ戻る。
+
+PSReadLine の入力欄へ複数行を貼る。管理者・同じユーザーの非管理者 PowerShell の切り替えは、setup-notes の [SSH 操作手順](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/windows-setup.md#ssh-で管理者非管理者の-powershell-を使う任意)を使う。
+
+1. 接続元と Windows 接続先の設定を、[更新](#更新)の手順 1 で更新する。
+
+   - 接続先は Git Bash で実行する
+   - 接続元は `Ctrl+Shift+R` で設定を読み直す
+   - 通常の PowerShell プロファイルには追記しない
+
+1. Linux の接続元では、セッションに対応するクリップボード取得コマンドがあるか確かめる。
+
+   ```bash
+   if [ -n "${WAYLAND_DISPLAY-}" ]; then
+     command -v wl-paste
+   elif [ -n "${DISPLAY-}" ]; then
+     command -v xclip
+   else
+     echo 'GUI セッションから WezTerm を起動してください'
+   fi
+   ```
+
+   - Wayland は `wl-clipboard` の `wl-paste`、X11 は `xclip` が要る。無ければ接続元の OS のパッケージ管理で導入する
+   - Windows 接続元ではこの手順を飛ばす。標準の Windows PowerShell を `-NoProfile` で使う
+
+1. 接続元の WezTerm の新しいペインで Windows に接続する。
+
+   ```bash
+   ssh surface
+   ```
+
+   - `surface` はこの環境の SSH エイリアス。別の接続先では自分のホスト名を使う
+   - Windows OpenSSH の既定シェルは Git Bash とする
+   - **次の手順は、接続先の Git Bash のプロンプトが出てから貼る**
+
+1. 接続先の Git Bash で統合を読み、Windows PowerShell 5.1 を起動する。
+
+   ```bash
+   export TERM_PROGRAM=WezTerm
+   . ~/.config/wezterm/shell/wezterm.sh
+   powershell.exe -NoLogo -NoExit -Command '. "$env:USERPROFILE\.config\wezterm\shell\wezterm.ps1"'
+   ```
+
+   - PowerShell 7 を使う場合は、最後の行の `powershell.exe` を `pwsh.exe` に替える
+   - **次の手順は、PowerShell のプロンプトが出てから貼る**
+
+1. 接続先 PowerShell で、専用受信キーが登録されたか確かめる。
+
+   ```powershell
+   Get-Module PSReadLine | Select-Object Name, Version; Get-PSReadLineKeyHandler -Bound | Where-Object Function -eq WezTermSshPaste
+   ```
+
+   - `Ctrl+Shift+F12` の `WezTermSshPaste` が出ればよい。このキーは配送用で、手動では押さない
+   - キーが無ければ PSReadLine を読み込み、統合を読み直してから確認する
+
+1. 接続元で無害な複数行をコピーし、右クリックまたは `Ctrl+Shift+V` で貼る。
+
+   ```powershell
+   & {
+     '一行目'
+
+     '二行目'
+   }
+   ```
+
+   - このブロックは入力欄に残り、Enter を押すまで実行しない
+   - 空行・日本語・末尾改行を保持する。PSReadLine の Paste と同じく CR を除き、タブを空白 4 個にする
+   - 準備応答・取得・検証が失敗すると通知し、本文を挿入しない。自動で通常貼り付けに切り替えない
+   - 本文は UTF-8 で 64 KiB まで。途中で `Ctrl+C` を押すと終端まで受信して捨てる。配送が止まった場合は受信待機が続くため、本文を追加で貼らず、接続元でその SSH ペインを閉じて接続し直す
+
+1. 入力欄を確認し、Enter を押して実行する。
+
+   - `一行目`・`二行目` が一度ずつ出ればよい
+   - **次の手順は、PowerShell のプロンプトが戻ってから行う**
+
+1. PowerShell を終了し、Git Bash から SSH を終了する。
+
+   ```powershell
+   exit
+   ```
+
+   - **次の手順は、Git Bash のプロンプトに戻ってから貼る**
+
+1. 接続先の Git Bash で接続を閉じる。
+
+   ```bash
+   exit
+   ```
+
+   - 接続元のプロンプトに戻ればよい
 
 ---
 

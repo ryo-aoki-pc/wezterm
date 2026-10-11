@@ -6,6 +6,7 @@ package.loaded.shells = { list = function() return {} end, for_split = function(
 local actions = require("actions")
 local config = wezterm.config_builder()
 require("bindings").apply(config)
+require("paste").apply(config)
 config.font = wezterm.font("Consolas")
 config.initial_cols = 120
 config.initial_rows = 40

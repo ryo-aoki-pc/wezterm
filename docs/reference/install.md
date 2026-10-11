@@ -103,3 +103,16 @@
 - `man sshd_config`（`AcceptEnv`）・`man ssh_config`（`SendEnv`）
 
 ---
+
+
+## Windows SSH の PowerShell 貼り付け
+
+- 操作は [導入手順](../install.md#windows-の-ssh-先で-powershell-に貼り付ける任意)を参照する。SSH 先の PSReadLine `Paste` は接続先のクリップボードを読むため、接続元のクリップボードを使う専用経路が必要になる
+- 接続元 Windows は標準 PowerShell の `-NoProfile -NonInteractive -STA` で `Get-Clipboard -Raw` を読み、UTF-8 の Base64 として取得する。接続元 Linux は Wayland の `wl-paste --no-newline --type text` または X11 の `xclip -selection clipboard -out -target UTF8_STRING` を使う。本文をコマンド引数・ファイル・ログへ書かない
+- 受信は SSH 用キーのハンドラー内で `Console.ReadKey` を呼ぶ。初回だけメモリー内の C# 補助型を `Add-Type` で読み、文字ごとの PowerShell 解釈を避ける。受信本文は補助型にもコマンドとして渡さない
+- PSReadLine 入力中の epoch、準備応答の nonce、ペイン、待機状態、取得前の応答を照合する。無応答・古い応答・識別子不一致では本文を送らない。クリップボード取得を先に済ませ、専用キーの受信開始後に応答を待ってから改行のないフレームを送る
+- 本文は最大 64 KiB。厳密な UTF-8 と Base64・長さ・nonce を検証し、NUL を拒否する。CR 除去・タブの空白 4 個への変換は [PSReadLine Paste の実装](https://github.com/PowerShell/PSReadLine/blob/v2.0.0/PSReadLine/KillYank.cs)に合わせる。選択範囲があれば `Replace`、なければ `Insert` を使い、Enter は送らない
+- 取消後は本文を終端まで読み捨てる。本文の受信が始まった後にタイムアウトで親シェルへ戻すと、遅れて届いたデータが管理者の入力に残るため、本文未着の待機だけを 5 秒で終了する。Lua の準備待機は 3 秒で終了する。配送停止時は接続元で SSH ペインを閉じる
+- OSC の識別子は古い配送や別ペインの応答を区別する。SSH 先が出力する OSC 自体を信頼する端末統合であり、接続先の悪意あるプログラムを認証する仕組みではない
+- Git Bash の既定シェルでは、対話 SSH の後に PowerShell を起動する。[Windows OpenSSH の PTY 起動実装](https://github.com/PowerShell/openssh-portable/blob/latestw_all/contrib/win32/win32compat/w32-doexec.c)が `bash -c` のコマンド引数を組み立てるため、`ssh -tt surface 'powershell.exe ...'` の形では引数の引用が失われることがある
+- [PR #39](https://github.com/ryo-aoki-pc/wezterm/pull/39)のローカル Windows は引き続き `Ctrl+V` と PSReadLine `Paste` を使う。専用経路は Windows の SSH セッションで PSReadLine 入力待機の能力が通知された場合に使う。Neovim の alternate screen・実行中のコマンド・統合なしは従来の送り分けを使う。tmux と入れ子 SSH の実セッションは未検証

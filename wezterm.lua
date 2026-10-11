@@ -12,5 +12,6 @@ require("shells").apply(config)
 require("bindings").apply(config)
 require("palette").apply(config)
 require("notify").apply(config)
+require("paste").apply(config)
 
 return config

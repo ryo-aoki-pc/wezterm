@@ -330,6 +330,12 @@ __wezterm_notify_done() {
 	__wezterm_uservar wezterm_cmd_done "$1"$'\t'"$2"$'\t'"$3"
 }
 
+# 子 PowerShell の終了・例外で残った入力待機の印を親 Bash/zsh で解除する。
+# 値はすべて空なので外部コマンドを起動せず、フックの登録順も変えない。
+__wz_clear_ps_paste() {
+	printf '\033]1337;SetUserVar=WEZTERM_PSREADLINE_PASTE=\007\033]1337;SetUserVar=WEZTERM_PSREADLINE_SSH_PASTE=\007\033]1337;SetUserVar=WEZTERM_PSREADLINE_SSH_READY=\007\033]1337;SetUserVar=WEZTERM_PSREADLINE_SSH_RESULT=\007'
+}
+
 if [ -n "${ZSH_VERSION-}" ]; then
 	# zsh: precmd（プロンプト直前）と preexec（コマンド実行直前）のフックを使う
 	# ※ このブロックは bash にも解析されるので、bash でも通る書き方にしておく
@@ -352,6 +358,7 @@ if [ -n "${ZSH_VERSION-}" ]; then
 
 	__wezterm_precmd() {
 		local __wz_status=$?
+		__wz_clear_ps_paste
 		printf '\033]133;D;%s\033\\' "$__wz_status"
 		if [ -n "${__wz_cmd_start-}" ]; then
 			# 実行中のコマンドの知らせ (WEZTERM_PROG) を消す
@@ -480,6 +487,7 @@ __wezterm_prompt_command() {
 	elif __wz_starship_active; then
 		__wz_status=${STARSHIP_CMD_STATUS:-$__wz_status}
 	fi
+	__wz_clear_ps_paste
 	printf '\033]133;D;%s\033\\' "$__wz_status"
 	# __wz_cmd_start は下の PS0 がコマンド実行直前に入れる。空 Enter では PS0 が
 	# 展開されないので未設定のまま = コマンドは走っていない
