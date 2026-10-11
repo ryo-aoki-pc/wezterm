@@ -4,12 +4,18 @@
 
 利用者への回答・質問・報告は、常に日本語で書く（コードのコメントなどの言語は、このファイルのほかの決まりに従う）。
 
+## 導入手順の正本
+
+Windows 11・AlmaLinux 10 の導入・利用・更新・任意操作は、setup-notes の [windows-setup.md](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/windows-setup.md) と [almalinux-setup.md](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/almalinux-setup.md) に集約する。既存の手順も対象とし、このリポジトリには移動先の案内・設定仕様・開発者検査・参考資料・検証記録・ロールバックを残す。
+
+以下の旧手順書を参照する規則は、実行手順については上の正本へ適用する。操作を変えたら正本・案内・参照情報を同期し、過去の検証本文は保持する。共通 bash 設定が読むツールの初期化を `~/.bashrc` に直接追記しない。
+
 ## このリポジトリは何か
 
 [WezTerm](https://wezterm.org/) の nightly 向けの個人設定。Windows 11（既定のシェルは Git Bash）が主で、Linux（GNOME Wayland）と macOS でも同じ設定が動くように書いてある。`~/.config/wezterm`（Windows は `%USERPROFILE%\.config\wezterm`）に clone して使う。
 
 - 機能・キー操作・シェル統合の仕組みの説明は `README.md`（参照用）
-- 導入の手順は `docs/install.md`（下の「docs/install.md の書き方」）
+- 導入の手順は上の正本。`docs/install.md` は案内と他 OS の操作
 - 過去の検証環境・実施日・対象コミット・実出力・結果・未確認事項は `docs/verification/install.md`、選定理由と技術的説明は `docs/reference/install.md`
 
 ビルド・テストフレームワークは無い。ドキュメント・コードのコメント・コミットメッセージは日本語で書く。検証していないことを「動く」と書かない。
@@ -39,7 +45,7 @@ bash -n shell/wezterm.sh && zsh -n shell/wezterm.sh
   - `shells.lua` はシェル・WSL・SSH ホストを探して `launch_menu` / `default_prog` を組み立て、bash 系に環境変数 `WEZTERM_SHELL_INTEGRATION`（`shell/wezterm.sh` のパス）を渡し、PowerShell には `-NoExit -Command` で `shell/wezterm.ps1` を読ませる
 - `shell/wezterm.sh` — bash / zsh のシェル統合（OSC 7・OSC 133・完了通知のユーザー変数・実行中のコマンドのユーザー変数 `WEZTERM_PROG`・迷子のマウス報告よけ）。`~/.bashrc` の 1 行で読む
 - `shell/wezterm.ps1` — PowerShell のシェル統合。**UTF-8 の BOM 付き**で保存する（Windows PowerShell 5.1 は BOM の無い `.ps1` を ANSI として読み、日本語のコメントで構文エラーになる）
-- `docs/install.md` — 導入の手順書
+- `docs/install.md` — 正本への案内と他 OS の操作
 
 ## 変えたら合わせて直すもの
 
@@ -47,8 +53,8 @@ bash -n shell/wezterm.sh && zsh -n shell/wezterm.sh
 - コマンドパレットの項目（`lua/palette.lua` の `ENTRIES`）→ README の「コマンドパレットの独自項目」
 - nightly だけの設定を使ったとき → README の「使用している nightly 限定機能」の表
 - よく変える値の場所を動かしたとき → README の「カスタマイズの勘所」、ファイルを足したとき → README の「ファイル構成」
-- 導入のしかたが変わる変更（配置先、シェル統合の読み込み方・環境変数、`lua/shells.lua` の `set_environment_variables`）→ `docs/install.md` の手順と `docs/reference/install.md` の注意点。検証を行ったら `docs/verification/install.md` に対象版と結果を追加する
-  - AlmaLinux 10 の COPR 版は `/etc/profile.d/wezterm.sh`（公式の統合）が先に読まれる。Bash では公式の cwd・ユーザー変数・bash-preexec を保ち、semantic の 2 callback だけを独自処理へ移して完了通知を補う。`WEZTERM_SHELL_SKIP_ALL=1` は渡さない。公式との担当や確かめ用の関数が変わったら、`docs/install.md` の手順 9 と `docs/reference/install.md` の注意点を合わせる
+- 導入のしかたが変わる変更（配置先、シェル統合の読み込み方・環境変数、`lua/shells.lua` の `set_environment_variables`）→ 正本の手順と `docs/reference/install.md` の注意点。検証を行ったら `docs/verification/install.md` に対象版と結果を追加する
+  - AlmaLinux 10 の COPR 版は `/etc/profile.d/wezterm.sh`（公式の統合）が先に読まれる。Bash では公式の cwd・ユーザー変数・bash-preexec を保ち、semantic の 2 callback だけを独自処理へ移して完了通知を補う。`WEZTERM_SHELL_SKIP_ALL=1` は渡さない。公式との担当や確かめ用の関数が変わったら、正本の「WezTerm の設定を導入する」の手順 6 と `docs/reference/install.md` の注意点を合わせる
   - シェル統合を読む 1 行や置き場所を変えたら、自分用の bash の設定（`ryo-aoki-pc/bash`）の `bashrc`・`migrate/old-lines.txt` も直す。その設定は、starship → この統合 → zoxide の順に読む（`PROMPT_COMMAND`・`PS0` の扱いを変えたら、bash リポジトリの検証記録にある「読む順番」の実測を取り直す）
 
 ## コードの注意
@@ -76,17 +82,8 @@ bash -n shell/wezterm.sh && zsh -n shell/wezterm.sh
 
 ## docs/install.md の書き方
 
-- タイトルの下に検証記録と参照情報へのリンクを置き、`## 実施手順`、任意の WSL・ssh、更新、ロールバックの順に並べる。手順書には手順と実行に必要な前提・分岐・注意・期待結果だけを載せる。
-- 過去の検証環境・日付・コミット・実測・失敗・未確認事項は `docs/verification/install.md` に置く。検証記録の既存本文は実施時点のまま保持し、番号やリンクの追従で範囲を広げない。再検証したら対象版と範囲を明記して追加する。
-- 選定理由・仕様・技術的な説明は `docs/reference/install.md` に置く。手順書へ背景説明の折り畳み・補足・検証付録は追加しない。
-- 各節はリード → 番号付きリスト → `---` の順。マーカーはすべて `1.`、本文は 3 スペース字下げ。各手順は「1 行の説明（〜する。）→ bash のブロック → 確認・分岐・注意の箇条書き」にする。
-- リードの `[!IMPORTANT]` に実行する場所・ユーザー・前提・対話や切り替えのある手順を示す。URL と置き場所は固定で、変える必要の無い変数は作らない。
-- 条件付きの手順は説明に条件を書く。判定側に飛ばす手順を示し、代わりの手順は「（手順 N の代わりに）」と書く。コマンドの無いウィンドウ・エディタ・タブの操作も独立した手順にする。
-- 待機や場所の切り替えがある手順の末尾は「**次の手順は、〜してから貼る**」。sudo の後ろに行が続くブロックは `{` と `}` で囲み、パスワード応答が要る手順は応答してから次を貼ることを書く。
-- 箇条書きは 1 項目 1 事実、末尾に「。」を付けない。`<...>` を含むコマンドはブロックに置かずインラインコードにする。出力の期待値は `<USER>` / `<HOST>` などのプレースホルダで書く。
-- 手順の参照は実施手順内では「手順 N」、他の節からは `[手順 N](docs/install.md#実施手順)`、同じ節では「この節の手順 N」。手順を変えたら README・参照情報・検証記録の番号とリンクを追従する。
-- アラートは最上位にだけ置き、1 文書に 5 つまで。取り戻せない削除は節の `[!CAUTION]` と手順の説明で示す。閉じの `**` は約物に接して閉じない。
-- 手順のコマンドを変更したら該当する分岐を実行して記録する。実行していないものを「検証済み」と書かない。パスワード・鍵・トークンは記載しない。
+
+Windows・AlmaLinux の操作は setup-notes の2冊を正本にする。執筆規則は setup-notes の `docs/dev/writing-rules.md` に従う。旧手順書は見出し・アンカーを残して新正本へ案内し、開発者検査・他OS操作・ロールバックはこのリポジトリで管理する。操作を変えたら正本と参照情報を同期する。検証記録の既存本文は実施時点のまま保持し、新しい対象版・環境・範囲を追記する。
 
 ## 共同作業の規則
 

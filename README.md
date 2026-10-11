@@ -1,5 +1,8 @@
 # wezterm
 
+導入・利用・更新は [AlmaLinux 10 の手順](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/almalinux-setup.md) / [Windows 11 の手順](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/windows-setup.md) に集約している。設定仕様・開発者向け操作・過去の検証・ロールバックはこのリポジトリで管理する。
+
+
 [WezTerm](https://wezterm.org/) の個人設定です。Tokyo Night 系の配色に、ピル型タブ・
 ステータスバー・シェル選択ランチャーを組み合わせ、シェル統合でカレントディレクトリ・
 プロンプト・コマンド出力の位置を WezTerm に伝えて操作を便利にしています。
@@ -58,7 +61,7 @@ AlmaLinux 10 と Windows 11 の Git Bash に同じコマンドを貼り、次の
 
 - 既にある設定（`~/.wezterm.lua`・`~/.config/wezterm`）を `.bak` に退避する
 - このリポジトリを `~/.config/wezterm` に clone する
-- `~/.bashrc` に、bash のシェル統合を読み込む 1 行を足す（→ [シェル統合](#シェル統合)。PowerShell は自動で読み込まれるので不要）
+- 共通 bash 設定からシェル統合を読む（→ [シェル統合](#シェル統合)。PowerShell は起動引数で読む）
 - 任意で、WSL と ssh 先でもシェル統合を使えるようにする
 
 設定ファイルは保存すると自動で再読み込みされます（手動なら `Ctrl+Shift+R`）。
@@ -707,7 +710,7 @@ WezTerm からは `bash.exe` しか見えず、vim の編集中でも確認な�
 
 `lua/shells.lua` が環境変数 `WEZTERM_SHELL_INTEGRATION` にパスを渡すので、
 `~/.bashrc`（zsh は `~/.zshrc`）に、このパスのスクリプトを読み込む 1 行を足します。
-足し方は [docs/install.md の手順 5〜7](docs/install.md#実施手順) にあります
+AlmaLinux 10・Git Bash は [setup-notes の導入案内](docs/install.md#実施手順)で共通 bash 設定を入れます。MSYS2・QMK MSYS・zsh の直接読み込みは [対象外シェルの案内](docs/install.md#almalinux-10git-bash-以外のシェル) にあります
 （starship の初期化より後ろ、zoxide の初期化より前に置きます）。
 自分用の bash の設定（`ryo-aoki-pc/bash`）を入れたホストでは、この 1 行は要りません
 （その設定が、starship・zoxide と合わせた順番でこのスクリプトを読みます）。
@@ -786,8 +789,8 @@ ssh は `$TERM_PROGRAM` を既定では接続先へ渡しません。公式統�
 - **手元の `~/.ssh/config`**（Windows は `%USERPROFILE%\.ssh\config`）の `Host` に `SendEnv TERM_PROGRAM` を足し、
   `TERM_PROGRAM` を送る。公式統合が無い場合、この値が `WezTerm` のときだけ独自統合を動かす
 - **ssh 先の sshd** で、`AcceptEnv TERM_PROGRAM` のドロップインを置いて受け取りを許可する
-- **ssh 先**にもこの設定を置き、ssh 先の `~/.bashrc` に手元と同じ[シェル統合の 1 行](#bashgit-bash--msys2--qmk-msys--linuxと-zsh)を足す
-  （Syncthing などで `~/.config/wezterm` を同期していれば、1 行だけでよい）
+- **ssh 先**にも共通 bash 設定とこの設定を置く（シェル統合は共通設定が読む）
+  （Syncthing などで `~/.config/wezterm` を同期していれば、その clone は不要）
 
 独自統合が動くと、タブ名が `ホスト名:ディレクトリ名` の形で ssh 先のディレクトリ名になり、
 ssh 先でも `Ctrl+Shift+Alt+↑/↓`・`Ctrl+Shift+Alt+C`・完了通知が効きます。
@@ -941,7 +944,7 @@ bash -n shell/wezterm.sh && zsh -n shell/wezterm.sh
 | --- | --- |
 | アイコンやタブの丸い端が □ になる | HackGen Console NF（または Symbols Nerd Font Mono）が入っているか。`ls-fonts` でどのフォントが使われているか見る |
 | 設定を変えたのに反映されない / 見た目が素の WezTerm になった | 設定エラー。画面上部のエラー表示か、`ls-fonts` の `ERROR` 行を見る。stable 版で起動していないか（nightly 必須） |
-| 新しいタブが今のディレクトリで開かない / タブ名がディレクトリ名にならない | [シェル統合](#シェル統合)が読み込まれているか。bash は `~/.bashrc` の 1 行、WSL は WSL 側の `~/.bashrc`（[docs/install.md の手順 9](docs/install.md#実施手順) で確かめられる） |
+| 新しいタブが今のディレクトリで開かない / タブ名がディレクトリ名にならない | [シェル統合](#シェル統合)が読み込まれているか。正本の設定導入（[AlmaLinux 10](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/almalinux-setup.md#wezterm-の設定を導入する) / [Windows 11](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/windows-setup.md#wezterm-の設定を導入する)）の最後で確認する。WSL は[WSL のシェル統合](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/windows-setup.md#wezterm-のシェル統合を-wsl-で使う任意)の最後で確認する |
 | 「コピーできません（要シェル統合）」と出る | 同上。コマンドプロンプトは非対応。tmux の中も非対応 |
 | 「コピーできる出力がありません」と出る | 画面に実行したコマンドが無い（開いた直後・`clear`・`Ctrl+Shift+Alt+K` の後）。zsh では、テーマがプロンプトを作り直して入力の開始の印が消えていないか（[bash と zsh](#bashgit-bash--msys2--qmk-msys--linuxと-zsh)） |
 | 「ssh 先の出力は区切れません」と出る | ssh 先でシェル統合が動いていない。[ssh 先でもシェル統合を使う](#ssh-先でもシェル統合を使う) |
