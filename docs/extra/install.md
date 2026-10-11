@@ -4,6 +4,14 @@
 
 - この文書で足したものを外す。WezTerm 本体は消さない（消すなら setup-notes の [AlmaLinux 10 の初期設定のロールバックの「端末とエディタを消す」](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/extra/almalinux-setup.md#端末とエディタを消す)。Windows 11 は[「OpenSSH・Git for Windows・Firefox・WezTerm を外す」](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/extra/windows-setup.md#opensshgit-for-windowsfirefoxwezterm-を外す)）
 
+> [!IMPORTANT]
+> - **自分のユーザーの bash で行う**。`sudo -i`・`su -` で開いた root のシェルには貼らない
+> - 手順 1〜4 はこの PC で行い、Windows 11 は **Git Bash** に貼る
+> - **手順 5 は WSL のシェルだけ**に貼る。WSL に手順 1〜4 は貼らない
+> - **手順 6 は ssh 先のシェルだけ**に貼る。手元の PC には貼らない
+> - 手順 6 の前に、ssh 先の端末で `sudo -v` を手で入力し、認証を終えてプロンプトに戻るまで待つ。認証できなければ中断する
+> - **パスワード入力中は後続の行を貼らない**。入力を終え、プロンプトに戻ってから進む
+
 > [!CAUTION]
 > **この節の手順 3 は、`~/.config/wezterm` を消す**。手元で変えて commit・push していないものは取り戻せない。この節の手順 2 で確かめてから貼る。
 

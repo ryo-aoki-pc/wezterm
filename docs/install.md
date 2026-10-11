@@ -30,8 +30,12 @@ Windows 11・AlmaLinux 10 の導入・利用・更新手順は setup-notes の2�
 
 MSYS2・QMK MSYS・zsh は、各シェルのホームの `~/.bashrc`（zsh は `~/.zshrc`）で統合を読む。starship の後、zoxide の前に置く。
 
-```bash
-[ -r "${WEZTERM_SHELL_INTEGRATION:=$HOME/.config/wezterm/shell/wezterm.sh}" ] && . "$WEZTERM_SHELL_INTEGRATION"
-```
+1. エディタで該当する rc ファイルを開き、次の 1 行を追記する。
+
+   ```bash
+   [ -r "${WEZTERM_SHELL_INTEGRATION:=$HOME/.config/wezterm/shell/wezterm.sh}" ] && . "$WEZTERM_SHELL_INTEGRATION"
+   ```
+
+   - 保存して新しい WezTerm のタブを開くと、rc ファイルから読み込む
 
 PowerShell は追加設定不要。起動引数で自動的に読む。
