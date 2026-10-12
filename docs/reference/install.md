@@ -52,7 +52,7 @@
   - tmux・ssh を挟むと環境変数が届かないので、既定の置き場所をフォールバックにした
 - **既にある設定は、消さずに `.bak` に退避する**
   - `~/.wezterm.lua` が残るとこの設定が読まれないので、`~/.config/wezterm` と合わせて退避する
-  - [ロールバック](../install.md#ロールバック)の手順 4 で戻せる
+  - [ロールバック](../extra/install.md#ロールバック)の手順 4 で戻せる
 - **AlmaLinux 10 の公式のシェル統合は止めない**
   - 公式 Bash 統合の cwd・ユーザー変数・bash-preexec を保ち、semantic の 2 フックだけを独自処理へ移す。`WEZTERM_SHELL_SKIP_ALL=1` を渡す設定は加えない（[注意点](#注意点)）
 - **Windows は、Git Bash に同じ bash のブロックを貼る**（setup-notes の初期設定の「Git」と同じ）
@@ -66,7 +66,7 @@
 | `~/.wezterm.lua.bak` / `~/.config/wezterm.bak` | 手順 2 で退避したときだけ |
 | （ssh 先）`/etc/ssh/sshd_config.d/50-wezterm.conf` | `AcceptEnv TERM_PROGRAM` の 1 行 |
 
-- WezTerm が起動したシェルは、[手順 9](../install.md#実施手順) で確かめる
+- WezTerm が起動したシェルは、正本の設定導入（[AlmaLinux 10](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/almalinux-setup.md#wezterm-の設定を導入する) / [Windows 11](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/windows-setup.md#wezterm-の設定を導入する)）の最後で確かめる
 
 ### 注意点
 
@@ -84,7 +84,7 @@
   - starship が終了コードと `PIPESTATUS` を保存してから、統合のフックを動かす。OSC 133 の `D` と完了通知にはその終了コードを使い、`PS1` の `A` / `B` は毎回付け直す
   - 公式 Bash 統合では、bash-preexec が終了コードとパイプ状態を保存し、Starship がプロンプトを作り直した後に独自処理を呼ぶ。公式 semantic フックは外して OSC 133 の二重送信を防ぐ
   - 公式の bash-preexec 経路で starship だけを直接再初期化する場合は、この統合も続けて読み直す。再初期化だけで重なる登録を各 1 個へ戻す。通常の個人 Bash 設定は starship の再初期化をガードしている
-  - 前の版でシェル統合を starship より先に読んでいるホストは、[手順 5](../install.md#実施手順)に従って並びを直し、新しいタブを開く
+  - 前の版でシェル統合を starship より先に読んでいるホストは、正本の共通 bash 設定（[AlmaLinux 10](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/almalinux-setup.md#共通の-bash-設定) / [Windows 11](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/windows-setup.md#git-bash-と-wezterm-の設定)）を導入し、新しいタブを開く
 - **Git Bash の `~/.bash_profile`**
   - WezTerm は Git Bash をログインシェル（`-l`）で起動するので、`~/.bashrc` は `~/.bash_profile` から読まれる必要がある
   - Git for Windows は、`~/.bashrc` があって `~/.bash_profile` などが無いと、`~/.bashrc` を読む `~/.bash_profile` を作り、`WARNING: Found ~/.bashrc but no ~/.bash_profile` と表示する
@@ -107,7 +107,7 @@
 
 ## Windows SSH の PowerShell 貼り付け
 
-- 操作は [導入手順](../install.md#windows-の-ssh-先で-powershell-に貼り付ける任意)を参照する。SSH 先の PSReadLine `Paste` は接続先のクリップボードを読むため、接続元のクリップボードを使う専用経路が必要になる
+- 操作は [AlmaLinux 10 の接続元](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/almalinux-setup.md#wezterm-windows-の-ssh-先で-powershell-に貼り付ける任意) / [Windows 11 の接続元](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/windows-setup.md#ssh-で管理者非管理者の-powershell-を使う任意)を参照する。SSH 先の PSReadLine `Paste` は接続先のクリップボードを読むため、接続元のクリップボードを使う専用経路が必要になる
 - 接続元 Windows は標準 PowerShell の `-NoProfile -NonInteractive -STA` で `Get-Clipboard -Raw` を読み、UTF-8 の Base64 として取得する。接続元 Linux は Wayland の `wl-paste --no-newline --type text` または X11 の `xclip -selection clipboard -out -target UTF8_STRING` を使う。本文をコマンド引数・ファイル・ログへ書かない
 - 受信は SSH 用キーのハンドラー内で `Console.ReadKey` を呼ぶ。初回だけメモリー内の C# 補助型を `Add-Type` で読み、文字ごとの PowerShell 解釈を避ける。受信本文は補助型にもコマンドとして渡さない
 - PSReadLine 入力中の epoch、準備応答の nonce、ペイン、待機状態、取得前の応答を照合する。無応答・古い応答・識別子不一致では本文を送らない。クリップボード取得を先に済ませ、専用キーの受信開始後に準備応答を待ってヘッダーだけを送る。受信側がヘッダーを読み終えた確認を返してから Base64 本文を送る。版番号は `2`、ヘッダーは `WZP2:<nonce>:`、本文は `<Base64長>:<Base64>~WZE2:<nonce>~`。旧版との混在では通知して停止する

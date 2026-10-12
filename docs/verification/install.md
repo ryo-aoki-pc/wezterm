@@ -189,8 +189,8 @@ x86_64 のクラウドホストで `dockerd` を動かし、`docker run -d --pri
 
 | 実行 | ユーザー | 流した手順 | 結果 |
 |---|---|---|---|
-| 1 | u1（設定無し） | 手順 1・3〜6・8（mux）・9、[更新](../install.md#更新)の手順 1、[ロールバック](../install.md#ロールバック)の手順 1〜3 | 手順 1 は 2 行とも `No such file or directory`。手順 4 は HackGen が無い警告と `ERROR  wezterm_toast_notification::dbus` で、`ERROR  wezterm_gui` は無し。手順 5 は何も出さなかった。手順 9 は `WezTerm`・`/home/<USER>/.config/wezterm/shell/wezterm.sh`・`__wezterm_set_user_var`・`__wz_mouse_off`。更新は `Already up to date.`。ロールバックは `0`・`## main...origin/main`・`No such file or directory` |
-| 1 | r1（ssh 先） | 手順 1・3〜6、[ssh 先の節](../install.md#ssh-先でもシェル統合を使う任意)の手順 2（r1）と手順 4・5（u1 の mux のペインから）、ロールバックの手順 6・1〜3 | ssh 先の節の手順 2 は、手順 2 の補足の 2 行。手順 5 は `WezTerm`・`__wezterm_set_user_var`・`__wz_mouse_off`（ssh 先にも COPR の WezTerm があるため）。`wezterm cli list` のペインの CWD は `file://<HOST>/home/r1/`。ロールバックの手順 6 は `removed '/etc/ssh/sshd_config.d/50-wezterm.conf'` で、reload の後の `sshd -T` に `acceptenv` の行は無かった |
+| 1 | u1（設定無し） | 手順 1・3〜6・8（mux）・9、[更新](https://github.com/ryo-aoki-pc/wezterm/blob/f7fe6b33b36e806e99148d9551f16f0ee01e4949/docs/install.md#更新)の手順 1、[ロールバック](https://github.com/ryo-aoki-pc/wezterm/blob/f7fe6b33b36e806e99148d9551f16f0ee01e4949/docs/install.md#ロールバック)の手順 1〜3 | 手順 1 は 2 行とも `No such file or directory`。手順 4 は HackGen が無い警告と `ERROR  wezterm_toast_notification::dbus` で、`ERROR  wezterm_gui` は無し。手順 5 は何も出さなかった。手順 9 は `WezTerm`・`/home/<USER>/.config/wezterm/shell/wezterm.sh`・`__wezterm_set_user_var`・`__wz_mouse_off`。更新は `Already up to date.`。ロールバックは `0`・`## main...origin/main`・`No such file or directory` |
+| 1 | r1（ssh 先） | 手順 1・3〜6、[ssh 先の節](https://github.com/ryo-aoki-pc/wezterm/blob/f7fe6b33b36e806e99148d9551f16f0ee01e4949/docs/install.md#ssh-先でもシェル統合を使う任意)の手順 2（r1）と手順 4・5（u1 の mux のペインから）、ロールバックの手順 6・1〜3 | ssh 先の節の手順 2 は、手順 2 の補足の 2 行。手順 5 は `WezTerm`・`__wezterm_set_user_var`・`__wz_mouse_off`（ssh 先にも COPR の WezTerm があるため）。`wezterm cli list` のペインの CWD は `file://<HOST>/home/r1/`。ロールバックの手順 6 は `removed '/etc/ssh/sshd_config.d/50-wezterm.conf'` で、reload の後の `sshd -T` に `acceptenv` の行は無かった |
 | 2 | u2（既存の設定・starship・HackGen） | 手順 1〜5・7（当時の、starship の行の前に差し込む版）・8（mux）・9、更新の手順 1、ロールバックの手順 1〜4 | 手順 1 は 2 行とも出た。手順 2 は `renamed` が 2 行。手順 4 は 2 文字とも HackGen Console NF で、警告も `ERROR` も無し。手順 5 は `26:eval "$(starship init bash)"`。手順 7 の後は、26 行目がシェル統合で 27 行目が starship。手順 9 は実行 1 と同じ（プロンプトは starship のもの）。ロールバックの手順 4 で 2 つとも戻り、`wezterm ls-fonts` は元の最小の例のフォント（`Noto Sans Mono`）を読んだ |
 
 個別に確かめたこと（systemd の無い AlmaLinux 10.2 のコンテナに同じ版の WezTerm を入れたものも使った）:
@@ -395,7 +395,7 @@ Windows の Git Bash `5.3.15(2)-release`、Starship `1.26.0`、WezTerm `20260905
 - 推奨の starship → 統合 → zoxide、starship → zoxide → 統合で、OSC 133 A / B / C / D、終了コード、パイプ個別ステータス、完了通知データ、統合の再読込、starship 再初期化を確認した。統合を追加読込しない starship 再初期化単独の補助確認も 10 件すべて成立した
 - `set -u`、行編集あり・なし、scalar / array の既存フック、旧版のフックを含む配列、配列の export 属性、既存 PS0、履歴設定、cwd、`BASH_REMATCH`、日本語・絵文字を含むユーザー変数の境界も確認した
 - 実 WezTerm の隔離ペインでは、23 snapshots の 19 件の確認がすべて成立した。Starship 起動時と後付け後のどちらも Prompt / Input / Output の範囲が生成され、直前の出力だけをコピーできた。プロンプトジャンプ後の可視範囲、cwd の分割先への引継ぎ、リサイズ・コピーモード・ズーム、Bash の失敗通知データ、PowerShell 2 種の回帰確認 8 件を含む
-- 統合 → starship の推奨外の並びでは、統合をもう一度読むまで A / B の一部が欠ける。追加読込後の復旧は確認したが、導入時は[手順 5](../install.md#実施手順)の並びに直して新しいタブを開く
+- 統合 → starship の推奨外の並びでは、統合をもう一度読むまで A / B の一部が欠ける。追加読込後の復旧は確認したが、導入時は[手順 5](https://github.com/ryo-aoki-pc/wezterm/blob/f7fe6b33b36e806e99148d9551f16f0ee01e4949/docs/install.md#実施手順)の並びに直して新しいタブを開く
 
 詳しい修正内容、再実行方法、生の出力と未検証範囲は [Git Bash の修正後の検証記録](../../tests/starship/FIX-REPORT.md)に保存した。修正前の結果は [Starship 適用時の検証記録](../../tests/starship/REPORT.md)と上の 2026-09-30 の付録をそのまま残している。
 
