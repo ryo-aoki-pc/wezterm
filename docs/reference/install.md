@@ -6,7 +6,7 @@
 
 ### 実施手順 — 手順 1: 2 つの置き場所
 
-- WezTerm は `~/.wezterm.lua` を `~/.config/wezterm/wezterm.lua` より先に探し、見つけた 1 つだけを読む（setup-notes の [WezTerm の記録の「設定ファイルの探索順序（実測）」](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/verification/almalinux-setup.md#wezterm-設定ファイルの探索順序実測)。もとは wezterm-nightly.md の記録）
+- WezTerm は `~/.wezterm.lua` を `~/.config/wezterm/wezterm.lua` より先に探し、見つけた 1 つだけを読む（setup-notes-verification（非公開）の [WezTerm の記録の「設定ファイルの探索順序（実測）」](https://github.com/ryo-aoki-pc/setup-notes-verification/blob/main/docs/verification/almalinux-setup.md#wezterm-設定ファイルの探索順序実測)。もとは wezterm-nightly.md の記録）
 - `~/.wezterm.lua` が残っていると、この設定は読まれない
 
 ### 実施手順 — 手順 3: `~/.config/wezterm` に置く理由
