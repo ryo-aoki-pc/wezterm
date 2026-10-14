@@ -55,7 +55,7 @@
 
    - 戻したものだけ、`renamed '/home/<USER>/.config/wezterm.bak' -> '/home/<USER>/.config/wezterm'` のように出る
 
-1. [WSL でもシェル統合を使う（任意）](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/windows-setup.md#wezterm-のシェル統合を-wsl-で使う任意)を通したときだけ、WSL のシェルで、WSL の `~/.bashrc` の行を消す。
+1. [WSL でもシェル統合を使う](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/windows-setup.md#wezterm-のシェル統合を-wsl-で使う)を通したときだけ、WSL のシェルで、WSL の `~/.bashrc` の行を消す。
 
    ```bash
    sed -i '\#/.config/wezterm/shell/wezterm.sh#d' ~/.bashrc
@@ -64,7 +64,7 @@
 
    - `0` と出ればよい
 
-1. [ssh 先でもシェル統合を使う（任意）](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/almalinux-setup.md#wezterm-のシェル統合を-ssh-先で使う任意)を通したときだけ、ssh 先で、sshd の設定を消す。
+1. [ssh 先でもシェル統合を使う](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/almalinux-setup.md#wezterm-のシェル統合を-ssh-先で使う)を通したときだけ、ssh 先で、sshd の設定を消す。
 
    ```bash
    {
