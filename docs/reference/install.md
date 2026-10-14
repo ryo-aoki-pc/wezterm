@@ -107,7 +107,7 @@
 
 ## Windows SSH の PowerShell 貼り付け
 
-- 操作は [AlmaLinux 10 の接続元](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/almalinux-setup.md#wezterm-windows-の-ssh-先で-powershell-に貼り付ける任意) / [Windows 11 の接続元](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/windows-setup.md#ssh-で管理者非管理者の-powershell-を使う任意)を参照する。SSH 先の PSReadLine `Paste` は接続先のクリップボードを読むため、接続元のクリップボードを使う専用経路が必要になる
+- 操作は [AlmaLinux 10 の接続元](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/almalinux-setup.md#wezterm-windows-の-ssh-先で-powershell-に貼り付ける) / [Windows 11 の接続元](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/windows-setup.md#ssh-で管理者非管理者の-powershell-を使う)を参照する。SSH 先の PSReadLine `Paste` は接続先のクリップボードを読むため、接続元のクリップボードを使う専用経路が必要になる
 - 接続元 Windows は標準 PowerShell の `-NoProfile -NonInteractive -STA` で `Get-Clipboard -Raw` を読み、UTF-8 の Base64 として取得する。接続元 Linux は Wayland の `wl-paste --no-newline --type text` または X11 の `xclip -selection clipboard -out -target UTF8_STRING` を使う。本文をコマンド引数・ファイル・ログへ書かない
 - 受信は SSH 用キーのハンドラー内で `Console.ReadKey` を呼ぶ。初回だけメモリー内の C# 補助型を `Add-Type` で読み、文字ごとの PowerShell 解釈を避ける。受信本文は補助型にもコマンドとして渡さない
 - PSReadLine 入力中の epoch、準備応答の nonce、ペイン、待機状態、取得前の応答を照合する。無応答・古い応答・識別子不一致では本文を送らない。クリップボード取得を先に済ませ、専用キーの受信開始後に準備応答を待ってヘッダーだけを送る。受信側がヘッダーを読み終えた確認を返してから Base64 本文を送る。版番号は `2`、ヘッダーは `WZP2:<nonce>:`、本文は `<Base64長>:<Base64>~WZE2:<nonce>~`。旧版との混在では通知して停止する
