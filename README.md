@@ -1,6 +1,6 @@
 # wezterm
 
-導入・利用・更新は [AlmaLinux 10 の手順](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/almalinux-setup.md) / [Windows 11 の手順](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/windows-setup.md) に集約している。設定仕様・開発者向け操作・過去の検証・ロールバックはこのリポジトリで管理する。
+導入・利用・更新は、シェルと端末のセットアップの [AlmaLinux 10](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#almalinux-10-で使う) / [Windows 11](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#windows-11-で使う) に集約している。設定仕様・開発者向け操作・過去の検証・ロールバックはこのリポジトリで管理する。
 
 移動先は[集約対応表](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/dev/consolidation-map.md)で確認する。
 
@@ -58,7 +58,7 @@ Windows 11（既定シェルは Git Bash）を主に、Linux（GNOME Wayland）�
 | Linux / macOS | `~/.config/wezterm` |
 | Windows | `%USERPROFILE%\.config\wezterm` |
 
-導入は [docs/install.md](docs/install.md) の手順で行います（setup-notes と同じ書式の手順書）。
+導入は [docs/install.md](docs/install.md) の案内から、シェルと端末のセットアップの手順へ進みます。
 AlmaLinux 10 と Windows 11 の Git Bash に同じコマンドを貼り、次のことをします。
 
 - 既にある設定（`~/.wezterm.lua`・`~/.config/wezterm`）を `.bak` に退避する
@@ -192,7 +192,7 @@ Windows のローカル PowerShell が PSReadLine で入力を待っている間
 PSReadLine の仕様により、タブ文字は 4 個の空白になります。
 設定の更新後は PowerShell のタブを開き直してください（[PowerShell の統合](#powershell)）。
 Linux / Windows の WezTerm から Windows の SSH 先へも、同じ操作で貼り付けられます。
-接続先の PowerShell を統合付きで起動してください（[AlmaLinux 10 の接続元](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/almalinux-setup.md#wezterm-windows-の-ssh-先で-powershell-に貼り付ける) / [Windows 11 の接続元](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/windows-setup.md#ssh-で管理者非管理者の-powershell-を使う)）。
+接続先の PowerShell を統合付きで起動してください（[AlmaLinux 10 の接続元](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#wezterm-windows-の-ssh-先で-powershell-に貼り付ける) / [Windows 11 の接続元](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/windows-setup.md#ssh-で管理者非管理者の-powershell-を使う)）。
 SSH 用の取得・応答・検証が失敗した場合は通知し、本文を挿入しません。通常貼り付けへの自動切り替えはしません。
 SSH 用の上限は UTF-8 で 64 KiB、Linux は Wayland の `wl-paste` または X11 の `xclip` が必要です。
 SSH 用統合で PSReadLine や専用キーを準備できない場合も、通知して停止します。
@@ -961,7 +961,7 @@ bash -n shell/wezterm.sh && zsh -n shell/wezterm.sh
 | --- | --- |
 | アイコンやタブの丸い端が □ になる | HackGen Console NF（または Symbols Nerd Font Mono）が入っているか。`ls-fonts` でどのフォントが使われているか見る |
 | 設定を変えたのに反映されない / 見た目が素の WezTerm になった | 設定エラー。画面上部のエラー表示か、`ls-fonts` の `ERROR` 行を見る。stable 版で起動していないか（nightly 必須） |
-| 新しいタブが今のディレクトリで開かない / タブ名がディレクトリ名にならない | [シェル統合](#シェル統合)が読み込まれているか。正本の設定導入（[AlmaLinux 10](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/almalinux-setup.md#wezterm-の設定を導入する) / [Windows 11](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/windows-setup.md#wezterm-の設定を導入する)）の最後で確認する。WSL は[WSL のシェル統合](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/windows-setup.md#wezterm-のシェル統合を-wsl-で使う)の最後で確認する |
+| 新しいタブが今のディレクトリで開かない / タブ名がディレクトリ名にならない | [シェル統合](#シェル統合)が読み込まれているか。正本の設定導入（[AlmaLinux 10](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#wezterm-の設定を導入する) / [Windows 11](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#windows-11-で-wezterm-の設定を導入する)）の最後で確認する。WSL は[WSL のシェル統合](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#wezterm-のシェル統合を-wsl-で使う)の最後で確認する |
 | 「コピーできません（要シェル統合）」と出る | 同上。コマンドプロンプトは非対応。tmux の中も非対応 |
 | 「コピーできる出力がありません」と出る | 画面に実行したコマンドが無い（開いた直後・`clear`・`Ctrl+Shift+Alt+K` の後）。zsh では、テーマがプロンプトを作り直して入力の開始の印が消えていないか（[bash と zsh](#bashgit-bash--msys2--qmk-msys--linuxと-zsh)） |
 | 「ssh 先の出力は区切れません」と出る | ssh 先でシェル統合が動いていない。[ssh 先でもシェル統合を使う](#ssh-先でもシェル統合を使う) |
