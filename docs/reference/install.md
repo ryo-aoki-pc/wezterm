@@ -1,60 +1,60 @@
 # WezTerm 設定導入の参照情報
 
-[手順書](../install.md) / [検証記録](../verification/install.md) / [機能とキー操作](../../README.md)
+手順は setup-notes の[WezTerm の設定を導入する](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#wezterm-の設定を導入する)（AlmaLinux 10）と[Windows 11 で WezTerm の設定を導入する](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#windows-11-で-wezterm-の設定を導入する)にある。見出しの手順番号は AlmaLinux 10 の項の番号で、Windows 11 の項は窓を開く手順が先頭にあるので 1 つ後ろになる。ロールバックと注意点は [extra](../extra/install.md)、検証は[検証記録](../verification/install.md)、機能とキー操作は [README](../../README.md)。
 
 ## 手順の背景と実装の説明
 
-### 実施手順 — 手順 1: 2 つの置き場所
+### WezTerm の設定を導入する / 手順 1: 補足: 2 つの置き場所
 
 - WezTerm は `~/.wezterm.lua` を `~/.config/wezterm/wezterm.lua` より先に探し、見つけた 1 つだけを読む（setup-notes-verification（非公開）の [WezTerm の記録の「設定ファイルの探索順序（実測）」](https://github.com/ryo-aoki-pc/setup-notes-verification/blob/main/docs/verification/shell-terminal.md#wezterm-設定ファイルの探索順序実測)。もとは wezterm-nightly.md の記録）
 - `~/.wezterm.lua` が残っていると、この設定は読まれない
 
-### 実施手順 — 手順 3: `~/.config/wezterm` に置く理由
+### WezTerm の設定を導入する / 手順 3: 補足: `~/.config/wezterm` に置く理由
 
 - `wezterm.lua` は、`lua/` のモジュールを `wezterm.config_dir`（`wezterm.lua` のあるディレクトリ）から読む。シェル統合のスクリプトも、同じディレクトリの `shell/` を指す。1 ファイルの `~/.wezterm.lua` には置けない
-- 手順 6 の 1 行は、`$HOME/.config/wezterm` を既定の置き場所として書いてある。別の場所に置くなら、その 1 行も書き換える
+- 共通の bash 設定は、`WEZTERM_SHELL_INTEGRATION` が無いとき（tmux や ssh を挟むと届かない）に `$HOME/.config/wezterm/shell/wezterm.sh` を読む。別の場所に置くと、そのときに読めない
 
-### 実施手順 — 手順 5: starship の行より後ろ、zoxide の行より前に置く理由
+### WezTerm の設定を導入する / 補足: starship の後、zoxide の前に読む理由
 
 - starship は、直前の終了コードとパイプ各要素の終了コード（`PIPESTATUS`）を先に保存し、`PS1` を毎回作り直す。統合は `PROMPT_COMMAND` の後ろにフックを足し、starship が保存した終了コードを OSC 133 の `D` と完了通知に使う
 - 統合は `PS1` の OSC 133 の印（`A` / `B`）をプロンプトごとに付け直す。starship のプロンプトとパイプ個別ステータス表示を保ちながら、WezTerm にプロンプト・入力・出力の範囲を伝える
 - zoxide はいちばん最後に初期化する（共通の bash 設定が starship → WezTerm → zoxide の順に読む。setup-notes の [シェルと端末のセットアップの注意点](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/extra/shell-terminal.md#注意点)）
 - 前の版のこの文書（2026-09-30 まで）は、この 1 行を starship の行の前に差し込んでいた。そのホストは、当時の setup-notes の starship.md の手順 3〜6 で starship の行を前へ移した（今は [シェルと端末のセットアップの「シェルのツール」](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#シェルのツール)にまとめ、順番は共通の bash 設定が持つ）
 
-### 実施手順 — 手順 6: 1 行の中身
+### WezTerm の設定を導入する / 手順 6: 補足: シェル統合を読む仕組み
 
 - `WEZTERM_SHELL_INTEGRATION` は、この設定の WezTerm が起動するシェルに渡す環境変数で、`shell/wezterm.sh` のパスが入る（`lua/shells.lua` の `set_environment_variables`）
 - 変数が無いとき（tmux や ssh を挟むと届かない）は、`$HOME/.config/wezterm/shell/wezterm.sh` を読む
-- WezTerm は bash をログインシェル（`-l`）で起動するので、`--rcfile` では読ませられない。そのため `~/.bashrc` に書く
+- WezTerm は bash をログインシェル（`-l`）で起動するので、`--rcfile` では読ませられない。そのため `~/.bashrc` から読む（今は共通の bash 設定が読む。この手順で確かめる）
 - PowerShell は、`lua/shells.lua` が起動引数（`-Command`）で `shell/wezterm.ps1` を読ませるので、プロファイルに足すものは無い
 - 公式統合が無い場合、WezTerm 以外の端末では迷子のマウス報告よけ（README）だけを動かす。既に有効な公式 Bash 統合がある場合は、それを補完する
 
-### ssh 先でもシェル統合を使う（任意） — 手順 2: AlmaLinux 10 の sshd の既定と、検証コンテナでの出力
+### WezTerm のシェル統合を SSH 先で使う / 手順 2: 補足: AlmaLinux 10 の sshd の既定と、検証コンテナでの出力
 
 - AlmaLinux 10.2 の既定の sshd は、`AcceptEnv` を 1 つも持たない（`sshd -T` に `acceptenv` の行が出ない）
 - `/etc/ssh/sshd_config` の `Include /etc/ssh/sshd_config.d/*.conf` が、このファイルを読む。`AcceptEnv` は、ほかの行やファイルにあっても足し合わされる
 
 ## 全体の参照情報
 
-
 ### 対象と検証環境
 
 - **目的**: この設定（[ryo-aoki-pc/wezterm](https://github.com/ryo-aoki-pc/wezterm)）を `~/.config/wezterm` に置き、bash のシェル統合を読ませる。AlmaLinux 10 と Windows 11 の Git Bash で、同じコマンドにする
-- **進め方**: git で clone し、`~/.bashrc` に 1 行を足す。**読者が書き換える変数は無い**（リポジトリの URL と置き場所は固定）
+- **進め方**: git で clone する。シェル統合は共通の bash 設定が読む。**読者が書き換える変数は無い**（リポジトリの URL と置き場所は固定）
+
 ### 選択した方針
 
 - **`~/.config/wezterm` に git で clone する**
   - `lua/` と `shell/` を `wezterm.config_dir` から読むので、ディレクトリごと置く
   - 更新は `git pull` で、手元で変えたところは `git diff` で見られる
   - Windows の WezTerm も `%USERPROFILE%\.config\wezterm\wezterm.lua` を読む。設定はディレクトリごと置く
-- **シェル統合は `~/.bashrc` の 1 行**
+- **シェル統合は `~/.bashrc` から読む**（今は共通の bash 設定が読む）
   - PowerShell には起動引数で読ませられるが、bash はログインシェルで起動するので `--rcfile` を使えない
   - tmux・ssh を挟むと環境変数が届かないので、既定の置き場所をフォールバックにした
 - **既にある設定は、消さずに `.bak` に退避する**
   - `~/.wezterm.lua` が残るとこの設定が読まれないので、`~/.config/wezterm` と合わせて退避する
   - [ロールバック](../extra/install.md#ロールバック)の手順 4 で戻せる
 - **AlmaLinux 10 の公式のシェル統合は止めない**
-  - 公式 Bash 統合の cwd・ユーザー変数・bash-preexec を保ち、semantic の 2 フックだけを独自処理へ移す。`WEZTERM_SHELL_SKIP_ALL=1` を渡す設定は加えない（[注意点](#注意点)）
+  - 公式 Bash 統合の cwd・ユーザー変数・bash-preexec を保ち、semantic の 2 フックだけを独自処理へ移す。`WEZTERM_SHELL_SKIP_ALL=1` を渡す設定は加えない（[注意点](../extra/install.md#注意点)）
 - **Windows は、Git Bash に同じ bash のブロックを貼る**（setup-notes の初期設定の「Git」と同じ）
 
 ### 完了時点の状態
@@ -62,36 +62,11 @@
 | 場所 | 中身 |
 |---|---|
 | `~/.config/wezterm` | このリポジトリの clone（`main`） |
-| `~/.bashrc` | 末尾（zoxide の行があればその上）に、シェル統合の 1 行 |
-| `~/.wezterm.lua.bak` / `~/.config/wezterm.bak` | 手順 2 で退避したときだけ |
+| `~/.bashrc` | 変えない（シェル統合は共通の bash 設定が読む） |
+| `~/.wezterm.lua.bak` / `~/.config/wezterm.bak` | 手順 2（Windows 11 は手順 3）で退避したときだけ |
 | （ssh 先）`/etc/ssh/sshd_config.d/50-wezterm.conf` | `AcceptEnv TERM_PROGRAM` の 1 行 |
 
 - WezTerm が起動したシェルは、正本の設定導入（[AlmaLinux 10](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#wezterm-の設定を導入する) / [Windows 11](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#windows-11-で-wezterm-の設定を導入する)）の最後で確かめる
-
-### 注意点
-
-- **AlmaLinux 10（COPR の WezTerm）の公式 Bash 統合と共存する**
-  - `wezterm-common` の `/etc/profile.d/wezterm.sh` は、`TERM_PROGRAM` を見ずに、すべての対話シェルで読まれる（ログインシェルは `/etc/profile`、そうでないシェルは `/etc/bashrc` から）
-  - `shell/wezterm.sh` は、公式の semantic の 2 フック（`__wezterm_semantic_precmd` / `__wezterm_semantic_preexec`）だけを独自処理へ移す。公式の cwd・ユーザー変数・bash-preexec と、Starship / ユーザーのフックは保つ
-  - 今のディレクトリ（OSC 7）は公式側が送り、プロンプト・入力・出力の印（OSC 133）と長いコマンドの完了通知は独自処理が送る。独自 OSC 7 は `__wz_osc7` とし、公式の `__wezterm_osc7` を上書きしない
-  - 既に有効な公式 Bash 統合があれば、SSH 先で `TERM_PROGRAM` が未設定でも補完する。zsh・ble.sh・tmux、semantic を明示的に無効化した環境は従来どおり公式へ任せる
-  - 公式の統合は `WEZTERM_SHELL_SKIP_ALL=1` で止まる。この設定の `lua/shells.lua` は、この値を渡していない
-- **WezTerm は nightly が要る**
-  - stable では、nightly だけの設定（README の「使用している nightly 限定機能」）が `ERROR  wezterm_gui >` になり、組み込みの既定の設定で開く見込み
-- **`~/.wezterm.lua` があると、`~/.config/wezterm` は読まれない**
-  - Windows では、`wezterm.exe` と同じフォルダーの `wezterm.lua` も探される（公式の [Configuration Files](https://wezterm.org/config/files.html)）
-- **starship と一緒に使うとき**: シェル統合の行は、starship の行より後ろに置く
-  - starship が終了コードと `PIPESTATUS` を保存してから、統合のフックを動かす。OSC 133 の `D` と完了通知にはその終了コードを使い、`PS1` の `A` / `B` は毎回付け直す
-  - 公式 Bash 統合では、bash-preexec が終了コードとパイプ状態を保存し、Starship がプロンプトを作り直した後に独自処理を呼ぶ。公式 semantic フックは外して OSC 133 の二重送信を防ぐ
-  - 公式の bash-preexec 経路で starship だけを直接再初期化する場合は、この統合も続けて読み直す。再初期化だけで重なる登録を各 1 個へ戻す。通常の個人 Bash 設定は starship の再初期化をガードしている
-  - 前の版でシェル統合を starship より先に読んでいるホストは、正本の共通 bash 設定（[AlmaLinux 10](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#共通の-bash-設定) / [Windows 11](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#git-bash-と-wezterm-の設定)）を導入し、新しいタブを開く
-- **Git Bash の `~/.bash_profile`**
-  - WezTerm は Git Bash をログインシェル（`-l`）で起動するので、`~/.bashrc` は `~/.bash_profile` から読まれる必要がある
-  - Git for Windows は、`~/.bashrc` があって `~/.bash_profile` などが無いと、`~/.bashrc` を読む `~/.bash_profile` を作り、`WARNING: Found ~/.bashrc but no ~/.bash_profile` と表示する
-- **MSYS2・QMK MSYS は、ホームが別**
-  - `C:\msys64\home\<WIN_USER>\.bashrc` と `C:\QMK_MSYS\home\<WIN_USER>\.bashrc` にも、手順 6 の 1 行を足す（README の「bash（Git Bash / MSYS2 / QMK MSYS / Linux）と zsh」）
-- **完了通知は、OS の通知の設定にも従う**
-  - Windows は「設定 → システム → 通知」で WezTerm が許されているか、集中モードになっていないかを見る（README の「長いコマンドの完了通知」）
 
 ### 参照
 
@@ -103,7 +78,6 @@
 - `man sshd_config`（`AcceptEnv`）・`man ssh_config`（`SendEnv`）
 
 ---
-
 
 ## Windows SSH の PowerShell 貼り付け
 
