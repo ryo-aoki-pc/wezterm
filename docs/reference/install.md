@@ -6,7 +6,7 @@
 
 ### 実施手順 — 手順 1: 2 つの置き場所
 
-- WezTerm は `~/.wezterm.lua` を `~/.config/wezterm/wezterm.lua` より先に探し、見つけた 1 つだけを読む（setup-notes-verification（非公開）の [WezTerm の記録の「設定ファイルの探索順序（実測）」](https://github.com/ryo-aoki-pc/setup-notes-verification/blob/main/docs/verification/almalinux-setup.md#wezterm-設定ファイルの探索順序実測)。もとは wezterm-nightly.md の記録）
+- WezTerm は `~/.wezterm.lua` を `~/.config/wezterm/wezterm.lua` より先に探し、見つけた 1 つだけを読む（setup-notes-verification（非公開）の [WezTerm の記録の「設定ファイルの探索順序（実測）」](https://github.com/ryo-aoki-pc/setup-notes-verification/blob/main/docs/verification/shell-terminal.md#wezterm-設定ファイルの探索順序実測)。もとは wezterm-nightly.md の記録）
 - `~/.wezterm.lua` が残っていると、この設定は読まれない
 
 ### 実施手順 — 手順 3: `~/.config/wezterm` に置く理由
@@ -18,8 +18,8 @@
 
 - starship は、直前の終了コードとパイプ各要素の終了コード（`PIPESTATUS`）を先に保存し、`PS1` を毎回作り直す。統合は `PROMPT_COMMAND` の後ろにフックを足し、starship が保存した終了コードを OSC 133 の `D` と完了通知に使う
 - 統合は `PS1` の OSC 133 の印（`A` / `B`）をプロンプトごとに付け直す。starship のプロンプトとパイプ個別ステータス表示を保ちながら、WezTerm にプロンプト・入力・出力の範囲を伝える
-- zoxide はいちばん最後に初期化する（共通の bash 設定が starship → WezTerm → zoxide の順に読む。setup-notes の [AlmaLinux 10 の初期設定の注意点](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/extra/almalinux-setup.md#注意点)）
-- 前の版のこの文書（2026-09-30 まで）は、この 1 行を starship の行の前に差し込んでいた。そのホストは、当時の setup-notes の starship.md の手順 3〜6 で starship の行を前へ移した（今は [AlmaLinux 10 の初期設定](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/almalinux-setup.md)にまとめ、順番は共通の bash 設定が持つ）
+- zoxide はいちばん最後に初期化する（共通の bash 設定が starship → WezTerm → zoxide の順に読む。setup-notes の [シェルと端末のセットアップの注意点](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/extra/shell-terminal.md#注意点)）
+- 前の版のこの文書（2026-09-30 まで）は、この 1 行を starship の行の前に差し込んでいた。そのホストは、当時の setup-notes の starship.md の手順 3〜6 で starship の行を前へ移した（今は [シェルと端末のセットアップの「シェルのツール」](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#シェルのツール)にまとめ、順番は共通の bash 設定が持つ）
 
 ### 実施手順 — 手順 6: 1 行の中身
 
@@ -66,7 +66,7 @@
 | `~/.wezterm.lua.bak` / `~/.config/wezterm.bak` | 手順 2 で退避したときだけ |
 | （ssh 先）`/etc/ssh/sshd_config.d/50-wezterm.conf` | `AcceptEnv TERM_PROGRAM` の 1 行 |
 
-- WezTerm が起動したシェルは、正本の設定導入（[AlmaLinux 10](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/almalinux-setup.md#wezterm-の設定を導入する) / [Windows 11](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/windows-setup.md#wezterm-の設定を導入する)）の最後で確かめる
+- WezTerm が起動したシェルは、正本の設定導入（[AlmaLinux 10](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#wezterm-の設定を導入する) / [Windows 11](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#windows-11-で-wezterm-の設定を導入する)）の最後で確かめる
 
 ### 注意点
 
@@ -84,7 +84,7 @@
   - starship が終了コードと `PIPESTATUS` を保存してから、統合のフックを動かす。OSC 133 の `D` と完了通知にはその終了コードを使い、`PS1` の `A` / `B` は毎回付け直す
   - 公式 Bash 統合では、bash-preexec が終了コードとパイプ状態を保存し、Starship がプロンプトを作り直した後に独自処理を呼ぶ。公式 semantic フックは外して OSC 133 の二重送信を防ぐ
   - 公式の bash-preexec 経路で starship だけを直接再初期化する場合は、この統合も続けて読み直す。再初期化だけで重なる登録を各 1 個へ戻す。通常の個人 Bash 設定は starship の再初期化をガードしている
-  - 前の版でシェル統合を starship より先に読んでいるホストは、正本の共通 bash 設定（[AlmaLinux 10](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/almalinux-setup.md#共通の-bash-設定) / [Windows 11](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/windows-setup.md#git-bash-と-wezterm-の設定)）を導入し、新しいタブを開く
+  - 前の版でシェル統合を starship より先に読んでいるホストは、正本の共通 bash 設定（[AlmaLinux 10](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#共通の-bash-設定) / [Windows 11](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#git-bash-と-wezterm-の設定)）を導入し、新しいタブを開く
 - **Git Bash の `~/.bash_profile`**
   - WezTerm は Git Bash をログインシェル（`-l`）で起動するので、`~/.bashrc` は `~/.bash_profile` から読まれる必要がある
   - Git for Windows は、`~/.bashrc` があって `~/.bash_profile` などが無いと、`~/.bashrc` を読む `~/.bash_profile` を作り、`WARNING: Found ~/.bashrc but no ~/.bash_profile` と表示する
@@ -96,8 +96,8 @@
 ### 参照
 
 - [README](../../README.md) — この設定の機能・キー操作・シェル統合の仕組み
-- setup-notes の [AlmaLinux 10 の初期設定の「WezTerm」](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/almalinux-setup.md#wezterm)・[Windows 11 の初期設定の「WezTerm」](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/windows-setup.md#wezterm) — WezTerm nightly の導入（設定ファイルの探索順序の実測は、その検証記録の「統合前の記録: WezTerm」）
-- setup-notes の [almalinux-setup.md](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/almalinux-setup.md)の「Git」「HackGen Console NF」と starship・zoxide（もとは git.md・hackgen.md・starship.md・zoxide.md）
+- setup-notes の [シェルと端末のセットアップの「WezTerm」](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#wezterm)・[シェルと端末のセットアップの「Windows 11 で WezTerm を入れる」](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#windows-11-で-wezterm-を入れる) — WezTerm nightly の導入（設定ファイルの探索順序の実測は、その検証記録の「統合前の記録: WezTerm」）
+- setup-notes の [AlmaLinux 10 の初期設定](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/almalinux-setup.md)の「Git」と、[シェルと端末のセットアップ](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md)の「HackGen Console NF」と starship・zoxide（もとは git.md・hackgen.md・starship.md・zoxide.md）
 - [Configuration Files — WezTerm](https://wezterm.org/config/files.html) — 設定ファイルの置き場所
 - [Shell Integration — WezTerm](https://wezterm.org/shell-integration.html) — 公式のシェル統合と `WEZTERM_SHELL_SKIP_ALL`
 - `man sshd_config`（`AcceptEnv`）・`man ssh_config`（`SendEnv`）
@@ -107,7 +107,7 @@
 
 ## Windows SSH の PowerShell 貼り付け
 
-- 操作は [AlmaLinux 10 の接続元](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/almalinux-setup.md#wezterm-windows-の-ssh-先で-powershell-に貼り付ける) / [Windows 11 の接続元](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/windows-setup.md#ssh-で管理者非管理者の-powershell-を使う)を参照する。SSH 先の PSReadLine `Paste` は接続先のクリップボードを読むため、接続元のクリップボードを使う専用経路が必要になる
+- 操作は [AlmaLinux 10 の接続元](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#wezterm-windows-の-ssh-先で-powershell-に貼り付ける) / [Windows 11 の接続元](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/windows-setup.md#ssh-で管理者非管理者の-powershell-を使う)を参照する。SSH 先の PSReadLine `Paste` は接続先のクリップボードを読むため、接続元のクリップボードを使う専用経路が必要になる
 - 接続元 Windows は標準 PowerShell の `-NoProfile -NonInteractive -STA` で `Get-Clipboard -Raw` を読み、UTF-8 の Base64 として取得する。接続元 Linux は Wayland の `wl-paste --no-newline --type text` または X11 の `xclip -selection clipboard -out -target UTF8_STRING` を使う。本文をコマンド引数・ファイル・ログへ書かない
 - 受信は SSH 用キーのハンドラー内で `Console.ReadKey` を呼ぶ。初回だけメモリー内の C# 補助型を `Add-Type` で読み、文字ごとの PowerShell 解釈を避ける。受信本文は補助型にもコマンドとして渡さない
 - PSReadLine 入力中の epoch、準備応答の nonce、ペイン、待機状態、取得前の応答を照合する。無応答・古い応答・識別子不一致では本文を送らない。クリップボード取得を先に済ませ、専用キーの受信開始後に準備応答を待ってヘッダーだけを送る。受信側がヘッダーを読み終えた確認を返してから Base64 本文を送る。版番号は `2`、ヘッダーは `WZP2:<nonce>:`、本文は `<Base64長>:<Base64>~WZE2:<nonce>~`。旧版との混在では通知して停止する

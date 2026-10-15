@@ -43,7 +43,7 @@
    - `No such file or directory` と出る
    - WezTerm は、次に起動したときから組み込みの既定の設定で開く（この節の手順 4 で戻したときは、戻した設定）
 
-1. [手順 2](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/almalinux-setup.md#wezterm-の設定を導入する) で退避したときだけ、元の設定を戻す。
+1. [手順 2](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#wezterm-の設定を導入する) で退避したときだけ、元の設定を戻す。
 
    ```bash
    for f in ~/.wezterm.lua ~/.config/wezterm; do
@@ -55,7 +55,7 @@
 
    - 戻したものだけ、`renamed '/home/<USER>/.config/wezterm.bak' -> '/home/<USER>/.config/wezterm'` のように出る
 
-1. [WSL でもシェル統合を使う](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/windows-setup.md#wezterm-のシェル統合を-wsl-で使う)を通したときだけ、WSL のシェルで、WSL の `~/.bashrc` の行を消す。
+1. [WSL でもシェル統合を使う](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#wezterm-のシェル統合を-wsl-で使う)を通したときだけ、WSL のシェルで、WSL の `~/.bashrc` の行を消す。
 
    ```bash
    sed -i '\#/.config/wezterm/shell/wezterm.sh#d' ~/.bashrc
@@ -64,7 +64,7 @@
 
    - `0` と出ればよい
 
-1. [ssh 先でもシェル統合を使う](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/almalinux-setup.md#wezterm-のシェル統合を-ssh-先で使う)を通したときだけ、ssh 先で、sshd の設定を消す。
+1. [ssh 先でもシェル統合を使う](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#wezterm-のシェル統合を-ssh-先で使う)を通したときだけ、ssh 先で、sshd の設定を消す。
 
    ```bash
    {
@@ -83,7 +83,7 @@
 
 - AlmaLinux 10（COPR の WezTerm）の公式 Bash 統合は止めない。`WEZTERM_SHELL_SKIP_ALL=1` を渡す設定は加えない
 - 公式の bash-preexec 経路で starship だけを直接再初期化する場合は、この統合も続けて読み直す。再初期化だけで重なる登録を各 1 個へ戻す。通常の個人 Bash 設定は starship の再初期化をガードしている
-- 前の版でシェル統合を starship より先に読んでいるホストは、[共通の bash 設定](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/almalinux-setup.md#共通の-bash-設定)を導入し、新しいタブを開く
+- 前の版でシェル統合を starship より先に読んでいるホストは、[共通の bash 設定](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#共通の-bash-設定)を導入し、新しいタブを開く
 - 完了通知が表示されなければ、Windows の「設定 → システム → 通知」で WezTerm が許されているか、集中モードになっていないかを見る
 
 実装の説明と環境ごとの注意は[参照情報](../reference/install.md#注意点)、実施済みの範囲と結果は[検証記録](../verification/install.md#修正後の状態2026-10-06)にある。
