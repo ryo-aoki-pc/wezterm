@@ -51,7 +51,7 @@
   - tmux・ssh を挟むと環境変数が届かないので、既定の置き場所をフォールバックにした
 - **既にある設定は、消さずに `.bak` に退避する**
   - `~/.wezterm.lua` が残るとこの設定が読まれないので、`~/.config/wezterm` と合わせて退避する
-  - [ロールバック](../extra/install.md#ロールバック)の手順 4 で戻せる
+  - [ロールバック](../extra/install.md#ロールバック)の手順 3 で戻せる
 - **AlmaLinux 10 の公式のシェル統合は止めない**
   - 公式 Bash 統合の cwd・ユーザー変数・bash-preexec を保ち、semantic の 2 フックだけを独自処理へ移す。`WEZTERM_SHELL_SKIP_ALL=1` を渡す設定は加えない（[注意点](../extra/install.md#注意点)）
 - **Windows は、Git Bash に同じ bash のブロックを貼る**（setup-notes の初期設定の「Git」と同じ）

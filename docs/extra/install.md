@@ -8,23 +8,14 @@ setup-notes の[WezTerm の設定を導入する](https://github.com/ryo-aoki-pc
 
 > [!IMPORTANT]
 > - **自分のユーザーの bash で行う**。`sudo -i`・`su -` で開いた root のシェルには貼らない
-> - 手順 1〜4 はこの PC で行い、Windows 11 は **Git Bash** に貼る
-> - **手順 5 は WSL のシェルだけ**に貼る。WSL に手順 1〜4 は貼らない
-> - **手順 6 は ssh 先のシェルだけ**に貼る。手元の PC には貼らない
-> - 手順 6 の前に、ssh 先の端末で `sudo -v` を手で入力し、認証を終えてプロンプトに戻るまで待つ。認証できなければ中断する
+> - 手順 1〜3 はこの PC で行い、Windows 11 は **Git Bash** に貼る
+> - **手順 4 は WSL のシェルだけ**に貼る。WSL に手順 1〜3 は貼らない
+> - **手順 5 は ssh 先のシェルだけ**に貼る。手元の PC には貼らない
+> - 手順 5 の前に、ssh 先の端末で `sudo -v` を手で入力し、認証を終えてプロンプトに戻るまで待つ。認証できなければ中断する
 > - **パスワード入力中は後続の行を貼らない**。入力を終え、プロンプトに戻ってから進む
 
 > [!CAUTION]
-> **この節の手順 3 は、`~/.config/wezterm` を消す**。手元で変えて commit・push していないものは取り戻せない。この節の手順 2 で確かめてから貼る。
-
-1. 以前の手順で直接追記していた場合だけ、`~/.bashrc` からシェル統合の行を消す。
-
-   ```bash
-   sed -i '/WEZTERM_SHELL_INTEGRATION/d' ~/.bashrc
-   grep -c 'WEZTERM_SHELL_INTEGRATION' ~/.bashrc
-   ```
-
-   - `0` と出ればよい
+> **この節の手順 2 は、`~/.config/wezterm` を消す**。手元で変えて commit・push していないものは取り戻せない。この節の手順 1 で確かめてから貼る。
 
 1. 設定のリポジトリに、手元だけの変更が無いか確かめる。
 
@@ -33,7 +24,7 @@ setup-notes の[WezTerm の設定を導入する](https://github.com/ryo-aoki-pc
    ```
 
    - `## main...origin/main` の 1 行だけなら、手元だけの変更は無い
-   - ほかの行や `[ahead 1]` などが出たら、要るものを別の場所へ写してから、この節の手順 3 へ進む
+   - ほかの行や `[ahead 1]` などが出たら、要るものを別の場所へ写してから、この節の手順 2 へ進む
 
 1. 設定を消す（取り戻せない）。
 
@@ -43,7 +34,7 @@ setup-notes の[WezTerm の設定を導入する](https://github.com/ryo-aoki-pc
    ```
 
    - `No such file or directory` と出る
-   - WezTerm は、次に起動したときから組み込みの既定の設定で開く（この節の手順 4 で戻したときは、戻した設定）
+   - WezTerm は、次に起動したときから組み込みの既定の設定で開く（この節の手順 3 で戻したときは、戻した設定）
 
 1. [手順 2](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#wezterm-の設定を導入する)（Windows 11 は[手順 3](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#windows-11-で-wezterm-の設定を導入する)）で退避したときだけ、元の設定を戻す。
 
@@ -76,7 +67,7 @@ setup-notes の[WezTerm の設定を導入する](https://github.com/ryo-aoki-pc
    ```
 
    - `removed '/etc/ssh/sshd_config.d/50-wezterm.conf'` と出る
-   - ssh 先の `~/.bashrc` の行と `~/.config/wezterm` は、ssh 先でこの節の手順 1〜3 を貼って消す
+   - ssh 先の `~/.config/wezterm` は、ssh 先でこの節の手順 1・2 を貼って消す
    - 手元の `~/.ssh/config` に足した `SendEnv TERM_PROGRAM` の行は、エディタで消す
 
 ---
@@ -97,7 +88,6 @@ setup-notes の[WezTerm の設定を導入する](https://github.com/ryo-aoki-pc
   - starship が終了コードと `PIPESTATUS` を保存してから、統合のフックを動かす。OSC 133 の `D` と完了通知にはその終了コードを使い、`PS1` の `A` / `B` は毎回付け直す
   - 公式 Bash 統合では、bash-preexec が終了コードとパイプ状態を保存し、Starship がプロンプトを作り直した後に独自処理を呼ぶ。公式 semantic フックは外して OSC 133 の二重送信を防ぐ
   - 公式の bash-preexec 経路で starship だけを直接再初期化する場合は、この統合も続けて読み直す。再初期化だけで重なる登録を各 1 個へ戻す。通常の個人 Bash 設定は starship の再初期化をガードしている
-  - 前の版でシェル統合を starship より先に読んでいるホストは、正本の共通 bash 設定（[AlmaLinux 10](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#共通の-bash-設定) / [Windows 11](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#git-bash-と-wezterm-の設定)）を導入し、新しいタブを開く
 - **Git Bash の `~/.bash_profile`**
   - WezTerm は Git Bash をログインシェル（`-l`）で起動するので、`~/.bashrc` は `~/.bash_profile` から読まれる必要がある
   - Git for Windows は、`~/.bashrc` があって `~/.bash_profile` などが無いと、`~/.bashrc` を読む `~/.bash_profile` を作り、`WARNING: Found ~/.bashrc but no ~/.bash_profile` と表示する

@@ -78,7 +78,7 @@ if [ -n "${BASH_VERSION-}" ]; then
 		return 1
 	}
 
-	# 前の版が先頭に付けた自分のフックだけを外す。ユーザーのコードを
+	# 登録し直す自分のフックだけを先頭と末尾から外す。ユーザーのコードを
 	# セミコロンで分割したり、文字列の途中を置換したりしない。
 	__wz_strip_prompt_prefixes() {
 		__wz_prompt_code=$1
@@ -91,7 +91,7 @@ if [ -n "${BASH_VERSION-}" ]; then
 			__wezterm_prompt_command$'\n'*) __wz_prompt_code=${__wz_prompt_code#__wezterm_prompt_command$'\n'} ;;
 			__wz_mouse_off$'\n'*) __wz_prompt_code=${__wz_prompt_code#__wz_mouse_off$'\n'} ;;
 			__bp_precmd_invoke_cmd$'\n'*)
-				# 初回の __bp_install が旧版の先頭フックを dispatcher の後ろへ移す。
+				# __bp_install が先頭へ足す dispatcher を残し、その後の自分のフックを外す。
 				# この既知の形だけ扱い、任意のユーザーコードは分割しない。
 				[ -z "$__wz_dispatcher" ] || break
 				__wz_dispatcher=$'__bp_precmd_invoke_cmd\n'
@@ -119,8 +119,8 @@ if [ -n "${BASH_VERSION-}" ]; then
 		# 再初期化が「未登録」と判断し、starship_precmd をもう一つ足してしまう。
 		# スカラーのコードも 1 要素として保持する（末尾コメント等を壊さない）。
 		PROMPT_COMMAND=("${__wz_prompt_commands[@]}")
-		# 統合を先に読んだ古い .bashrc からの復旧。Starship が退避した
-		# 自分のフックを外してから、以下で PROMPT_COMMAND の後ろに付け直す。
+		# 起動済みのペインへの Starship の後付けでも、自分のフックが退避される。
+		# 退避先から外し、以下で PROMPT_COMMAND の後ろに付け直す。
 		if [ -n "${STARSHIP_PROMPT_COMMAND-}" ]; then
 			__wz_strip_prompt_prefixes "$STARSHIP_PROMPT_COMMAND"
 			STARSHIP_PROMPT_COMMAND=$__wz_prompt_code
