@@ -9,32 +9,24 @@ Windows 11（既定シェルは Git Bash）を主に、Linux（GNOME Wayland）�
 
 ## 導入
 
-- 対象: Windows 11 の Git Bash と、AlmaLinux 10 の GNOME の自分のユーザー
-- WezTerm は **nightly 必須**（stable では未知オプションで設定エラーになります）。フォントは
-  [HackGen Console NF](https://github.com/yuru7/HackGen)（未導入でも `Symbols Nerd Font Mono` /
-  `Noto Sans Mono CJK JP` へフォールバックします）
-- 置き場所は `~/.config/wezterm`（Windows は `%USERPROFILE%\.config\wezterm`）。既にある
-  `~/.wezterm.lua`・`~/.config/wezterm` は `.bak` に退避してから clone します
-- シェル統合は、共通の bash 設定（[ryo-aoki-pc/bash](https://github.com/ryo-aoki-pc/bash)）が読みます。
-  PowerShell は起動引数で読むので、足すものはありません
-- 手順は setup-notes の[シェルと端末のセットアップ](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md)にあり、上から順に通します
+- 対象: Windows 11 の Git Bash と、AlmaLinux 10 の GNOME の自分のユーザー。WezTerm は **nightly 必須** (stable では未知オプションで設定エラーになる)
+- 置き場所は `~/.config/wezterm` (Windows は `%USERPROFILE%\.config\wezterm`)。シェル統合は共通の bash 設定 ([ryo-aoki-pc/bash](https://github.com/ryo-aoki-pc/bash)) が読む
+- 手順は setup-notes の[シェルと端末のセットアップ](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md)にある。各項のリードの前提を先に満たす (AlmaLinux 10 は共通の bash 設定が本体より先、Windows 11 は本体が共通の bash 設定より先)
 
 | | AlmaLinux 10 | Windows 11 |
 | --- | --- | --- |
 | フォント | [HackGen Console NF](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#hackgen-console-nf) | [Windows 11 で HackGen Console NF を入れる](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#windows-11-で-hackgen-console-nf-を入れる) |
-| 共通の bash 設定 | [共通の bash 設定](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#共通の-bash-設定) | [Git Bash と WezTerm の設定](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#git-bash-と-wezterm-の設定)の手順 1〜6 |
-| 本体（nightly） | [WezTerm](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#wezterm) | [Windows 11 で WezTerm を入れる](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#windows-11-で-wezterm-を入れる) |
-| この設定 | [WezTerm の設定を導入する](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#wezterm-の設定を導入する) | [Windows 11 で WezTerm の設定を導入する](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#windows-11-で-wezterm-の設定を導入する) |
-| ssh 先・WSL でもシェル統合を使う | [WezTerm のシェル統合を SSH 先で使う](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#wezterm-のシェル統合を-ssh-先で使う) | [WezTerm のシェル統合を WSL で使う](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#wezterm-のシェル統合を-wsl-で使う) |
-| Windows の SSH 先の PowerShell に貼り付ける | [WezTerm: Windows の SSH 先で PowerShell に貼り付ける](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#wezterm-windows-の-ssh-先で-powershell-に貼り付ける) | [SSH で管理者・非管理者の PowerShell を使う](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/windows-setup.md#ssh-で管理者非管理者の-powershell-を使う) |
+| 共通の bash 設定 | [共通の bash 設定](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#共通の-bash-設定) | 本体の後に、[Git Bash と WezTerm の設定](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#git-bash-と-wezterm-の設定)の手順 1〜6 |
+| 本体 (nightly) とこの設定 | [WezTerm](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#wezterm) (手順 5 で「WezTerm の設定を導入する」も通す) | [Windows 11 で WezTerm を入れる](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#windows-11-で-wezterm-を入れる)の後、[Windows 11 で WezTerm の設定を導入する](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#windows-11-で-wezterm-の設定を導入する) |
+| この設定だけ (本体が入っているとき) | [WezTerm の設定を導入する](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#wezterm-の設定を導入する) | [Windows 11 で WezTerm の設定を導入する](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#windows-11-で-wezterm-の設定を導入する) |
+| ssh 先・WSL でもシェル統合を使う (任意) | [WezTerm のシェル統合を SSH 先で使う](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#wezterm-のシェル統合を-ssh-先で使う) | [WezTerm のシェル統合を WSL で使う](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#wezterm-のシェル統合を-wsl-で使う) |
+| Windows の SSH 先の PowerShell に貼り付ける (任意) | [WezTerm: Windows の SSH 先で PowerShell に貼り付ける](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#wezterm-windows-の-ssh-先で-powershell-に貼り付ける) | [SSH で管理者・非管理者の PowerShell を使う](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/windows-setup.md#ssh-で管理者非管理者の-powershell-を使う) |
 | 設定の更新 | [WezTerm の設定を更新する](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#wezterm-の設定を更新する) | [Windows 11 で WezTerm の設定を更新する](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#windows-11-で-wezterm-の設定を更新する) |
-| 本体の更新 | [OS とファームウェアの更新](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/almalinux-setup.md#os-とファームウェアの更新)（COPR の nightly も OS の更新で上がる） | [Git for Windows・Firefox・WezTerm を上げる](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/windows-setup.md#git-for-windowsfirefoxwezterm-を上げる) |
-| 戻す | [WezTerm の設定のロールバック](docs/extra/install.md#ロールバック) | 同じ（Git Bash に貼る） |
+| 本体の更新 | [OS とファームウェアの更新](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/almalinux-setup.md#os-とファームウェアの更新) (COPR の nightly も OS の更新で上がる) | [Git for Windows・Firefox・WezTerm を上げる](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/windows-setup.md#git-for-windowsfirefoxwezterm-を上げる) |
+| 戻す | [ロールバック](docs/extra/install.md#ロールバック) | 同じ (Git Bash に貼る) |
 
-- 設定ファイルは保存すると自動で再読み込みされます（手動なら `Ctrl+Shift+R`）。
-  ただしウィンドウ装飾（`window_decorations`）の変更だけは WezTerm の再起動が必要です
-- 導入の後に、必要なら: `~/.ssh/config` に `Host` を書くと、起動メニューに「ssh ホスト名」が並びます
-  （→ [SSH ホスト](#ssh-ホスト)）。完了通知を使うなら、OS の通知設定で WezTerm を許可しておきます
+- フォントが無くても `Symbols Nerd Font Mono` / `Noto Sans Mono CJK JP` へフォールバックする。設定ファイルは保存すると自動で再読み込みされる (手動なら `Ctrl+Shift+R`)。ウィンドウ装飾 (`window_decorations`) の変更だけは再起動が要る
+- 導入の後に、必要なら: `~/.ssh/config` に `Host` を書くと、起動メニューに「ssh ホスト名」が並ぶ (→ [SSH ホスト](#ssh-ホスト))。完了通知を使うなら、OS の通知設定で WezTerm を許可する
 
 ## 目次
 
