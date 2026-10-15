@@ -22,7 +22,7 @@
 設定の読み込み（`ls-fonts`）・キー割り当て（`show-keys`）・シェル統合の構文（`bash -n` / `zsh -n`）の確かめ方は、README の「動作確認」にある。`show-keys` は設定を読めなくても黙って既定の一覧を出すので、読み込みの確認には `ls-fonts` を使う。
 
 - 画面の無い環境でシェル統合を試すときは、`wezterm-mux-server --daemonize` を起動し、`wezterm cli spawn` / `send-text --no-paste` / `get-text` / `list` を使う（`docs/verification/install.md` のコンテナ記録と同じ方法。設定の `set_environment_variables` が効き、シェルはログインシェルで起動する）
-- AlmaLinux 10 のコンテナで WezTerm を入れるときは、setup-notes のシェルと端末のセットアップ（`docs/shell-terminal.md`）の「WezTerm」の手順 1〜4（COPR の `rhel-9-<arch>` を明示。もとは `docs/wezterm-nightly.md`）
+- AlmaLinux 10 のコンテナで WezTerm を入れるときは、setup-notes のシェルと端末のセットアップ（`docs/shell-terminal.md`）の「WezTerm」の手順 1〜4（COPR の `rhel-9-<arch>` を明示）
 
 ## 構成
 
@@ -34,7 +34,7 @@
 - `shell/wezterm.sh` — bash / zsh のシェル統合（OSC 7・OSC 133・完了通知のユーザー変数・実行中のコマンドのユーザー変数 `WEZTERM_PROG`・迷子のマウス報告よけ）。`~/.bashrc` の 1 行で読む
 - `shell/wezterm.ps1` — PowerShell のシェル統合。**UTF-8 の BOM 付き**で保存する（Windows PowerShell 5.1 は BOM の無い `.ps1` を ANSI として読み、日本語のコメントで構文エラーになる）
 - `docs/extra/install.md` — 設定のロールバックと注意点。`docs/reference/install.md` — 正本の手順の背景と選定理由、Windows の SSH 先への貼り付けの実装
-- `docs/verification/` — 検証記録（`install.md` は導入とシェル統合、`readme.md` は README にあった実機の記録、`starship/` は Starship との共存の報告書）
+- `docs/verification/` — 検証記録（`install.md` は導入とシェル統合、`readme.md` は実機の記録、`starship/` は Starship との共存の報告書）
 - `tests/` — 手で動かす検証の道具（`paste/` は貼り付け、`starship/` は Starship との共存。`starship/verification-summary.json` は公開用の集計）
 
 ## 変えたら合わせて直すもの
@@ -45,7 +45,7 @@
 - よく変える値の場所を動かしたとき → README の「カスタマイズの勘所」、ファイルを足したとき → README の「ファイル構成」
 - 導入のしかたが変わる変更（配置先、シェル統合の読み込み方・環境変数、`lua/shells.lua` の `set_environment_variables`）→ 正本の手順・README の「導入」の表・`docs/extra/install.md` の注意点。検証を行ったら `docs/verification/install.md` に対象版と結果を追加する
   - AlmaLinux 10 の COPR 版は `/etc/profile.d/wezterm.sh`（公式の統合）が先に読まれる。Bash では公式の cwd・ユーザー変数・bash-preexec を保ち、semantic の 2 callback だけを独自処理へ移して完了通知を補う。`WEZTERM_SHELL_SKIP_ALL=1` は渡さない。公式との担当や確かめ用の関数が変わったら、正本の「WezTerm の設定を導入する」の手順 6 と `docs/extra/install.md` の注意点を合わせる
-  - シェル統合を読む 1 行や置き場所を変えたら、自分用の bash の設定（`ryo-aoki-pc/bash`）の `bashrc`・`migrate/old-lines.txt` も直す。その設定は、starship → この統合 → zoxide の順に読む（`PROMPT_COMMAND`・`PS0` の扱いを変えたら、bash リポジトリの検証記録にある「読む順番」の実測を取り直す）
+  - シェル統合を読む 1 行や置き場所を変えたら、自分用の bash の設定（`ryo-aoki-pc/bash`）の `bashrc` も直す。その設定は、starship → この統合 → zoxide の順に読む（`PROMPT_COMMAND`・`PS0` の扱いを変えたら、bash リポジトリの検証記録にある「読む順番」の実測を取り直す）
 
 ## コードの注意
 
@@ -58,7 +58,7 @@
   - ステータスは 1.75 行の高さで描かれるので、面で塗ったピルにしない（端の半円が縦長になる）
 - `shell/wezterm.sh` は、既存の `PS1` / `PROMPT_COMMAND` とユーザーのフックを保ち、前後に必要な印・処理だけ足す（Git Bash の `git-prompt.sh` のブランチ表示も残す）
   - 公式 Bash 統合では `__wezterm_semantic_precmd` / `__wezterm_semantic_preexec` の登録だけを外して独自の OSC 133 と完了通知へ移す。公式関数・cwd・ユーザー変数・bash-preexec dispatcher は温存し、Starship とユーザーの callback の順序を保つ
-  - 既に有効な公式 Bash 統合は `TERM_PROGRAM` 未受信の SSH でも補完する。公式なしの経路は `TERM_PROGRAM=WezTerm` の条件を保つ。zsh・ble.sh・tmux、semantic を明示的に無効化した環境は従来どおり公式へ任せる
+  - 既に有効な公式 Bash 統合は `TERM_PROGRAM` 未受信の SSH でも補完する。公式なしの経路は `TERM_PROGRAM=WezTerm` の条件を保つ。zsh・ble.sh・tmux、semantic を明示的に無効化した環境は公式へ任せる
   - 独自 OSC 7 は `__wz_osc7` の名前で定義し、公式の `__wezterm_osc7` は上書きしない。公式経路では公式の OSC 7 を使い、二重に送らない
   - bash-preexec dispatcher と Starship の後、`__bp_interactive_mode` の前にマウス解除と独自プロンプト処理を置く。初回 install 前は先頭要素の末尾、稼働中は mode 直前の独立した配列要素へ登録し、ユーザーの途中要素も保つ。再読込時は自分のフックだけを外して足し直す
   - 何度読まれてもよいように、フック・印は無いときだけ足す（フラグで早く抜けると、`.bashrc` を読み直して `PS1` / `PROMPT_COMMAND` が作り直されたときに統合が消える）
@@ -74,8 +74,8 @@
 
 - 導入・利用・更新の手順は正本に置き、README の「導入」の表から正本の項へ直接リンクする（手順書の先頭やカテゴリの見出しへはリンクしない）。執筆規則は setup-notes の `docs/dev/writing-rules.md`
 - `docs/extra/` はロールバックと注意点、`docs/reference/` は背景、`docs/verification/` は検証記録（環境・日付・対象コミット・実出力・未確認事項）。検証の報告書も `docs/verification/` に置き、`tests/` には道具だけを置く
-- 案内だけになった文書・節は消し、旧パスと移動先を setup-notes の集約対応表に足す。消すときは参照元のリンクを付け替える（検証記録は、削除前の固定コミットの URL にする）
-- 検証記録の既存の本文・手順番号・出力は変えない。新しい対象版・環境・範囲は追記する
+- 文書を移す・分ける・まとめるときは、移した経緯と、旧ファイル名・旧見出しとの対応を文書に書かない（経緯は git の履歴と Pull Request の本文に残す）。リンクを今の場所へ直す。中身が新しい場所への案内だけになったファイルは消す
+- 残す検証記録の実施日・対象版・環境・出力・成功と失敗・未実施の範囲・記録したときの手順番号は書き換えない。再検証せずに検証範囲を広げない。記録の手順番号が今の手順と違い、本文を読むのに要るときだけ「記録の手順 | 今の手順」の表で結ぶ
 - 操作を変えたら、正本・README の「導入」の表・参考資料を合わせて直す
 
 ## 共同作業の規則
@@ -87,14 +87,14 @@
 - 頼まれた範囲のファイルだけを変える。範囲の外を変えるときは、変える前に理由を書いて確かめる
 - 終わったら、テストとリンターを通してから、目的ごとにコミットする。通らなければコミットせずに、結果を報告する
 - コミットしたら、今のブランチを push し、`main` への Pull Request を作る（既にあれば足す）。今のブランチに `main` を取り込むのは、頼まれたときと、Pull Request が競合したときだけ
-- `main` への取り込み（マージ）は、エージェントが行ってよい（2026-10-15、利用者の決定）。テストとリンターが通り、Pull Request が競合していなければ、`gh pr merge --squash` で Pull Request を取り込む（手元の `main` にはコミットも push もしない）。利用者が取り込まないよう頼んだときは取り込まず、そのことを報告する。取り込んだ Pull Request のブランチは、GitHub がリモートから自動で消す（リポジトリの Automatically delete head branches は人が有効にしておき、エージェントは変えない）。取り込んだブランチには、その後コミットも push もせず、次の作業は新しいブランチで始める。手元に残ったブランチの削除は人が行う
+- `main` への取り込み（マージ）は、エージェントが行ってよい。テストとリンターが通り、Pull Request が競合していなければ、`gh pr merge --squash` で Pull Request を取り込む（手元の `main` にはコミットも push もしない）。利用者が取り込まないよう頼んだときは取り込まず、そのことを報告する。取り込んだ Pull Request のブランチは、GitHub がリモートから自動で消す（リポジトリの Automatically delete head branches は人が有効にしておき、エージェントは変えない）。取り込んだブランチには、その後コミットも push もせず、次の作業は新しいブランチで始める。手元に残ったブランチの削除は人が行う
 - 秘密情報（`.env`・鍵・トークン・パスワード）を読まない・書かない・出力しない
 - レビューを頼まれたら、ファイルを変えずに、指摘を「重大度・場所（ファイル:行）・理由・直し方」で挙げる
 - ほかの担当の変更は、`git diff main...agent/codex` のように git で読む（ほかの worktree へ移らない）
 
 ## 既定の分担
 
-利用者が Claude Code に、分担を指定せずにファイルを変える作業を頼んだときは、Claude Code が取りまとめて次の 4 つで分担する（2026-10-15、利用者の決定）。「共同作業の規則」の「分担は人が決める」で、人が分担を決めていないときの既定にする。利用者がほかのエージェントに直接頼んだときは、この節は使わず「共同作業の規則」に従う。
+利用者が Claude Code に、分担を指定せずにファイルを変える作業を頼んだときは、Claude Code が取りまとめて次の 4 つで分担する。「共同作業の規則」の「分担は人が決める」で、人が分担を決めていないときの既定にする。利用者がほかのエージェントに直接頼んだときは、この節は使わず「共同作業の規則」に従う。
 
 - Claude Code だけで行うもの: 利用者の質問への答え、ファイルを変えない調べもの、1 つのファイルの数行で振る舞いを変えない直し（誤字・リンク・値の直しなど）
 - Claude Code: 計画・実機での確かめ・ほかの 3 つへの依頼・指摘の確かめ・統合・コミットと Pull Request・取り込み

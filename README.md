@@ -175,7 +175,7 @@ Linux / Windows の WezTerm から Windows の SSH 先へも、同じ操作で�
 SSH 用の取得・応答・検証が失敗した場合は通知し、本文を挿入しません。通常貼り付けへの自動切り替えはしません。
 SSH 用の上限は UTF-8 で 64 KiB、Linux は Wayland の `wl-paste` または X11 の `xclip` が必要です。
 SSH 用統合で PSReadLine や専用キーを準備できない場合も、通知して停止します。
-コマンド実行中・統合のない SSH・WSL・別のアプリでは、従来どおり端末から貼り付けます。
+コマンド実行中・統合のない SSH・WSL・別のアプリでは、端末から貼り付けます。
 
 SSH 先の Neovim に手元でコピーしたテキストを入れるときは、貼り付け位置にカーソルを置いて
 `i` で挿入モードにし、右クリックします。`Ctrl+Shift+V` でも貼り付けられます。
@@ -746,7 +746,7 @@ WezTerm は bash をログインシェル（`bash -i -l`）で起動し、`--rcf
   bash 5.3 以降（Git Bash の現行版）はサブシェルを作らずに送るので、コマンドごとの待ち時間はほぼありません
   （古い bash はサブシェルを 1〜2 回作る）。Linux / macOS では WezTerm が自分でプロセスを調べられるので送りません
 
-Git Bash + Starship の修正後の検証範囲と結果は [FIX-REPORT.md](docs/verification/starship/FIX-REPORT.md)、SSH 先を含む最終の結果は [SSH-FIX-REPORT.md](docs/verification/starship/SSH-FIX-REPORT.md) にあります。
+Git Bash + Starship の検証範囲と結果は [FIX-REPORT.md](docs/verification/starship/FIX-REPORT.md)、SSH 先を含む最終の結果は [SSH-FIX-REPORT.md](docs/verification/starship/SSH-FIX-REPORT.md) にあります。
 
 Linux 版 WezTerm のパッケージは公式のシェル統合を `/etc/profile.d/wezterm.sh` に置きます。
 公式の Bash 統合が有効なら、`shell/wezterm.sh` は公式の OSC 7・ユーザー変数・`bash-preexec` を
@@ -756,7 +756,7 @@ Linux 版 WezTerm のパッケージは公式のシェル統合を `/etc/profile
 
 `bash-preexec` が終了コードとパイプ状態を保存し、Starship がプロンプトを作り直した後に印を付けるため、
 公式の印と独自の印を二重に送らない構成です。zsh・ble.sh・tmux、semantic の明示的な無効化では、
-従来どおり公式へ任せます。初期化の 1 行、Starship → 統合 → zoxide の読む順番、環境変数の設定は変更しません
+公式へ任せます。Starship → 統合 → zoxide の順に初期化します
 （[注意点](docs/extra/install.md#注意点)）。
 
 公式の bash-preexec 経路で Starship だけを直接再初期化した場合は、この統合も続けて読み直します。
@@ -798,10 +798,10 @@ ssh 先でも `Ctrl+Shift+Alt+↑/↓`・`Ctrl+Shift+Alt+C`・完了通知が効
 ssh 先で tmux を使っている場合、tmux の中では無効です（[tmux の中](#tmux-の中)）。
 
 AlmaLinux の COPR 版など、接続先で公式 Bash 統合が既に有効な場合は、`TERM_PROGRAM` が届かなくても
-この設定が公式統合を補完します。接続先の `~/.bashrc` が修正版の `shell/wezterm.sh` を読む必要があります。
+この設定が公式統合を補完します。接続先の `~/.bashrc` が `shell/wezterm.sh` を読む必要があります。
 公式の cwd・ユーザー変数を残し、Starship 後に入力範囲の印を付け直す構成です。
 
-[SSH 共存修正前後の検証記録](docs/verification/readme.md#ssh-共存修正前後の検証2026-10-06)を参照してください。
+[SSH のシェル統合の検証記録](docs/verification/readme.md#ssh-のシェル統合の検証2026-10-06)を参照してください。
 
 ### 迷子のマウス報告よけ
 
@@ -836,7 +836,7 @@ gui:
 
 ### 導入しない場合
 
-統合を入れなくても設定は問題なく動きます。タブ名は従来どおりプロセス名になり、
+統合を入れなくても設定は問題なく動きます。タブ名はプロセス名になり、
 プロンプトジャンプ・出力のコピー・完了通知と、Git Bash・WSL での ssh 中の判定（タブ名・アイコン）が効かないだけです。
 
 ## カスタマイズの勘所
@@ -991,6 +991,5 @@ bash -n shell/wezterm.sh && zsh -n shell/wezterm.sh
 
 - [設定のロールバックと注意点](docs/extra/install.md)
 - [導入の選定理由と技術的説明](docs/reference/install.md)
-- 検証記録: [導入と動作](docs/verification/install.md)・[README にあった実機の記録](docs/verification/readme.md)・[Starship との共存](docs/verification/starship/)
+- 検証記録: [導入と動作](docs/verification/install.md)・[実機の記録](docs/verification/readme.md)・[Starship との共存](docs/verification/starship/)
 - 変更するときの決まり: [AGENTS.md](AGENTS.md)
-- 旧手順書の移動先: setup-notes の[集約対応表](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/dev/consolidation-map.md)

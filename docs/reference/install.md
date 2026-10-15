@@ -6,7 +6,7 @@
 
 ### WezTerm の設定を導入する / 手順 1: 補足: 2 つの置き場所
 
-- WezTerm は `~/.wezterm.lua` を `~/.config/wezterm/wezterm.lua` より先に探し、見つけた 1 つだけを読む（setup-notes-verification（非公開）の [WezTerm の記録の「設定ファイルの探索順序（実測）」](https://github.com/ryo-aoki-pc/setup-notes-verification/blob/main/docs/verification/shell-terminal.md#wezterm-設定ファイルの探索順序実測)。もとは wezterm-nightly.md の記録）
+- WezTerm は `~/.wezterm.lua` を `~/.config/wezterm/wezterm.lua` より先に探し、見つけた 1 つだけを読む（setup-notes-verification（非公開）の [WezTerm の記録の「設定ファイルの探索順序（実測）」](https://github.com/ryo-aoki-pc/setup-notes-verification/blob/main/docs/verification/shell-terminal.md#wezterm-設定ファイルの探索順序実測)）
 - `~/.wezterm.lua` が残っていると、この設定は読まれない
 
 ### WezTerm の設定を導入する / 手順 3: 補足: `~/.config/wezterm` に置く理由
@@ -19,7 +19,6 @@
 - starship は、直前の終了コードとパイプ各要素の終了コード（`PIPESTATUS`）を先に保存し、`PS1` を毎回作り直す。統合は `PROMPT_COMMAND` の後ろにフックを足し、starship が保存した終了コードを OSC 133 の `D` と完了通知に使う
 - 統合は `PS1` の OSC 133 の印（`A` / `B`）をプロンプトごとに付け直す。starship のプロンプトとパイプ個別ステータス表示を保ちながら、WezTerm にプロンプト・入力・出力の範囲を伝える
 - zoxide はいちばん最後に初期化する（共通の bash 設定が starship → WezTerm → zoxide の順に読む。setup-notes の [シェルと端末のセットアップの注意点](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/extra/shell-terminal.md#注意点)）
-- 前の版のこの文書（2026-09-30 まで）は、この 1 行を starship の行の前に差し込んでいた。そのホストは、当時の setup-notes の starship.md の手順 3〜6 で starship の行を前へ移した（今は [シェルと端末のセットアップの「シェルのツール」](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#シェルのツール)にまとめ、順番は共通の bash 設定が持つ）
 
 ### WezTerm の設定を導入する / 手順 6: 補足: シェル統合を読む仕組み
 
@@ -52,7 +51,7 @@
   - tmux・ssh を挟むと環境変数が届かないので、既定の置き場所をフォールバックにした
 - **既にある設定は、消さずに `.bak` に退避する**
   - `~/.wezterm.lua` が残るとこの設定が読まれないので、`~/.config/wezterm` と合わせて退避する
-  - [ロールバック](../extra/install.md#ロールバック)の手順 4 で戻せる
+  - [ロールバック](../extra/install.md#ロールバック)の手順 3 で戻せる
 - **AlmaLinux 10 の公式のシェル統合は止めない**
   - 公式 Bash 統合の cwd・ユーザー変数・bash-preexec を保ち、semantic の 2 フックだけを独自処理へ移す。`WEZTERM_SHELL_SKIP_ALL=1` を渡す設定は加えない（[注意点](../extra/install.md#注意点)）
 - **Windows は、Git Bash に同じ bash のブロックを貼る**（setup-notes の初期設定の「Git」と同じ）
@@ -71,8 +70,8 @@
 ### 参照
 
 - [README](../../README.md) — この設定の機能・キー操作・シェル統合の仕組み
-- setup-notes の [シェルと端末のセットアップの「WezTerm」](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#wezterm)・[シェルと端末のセットアップの「Windows 11 で WezTerm を入れる」](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#windows-11-で-wezterm-を入れる) — WezTerm nightly の導入（設定ファイルの探索順序の実測は、その検証記録の「統合前の記録: WezTerm」）
-- setup-notes の [AlmaLinux 10 の初期設定](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/almalinux-setup.md)の「Git」と、[シェルと端末のセットアップ](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md)の「HackGen Console NF」と starship・zoxide（もとは git.md・hackgen.md・starship.md・zoxide.md）
+- setup-notes の [シェルと端末のセットアップの「WezTerm」](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#wezterm)・[シェルと端末のセットアップの「Windows 11 で WezTerm を入れる」](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#windows-11-で-wezterm-を入れる) — WezTerm nightly の導入（設定ファイルの探索順序の実測は、その検証記録の「WezTerm の記録」）
+- setup-notes の [AlmaLinux 10 の初期設定](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/almalinux-setup.md)の「Git」と、[シェルと端末のセットアップ](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md)の「HackGen Console NF」と starship・zoxide
 - [Configuration Files — WezTerm](https://wezterm.org/config/files.html) — 設定ファイルの置き場所
 - [Shell Integration — WezTerm](https://wezterm.org/shell-integration.html) — 公式のシェル統合と `WEZTERM_SHELL_SKIP_ALL`
 - `man sshd_config`（`AcceptEnv`）・`man ssh_config`（`SendEnv`）
@@ -93,4 +92,4 @@
 - C# の型は PowerShell のプロセス内に残り、同じ型名を再定義できない。統合ファイルを更新した後は、新しい SSH / PowerShell プロセスを起動する。同じ版の再読み込みでは既存の型を使う
 - OSC の識別子は古い配送や別ペインの応答を区別する。SSH 先が出力する OSC 自体を信頼する端末統合であり、接続先の悪意あるプログラムを認証する仕組みではない
 - Git Bash の既定シェルでは、対話 SSH の後に PowerShell を起動する。[Windows OpenSSH の PTY 起動実装](https://github.com/PowerShell/openssh-portable/blob/latestw_all/contrib/win32/win32compat/w32-doexec.c)が `bash -c` のコマンド引数を組み立てるため、`ssh -tt surface 'powershell.exe ...'` の形では引数の引用が失われることがある
-- [PR #39](https://github.com/ryo-aoki-pc/wezterm/pull/39)のローカル Windows は引き続き `Ctrl+V` と PSReadLine `Paste` を使う。専用経路は Windows の SSH セッションで PSReadLine 入力待機の能力が通知された場合に使う。Neovim の alternate screen・実行中のコマンド・統合なしは従来の送り分けを使う。tmux の既定設定では、PowerShell 7 管理者・右クリックの 1 条件で通常貼り付けを確認した。tmux の専用配送と入れ子 SSH の実セッションは未検証
+- ローカル Windows は `Ctrl+V` と PSReadLine `Paste` を使う。専用経路は Windows の SSH セッションで PSReadLine 入力待機の能力が通知された場合に使う。Neovim の alternate screen・実行中のコマンド・統合なしは通常の端末貼り付けを使う。tmux の既定設定では、PowerShell 7 管理者・右クリックの 1 条件で通常貼り付けを確認した。tmux の専用配送と入れ子 SSH の実セッションは未検証

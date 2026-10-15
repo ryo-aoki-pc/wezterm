@@ -14,7 +14,7 @@
 
 既存の配置ファイルは SHA-256 を照合して控えを保存し、`shell/wezterm.sh` の 1 ファイルを Windows と `kawasaki-pi` で更新した。プロファイル・SSH / sshd の設定・公式スクリプト・Lua 設定は変更していない。既存のユーザーの WezTerm プロセスは維持し、試験で起動した GUI とペインは終了した。
 
-修正前に観測した SSH の出力コピー失敗、独自通知の未送信、再読込時のマウス解除の重複は [SSH-REPORT.md](SSH-REPORT.md)に残した。このファイルは修正後の記録として分ける。
+修正前に観測した SSH の出力コピー失敗、独自通知の未送信、再読込時のマウス解除の重複は [SSH-REPORT.md](SSH-REPORT.md)に残した。
 
 ## 修正内容
 
@@ -71,7 +71,7 @@
 
 ## 読む順番の記録
 
-`CLAUDE.md` と個人 Bash 設定の `CLAUDE.md` は、`PROMPT_COMMAND` / `PS0` の変更時に、個人 Bash README の「読む順番」の実測を取り直すよう定めている。今回の公式 → Starship → 統合 → zoxide の新規起動・再読込・保存済み状態を記録した。初回 install 前は先頭要素の末尾、稼働中は dispatcher とユーザー処理の後、`__bp_interactive_mode` の前に独自フックを置く。個人 Bash README へ今回の実測を追記し、過去の記録と既存の差分は保持した。読み込む 1 行と配置先は変えないので、個人 Bash の `bashrc` / `migrate/old-lines.txt` は変更していない。既存内容のバイト一致と前後のハッシュはローカルの README 更新記録に残した。
+`AGENTS.md` と個人 Bash 設定の `AGENTS.md` は、`PROMPT_COMMAND` / `PS0` の変更時に、個人 Bash 設定の[「読む順番」の検証記録](https://github.com/ryo-aoki-pc/bash/blob/main/docs/verification/readme.md#読む順番の検証記録)の実測を取り直すよう定めている。今回の公式 → Starship → 統合 → zoxide の新規起動・再読込・保存済み状態を記録した。初回 install 前は先頭要素の末尾、稼働中は dispatcher とユーザー処理の後、`__bp_interactive_mode` の前に独自フックを置く。読み込む 1 行と配置先は変えないので、個人 Bash の `bashrc` / `migrate/old-lines.txt` は変更していない。既存内容のバイト一致と前後のハッシュはローカルの検証記録に残した。
 
 ## 記録と再実行
 

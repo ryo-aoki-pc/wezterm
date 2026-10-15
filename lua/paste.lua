@@ -226,7 +226,7 @@ function M.clipboard(window, pane)
 	end
 	invalidate(pane:pane_id())
 	attempts[pane:pane_id()] = nil
-	-- PR #39 のローカル Windows 経路は、引き続き PSReadLine の Paste を使う。
+	-- ローカル Windows 経路は PSReadLine の Paste を使う。
 	if wezterm.target_triple:find("windows") and pane:get_domain_name() == "local" then
 		local name = procs.basename(pane:get_foreground_process_name())
 		if vars.WEZTERM_PSREADLINE_PASTE == "1" and (name == "powershell" or name == "pwsh") then

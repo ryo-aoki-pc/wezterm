@@ -51,54 +51,6 @@ assertion の成立には「現状の不具合が期待どおり再現する」�
 
 ## 再現した互換性の問題
 
-### 1. Bash: プロンプトと入力の区切りが消える
-
-推奨の `Starship → shell/wezterm.sh → zoxide` でも、Starship がプロンプトごとに `PS1` を作り直し、`shell/wezterm.sh:356` が一度だけ足した OSC 133 A/B が消える。代表的な生出力では C は 42 回、A/B は各 0 回だった。C/D が存在しても、コピー処理が必要とする Input 範囲は生成されない。
-
-実ペインの比較:
-
-| 操作 | 実 WezTerm の範囲 | コピー結果 |
-| --- | --- | --- |
-| Starship なしで `printf 'BASE_OUTPUT\n'` | Prompt / Input / Output | `BASE_OUTPUT` |
-| Starship ありで `printf 'STAR_OUTPUT\n'` | Output のみ | `コピーできません（要シェル統合）` |
-| Starship なしで開始し、同じペインに Starship を適用後 `printf 'AFTER_THEME_OUTPUT\n'` | 過去の Input が残り、後続部分が Output | 下のようにプロンプト・新しいコマンドまで混入 |
-
-```text
-wezterm DURATION=0s OK>  printf 'AFTER_THEME_OUTPUT\n'
-AFTER_THEME_OUTPUT
-wezterm DURATION=0s OK>
-```
-
-`lua/actions.lua:103` は最後の確定済み Input を基準に出力を探すため、新しい Input が消えた場合に過去の入力を参照する。新規ペインでの使用不可に加え、後付け時の誤コピーも実測した。`Ctrl+Shift+Alt+↑/↓` に必要な Prompt 範囲も生成されない。公式の [semantic zones の説明](https://wezterm.org/config/lua/pane/get_semantic_zones.html) と照らして、範囲データの欠落を確認した。
-
-証拠: `live-results/summary.json` の `baseline-output`、`starship-output`、`baseline-then-starship`。`live-results/verification.json` はそれぞれを機械的に確認する。
-
-### 2. Bash: パイプ途中の失敗が Starship から見えなくなる
-
-推奨順では `__wezterm_prompt_command` と `__wz_mouse_off` が Starship より先に実行され、`$?` は返すが `PIPESTATUS` の各要素を保持しない。
-
-Starship の `[status] pipestatus=true` を有効にして比較した:
-
-| コマンド | Starship 単体 | Starship → 統合 |
-| --- | --- | --- |
-| `false \| true` | `PIPE=S=1 \|S=0 -> S=0 OK>` | `OK>` |
-| `set -o pipefail; false \| true` | `PIPE=S=1 \|S=0 -> S=1 ERR>` | `S=1 ERR>` |
-
-全体の終了コードは正しいが、途中の失敗情報が失われる。既定の `pipestatus=false` ではこの表示差は表面に出ない。
-
-証拠: `bash-pipeline-visible-baseline.txt`、`bash-pipeline-visible-recommended.txt`、`bash-results.json`。
-
-### 3. Bash: 読み込み順を逆にすると失敗が成功として通知される
-
-`統合 → Starship → zoxide` では、統合が Starship の退避フックへ入り、呼ばれる時の状態が 0 になる。Starship の表示自体は失敗を示していても、OSC 133 D と完了通知は 0 になった。
-
-```text
-推奨順: sleep 2.15; false → 通知 1<TAB>2〜3<TAB>sleep 2.15; false
-逆順:   sleep 2.15; false → 通知 0<TAB>2<TAB>sleep 2.15; false
-```
-
-単なる統合の追加 `source` では、退避済みの古いフックと新しいフックが重なる場合もある。起動順を直したうえで新しいシェルを起動する必要がある。ただし、正しい順番でも問題 1 と 2 は残る。
-
 ### 4. PowerShell: Starship の再初期化後に統合を再読込しても戻らない
 
 通常の `Starship → shell/wezterm.ps1` は正常だった。プロファイルで Starship を初期化し、`lua/shells.lua` の起動引数で統合を読む設計と整合する。
@@ -116,8 +68,6 @@ Starship が `prompt` を上書きし、`shell/wezterm.ps1:20` のロード済�
 
 互換性の中心問題とは区別するが、詳細テストで次も確認した。
 
-- **Git Bash の文字切断**: 199 個の ASCII の直後に絵文字 `😀` を置くと、`shell/wezterm.sh:252` の `${2:0:200}` が絵文字の途中を切り、ユーザー変数へ不正 UTF-8 を送る。198 個なら絵文字全体が残る。`bash-helpers.json` の `emoji-boundary-199` は失敗。
-- **PROMPT_COMMAND 配列の重複**: 統合フックが既に配列の第 2 要素にある変則条件では、先頭にも追加されて D が二重になった。通常の配列・二重 source は正常。
 - **PowerShell の巨大通知閾値**: `WEZTERM_NOTIFY_AFTER=999999999999999999999999` は `shell/wezterm.ps1:91` の int 変換でエラーを残し、既定 10 秒に戻って通知する。通常値・不正文字列・負数・ゼロ・境界はテストした。
 - **Starship 側の PowerShell 表示**: native exit 7 の後に `Write-Error` を実行すると、Starship は古い `STATUS=7` を示すことがある。Starship 単体でも同じ挙動で、統合の OSC D は 1 と正しい。Windows PowerShell の native stderr を `2>&1` で受けるケースも Starship 単体と同じ表示の制限がある。統合による退行とは判断しない。
 

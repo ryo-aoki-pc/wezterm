@@ -1,6 +1,6 @@
 # WezTerm 設定導入の検証記録
 
-[手順書](https://github.com/ryo-aoki-pc/wezterm/blob/6e80f5c013b1e4b2423627705180c364ce70955c/docs/install.md) に記載していた検証結果を移動した記録。各記録の実施時点・対象版・未確認事項を保持し、この文書の移動による再検証は行っていない。
+記録の手順番号は [当時の手順書](https://github.com/ryo-aoki-pc/wezterm/blob/6e80f5c013b1e4b2423627705180c364ce70955c/docs/install.md) の番号。現在の手順と実装は[参照情報](../reference/install.md)を参照。
 
 以下の既存記録は公式 Bash 統合との共存修正前の説明を含む。2026-10-06 の追加検証と修正後の範囲は[修正後の状態](#修正後の状態2026-10-06)を参照。
 
@@ -20,7 +20,7 @@
 |---|---|
 | 実施日 | 2026-09-30 |
 | OS | AlmaLinux 10.2 (Lavender Lion) / x86_64（`quay.io/almalinuxorg/10-init:10.2`、Docker 29.3.1、`--privileged`。systemd が PID 1） |
-| WezTerm | `wezterm-20260929_043349_cab25161-0.x86_64`（COPR の `rhel-9-x86_64`。setup-notes の wezterm-nightly.md の手順で導入） |
+| WezTerm | `wezterm-20260929_043349_cab25161-0.x86_64`（COPR の `rhel-9-x86_64`。setup-notes の WezTerm の手順で導入） |
 | git / bash | `git-2.52.0-1.el10` / `bash-5.2.26-6.el10` |
 | この設定 | `main` の `e06db70` |
 | sshd | `openssh-server-9.9p1-27.el10_2.alma.1` |
@@ -29,24 +29,22 @@
 > [!NOTE]
 > 出力例の値は `<USER>` / `<WIN_USER>` / `<HOST>` / `<TIME>` などのプレースホルダで書いてある。WezTerm の版（`20260929_043349_cab25161`）とこの設定のコミット（`e06db70`）は、実行日によって変わる。
 
-手順書全体に関わる理由・実測・落とし穴と検証記録（手順ごとのものは各手順の末尾の「補足」にある）。手順を実行するだけなら読まなくてよい。
-
 ### 実施前の状態
 
 | 項目 | 1 回目 | 2 回目 |
 |---|---|---|
 | WezTerm | COPR の nightly（`/etc/profile.d/wezterm.sh` がある） | 同じ |
-| `~/.wezterm.lua` | 無し | あり（wezterm-nightly.md の最小の例） |
+| `~/.wezterm.lua` | 無し | あり（WezTerm の最小の設定例） |
 | `~/.config/wezterm` | 無し | あり（同じ最小の例の `wezterm.lua` だけ） |
 | `~/.bashrc` | `/etc/skel` のまま | `/etc/skel` の末尾に `eval "$(starship init bash)"` |
 | HackGen Console NF | 無し（日本語のフォントも無い） | `~/.local/share/fonts` に 4 ファイル |
 
 
-## 手順本文にあった検証記録
+## 導入の検証
 
 ### 実施手順 — 手順 1: 2 つの置き場所
 
-- WezTerm は `~/.wezterm.lua` を `~/.config/wezterm/wezterm.lua` より先に探し、見つけた 1 つだけを読む（setup-notes-verification（非公開）の [wezterm-nightly.md の「設定ファイルの探索順序（実測）」](https://github.com/ryo-aoki-pc/setup-notes-verification/blob/main/docs/verification/shell-terminal.md#wezterm-設定ファイルの探索順序実測)）
+- WezTerm は `~/.wezterm.lua` を `~/.config/wezterm/wezterm.lua` より先に探し、見つけた 1 つだけを読む（setup-notes-verification（非公開）の [WezTerm の「設定ファイルの探索順序（実測）」](https://github.com/ryo-aoki-pc/setup-notes-verification/blob/main/docs/verification/shell-terminal.md#wezterm-設定ファイルの探索順序実測)）
 - `~/.wezterm.lua` が残っていると、この設定は読まれない
 - Windows でも、WezTerm は `%USERPROFILE%\.wezterm.lua` と `%USERPROFILE%\.config\wezterm\wezterm.lua` を探す。Git Bash の `~` は `%USERPROFILE%` なので、同じコマンドで見られるはず（試していない）
 
@@ -54,7 +52,7 @@
 
 - `wezterm.lua` は、`lua/` のモジュールを `wezterm.config_dir`（`wezterm.lua` のあるディレクトリ）から読む。シェル統合のスクリプトも、同じディレクトリの `shell/` を指す。1 ファイルの `~/.wezterm.lua` には置けない
 - 手順 6 の 1 行は、`$HOME/.config/wezterm` を既定の置き場所として書いてある。別の場所に置くなら、その 1 行も書き換える
-- Git Bash のホームは `/c/Users/<WIN_USER>`（setup-notes の [windows-openssh-server.md](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/windows-setup.md#openssh-サーバー) の実測）なので、Windows では `C:\Users\<WIN_USER>\.config\wezterm` に置かれるはず（試していない）
+- Git Bash のホームは `/c/Users/<WIN_USER>`（setup-notes の [OpenSSH サーバー](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/windows-setup.md#openssh-サーバー) の実測）なので、Windows では `C:\Users\<WIN_USER>\.config\wezterm` に置かれるはず（試していない）
 
 ### 実施手順 — 手順 4: 出力の例と、設定の誤りの出方
 
@@ -99,19 +97,15 @@ LeftToRight
 
 - どちらも終了コードは 0 のままなので、出力の `ERROR` の行で判断する
 - `wezterm show-keys` は、設定を読めなくても何も言わずに既定のキーの一覧を出す（README の「動作確認」）ので、この確かめには使わない
-- `| head` で切ると、パイプが閉じて終了コードが 101 になる（setup-notes の [wezterm-nightly.md 手順 4](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#wezterm) の補足）ので、付けていない
+- `| head` で切ると、パイプが閉じて終了コードが 101 になる（setup-notes の [WezTerm の手順 4](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#wezterm) の補足）ので、付けていない
 
 ### 実施手順 — 手順 5: starship の行より後ろ、zoxide の行より前に置く理由
 
-- starship は、既にある `PROMPT_COMMAND` を `STARSHIP_PROMPT_COMMAND` に退避して、自分の中から呼ぶ。シェル統合が starship より前にあると、統合の関数がその退避先に入り、呼ばれるときの `$?` がいつも 0 になる
-- starship より後ろなら、統合は `$?` を保つ関数を `starship_precmd` の前に足すので、OSC 133 の `D` に正しい終了コードが入る
-- zoxide は `~/.bashrc` のいちばん最後に置く（当時の setup-notes の zoxide.md 手順 6。今は [AlmaLinux 10 の初期設定](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/almalinux-setup.md)）。統合が zoxide より後ろにあっても、結果は同じだった（統合は `PROMPT_COMMAND` の先頭に足すため）
 - 自分用の bash の設定（`ryo-aoki-pc/bash`）の検証コンテナで、公式の統合の無い形で、擬似端末の生の出力を見た（2026-09-30）:
   - starship → この 1 行 → zoxide（と starship → zoxide → この 1 行）: `false` の後は `D;1`。`zoxide: detected a possible configuration issue.` は出なかった
-  - この 1 行 → starship（前の版のこの文書の手順 7 の並び）: `D` はいつも `D;0`
+  - この 1 行 → starship（記録の手順 7 の並び）: `D` はいつも `D;0`
   - 当時の統合では、どの並びでも、starship がいると `PS1` の OSC 133 の印（`A` / `B`）は無くなった。2026-10-06 に、既存のプロンプト処理の後で印を付け直すよう修正し、Windows の Git Bash で A / B と出力コピーの復帰を確認した
   - 2026-09-30 の時点では、画面でのプロンプトへのジャンプや、出力のコピーへの影響は確かめていなかった。2026-10-06 の実 GUI の結果は[ホストでの検証記録](#付録-windows-11-のホストでの動作検証2026-10-06)
-- 前の版のこの文書（2026-09-30 まで）は、この 1 行を starship の行の前に差し込んでいた。そのホストは、setup-notes の starship.md の手順 3〜6 で starship の行を前へ移す（この 1 行は動かさなくてよい）
 
 ### 実施手順 — 手順 9: 検証コンテナでの出力
 
@@ -131,7 +125,7 @@ __wz_mouse_off
 - 手順 6 の 1 行を足す前は、`__wezterm_set_user_var`（と公式の `__wezterm_osc7`）だけだった。シェルはログインシェルで起動していた
 - 公式の統合を止めた（`WEZTERM_SHELL_SKIP_ALL=1` を付けて起動した）シェルでは、`__wezterm_notify_done` と `__wz_mouse_off` が出た。公式の統合が無い Windows の Git Bash も、この形になることを 2026-10-06 に確認した
 
-### ssh 先でもシェル統合を使う（任意） — 手順 2: AlmaLinux 10 の sshd の既定と、検証コンテナでの出力
+### ssh 先でもシェル統合を使う — 手順 2: AlmaLinux 10 の sshd の既定と、検証コンテナでの出力
 
 - AlmaLinux 10.2 の既定の sshd は、`AcceptEnv` を 1 つも持たない（`sshd -T` に `acceptenv` の行が出ない）
 - `/etc/ssh/sshd_config` の `Include /etc/ssh/sshd_config.d/*.conf` が、このファイルを読む。`AcceptEnv` は、ほかの行やファイルにあっても足し合わされる
@@ -142,27 +136,23 @@ AcceptEnv TERM_PROGRAM
 acceptenv TERM_PROGRAM
 ```
 
-### 実施手順 — 手順 0 の記載
+### 導入の検証範囲
 
 > **導入・更新・ロールバックの全分岐は AlmaLinux 10 の x86_64 コンテナで検証した**。新規 x86_64 VM では、共通 bash 設定を使う分岐の導入、実 GUI、日本語入力、公式シェル統合、更新・ロールバックを確認した（2026-10-06。[新規 VM の記録](#付録-現行版の新規-vm-での再検証2026-10-06)）。Windows 11 の実ホストの画面・分割・OS 通知と、外部 SSH の統合の制限は以前の検証記録にある。aarch64 の Linux GUI、物理キー・マウス、この VM での WSL・SSH 任意節は未実施。各環境の範囲は[対象と検証環境](#対象と検証環境)を参照。
 
-### 実施手順 — 手順 4 の記載
+### 実施手順 — 手順 4: Windows のコマンドパス
 
 - Windows で `wezterm: command not found` と出たら、`"/c/Program Files/WezTerm/wezterm.exe" ls-fonts --text 'aあ'` のようにインストール先から呼ぶ（試していない）
 
-### 実施手順 — 手順 6 の記載
+### 実施手順 — 手順 6: zsh の未確認事項
 
 - zsh を使うなら、同じ行を `~/.zshrc` にも足す（試していない）
 
-### WSL でもシェル統合を使う（任意） — 手順 0 の記載
+### WSL のシェル統合の検証範囲
 
 - **この節のコードブロックは流していない**。Windows の実ホストの WSL 2 環境は、Linux 側の既定パスに統合を置く方法で検証した（[ホストでの検証記録](#付録-windows-11-のホストでの動作検証2026-10-06)）
 
-### ssh 先でもシェル統合を使う（任意）の適用範囲
-
-- この設定の統合が動けば、タブ名が `<HOST>:<ディレクトリ名>` になり、ssh 先でもプロンプトへのジャンプ・出力のコピー・完了通知が使える。公式統合が先に読まれる場合は完了通知が動かず、Starship との併用では出力の区切りも失われることがある（[追加検証](#付録-os-通知と外部-ssh-の追加検証2026-10-06)）
-
-## 補足にあった検証記録
+## 環境別の検証
 
   - Windows の WezTerm も `%USERPROFILE%\.config\wezterm\wezterm.lua` を読む。2026-10-06 に、既存配置の設定読み込みと新規 GUI の起動を確認した（clone・退避・ロールバックの全手順は未実施）
   - 公式の統合は `WEZTERM_SHELL_SKIP_ALL=1` で止まる。検証コンテナで、この値を付けて起動したシェル（`wezterm cli spawn -- env WEZTERM_SHELL_SKIP_ALL=1 bash -l`）では、この設定の統合がすべて読まれた。この設定の `lua/shells.lua` は、まだこの値を渡していない
@@ -172,7 +162,7 @@ acceptenv TERM_PROGRAM
   - 2026-09-30 の検証では、どの並びでも Starship が PS1 の OSC 133 A / B を消した。この設定の統合を使う場合は 2026-10-06 の修正で印が戻る。公式統合が先に読まれる環境の制限は[追加検証](#付録-os-通知と外部-ssh-の追加検証2026-10-06)
 - **Git Bash の `~/.bash_profile`**（試していない）
   - `C:\msys64\home\<WIN_USER>\.bashrc` と `C:\QMK_MSYS\home\<WIN_USER>\.bashrc` にも、手順 6 の 1 行を足す（README の「bash（Git Bash / MSYS2 / QMK MSYS / Linux）と zsh」。試していない）
-- setup-notes の [wezterm-nightly.md](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#wezterm) — WezTerm nightly の導入と、設定ファイルの探索順序の実測
+- setup-notes の [WezTerm](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#wezterm) — WezTerm nightly の導入と、設定ファイルの探索順序の実測
 
 ### 付録: コンテナでの検証記録（2026-09-30）
 
@@ -189,9 +179,9 @@ x86_64 のクラウドホストで `dockerd` を動かし、`docker run -d --pri
 
 | 実行 | ユーザー | 流した手順 | 結果 |
 |---|---|---|---|
-| 1 | u1（設定無し） | 手順 1・3〜6・8（mux）・9、[更新](https://github.com/ryo-aoki-pc/wezterm/blob/f7fe6b33b36e806e99148d9551f16f0ee01e4949/docs/install.md#更新)の手順 1、[ロールバック](https://github.com/ryo-aoki-pc/wezterm/blob/f7fe6b33b36e806e99148d9551f16f0ee01e4949/docs/install.md#ロールバック)の手順 1〜3 | 手順 1 は 2 行とも `No such file or directory`。手順 4 は HackGen が無い警告と `ERROR  wezterm_toast_notification::dbus` で、`ERROR  wezterm_gui` は無し。手順 5 は何も出さなかった。手順 9 は `WezTerm`・`/home/<USER>/.config/wezterm/shell/wezterm.sh`・`__wezterm_set_user_var`・`__wz_mouse_off`。更新は `Already up to date.`。ロールバックは `0`・`## main...origin/main`・`No such file or directory` |
-| 1 | r1（ssh 先） | 手順 1・3〜6、[ssh 先の節](https://github.com/ryo-aoki-pc/wezterm/blob/f7fe6b33b36e806e99148d9551f16f0ee01e4949/docs/install.md#ssh-先でもシェル統合を使う任意)の手順 2（r1）と手順 4・5（u1 の mux のペインから）、ロールバックの手順 6・1〜3 | ssh 先の節の手順 2 は、手順 2 の補足の 2 行。手順 5 は `WezTerm`・`__wezterm_set_user_var`・`__wz_mouse_off`（ssh 先にも COPR の WezTerm があるため）。`wezterm cli list` のペインの CWD は `file://<HOST>/home/r1/`。ロールバックの手順 6 は `removed '/etc/ssh/sshd_config.d/50-wezterm.conf'` で、reload の後の `sshd -T` に `acceptenv` の行は無かった |
-| 2 | u2（既存の設定・starship・HackGen） | 手順 1〜5・7（当時の、starship の行の前に差し込む版）・8（mux）・9、更新の手順 1、ロールバックの手順 1〜4 | 手順 1 は 2 行とも出た。手順 2 は `renamed` が 2 行。手順 4 は 2 文字とも HackGen Console NF で、警告も `ERROR` も無し。手順 5 は `26:eval "$(starship init bash)"`。手順 7 の後は、26 行目がシェル統合で 27 行目が starship。手順 9 は実行 1 と同じ（プロンプトは starship のもの）。ロールバックの手順 4 で 2 つとも戻り、`wezterm ls-fonts` は元の最小の例のフォント（`Noto Sans Mono`）を読んだ |
+| 1 | u1（設定無し） | 手順 1・3〜6・8（mux）・9、[更新](https://github.com/ryo-aoki-pc/wezterm/blob/f7fe6b33b36e806e99148d9551f16f0ee01e4949/docs/install.md#更新)の手順 1、[ロールバック](https://github.com/ryo-aoki-pc/wezterm/blob/f7fe6b33b36e806e99148d9551f16f0ee01e4949/docs/install.md#ロールバック)の手順 2・3 | 手順 1 は 2 行とも `No such file or directory`。手順 4 は HackGen が無い警告と `ERROR  wezterm_toast_notification::dbus` で、`ERROR  wezterm_gui` は無し。手順 5 は何も出さなかった。手順 9 は `WezTerm`・`/home/<USER>/.config/wezterm/shell/wezterm.sh`・`__wezterm_set_user_var`・`__wz_mouse_off`。更新は `Already up to date.`。ロールバックは `## main...origin/main`・`No such file or directory` |
+| 1 | r1（ssh 先） | 手順 1・3〜6、[ssh 先の節](https://github.com/ryo-aoki-pc/wezterm/blob/f7fe6b33b36e806e99148d9551f16f0ee01e4949/docs/install.md#ssh-先でもシェル統合を使う任意)の手順 2（r1）と手順 4・5（u1 の mux のペインから）、ロールバックの手順 6・2・3 | ssh 先の節の手順 2 は、手順 2 の補足の 2 行。手順 5 は `WezTerm`・`__wezterm_set_user_var`・`__wz_mouse_off`（ssh 先にも COPR の WezTerm があるため）。`wezterm cli list` のペインの CWD は `file://<HOST>/home/r1/`。ロールバックの手順 6 は `removed '/etc/ssh/sshd_config.d/50-wezterm.conf'` で、reload の後の `sshd -T` に `acceptenv` の行は無かった |
+| 2 | u2（既存の設定・starship・HackGen） | 手順 1〜5・7（当時の、starship の行の前に差し込む版）・8（mux）・9、更新の手順 1、ロールバックの手順 2〜4 | 手順 1 は 2 行とも出た。手順 2 は `renamed` が 2 行。手順 4 は 2 文字とも HackGen Console NF で、警告も `ERROR` も無し。手順 5 は `26:eval "$(starship init bash)"`。手順 7 の後は、26 行目がシェル統合で 27 行目が starship。手順 9 は実行 1 と同じ（プロンプトは starship のもの）。ロールバックの手順 4 で 2 つとも戻り、`wezterm ls-fonts` は元の最小の例のフォント（`Noto Sans Mono`）を読んだ |
 
 個別に確かめたこと（systemd の無い AlmaLinux 10.2 のコンテナに同じ版の WezTerm を入れたものも使った）:
 
@@ -227,17 +217,17 @@ x86_64 のクラウドホストで `dockerd` を動かし、`docker run -d --pri
 | wz1（`brew shellenv` → starship → `zoxide init bash --cmd z`） | 手順 5・7（当時の、`zoxide init bash` で探す版） | 手順 5 は starship と zoxide の 2 行。手順 7 の後は starship（27 行目）→ シェル統合（28 行目）→ zoxide（29 行目）。`false` の後は `D;1`、`zoxide: detected a possible configuration issue.` は出ない |
 | wz2（`brew shellenv` → starship） | 手順 5・6 | 手順 5 は starship の 1 行。手順 6 の後は starship（27 行目）→ シェル統合（28 行目）。`false` の後は `D;1` |
 | wz3（`/etc/skel` のまま） | 手順 5・6 | 手順 5 は何も出さず、手順 6 で末尾に 1 行 |
-| wz4（前の版の手順書の並び: zoxide → シェル統合 → starship） | 手順 5、setup-notes の starship.md の手順 5（当時の、`brew shellenv` の行を動かさない版） | 手順 5 は 3 行とも出た（starship が zoxide より後ろ）。starship.md の手順 5 の後は starship（27 行目）→ zoxide → シェル統合。`false` の後は `D;1`、警告は出ない |
+| wz4（zoxide → シェル統合 → starship） | 手順 5、Starship 初期化の記録の手順 5（`brew shellenv` の行を動かさない版） | 手順 5 は 3 行とも出た（starship が zoxide より後ろ）。Starship 初期化の手順 5 の後は starship（27 行目）→ zoxide → シェル統合。`false` の後は `D;1`、警告は出ない |
 
-- 上の 3 つの `false` の後の `D;1` は、`PROMPT_COMMAND` が配列（AlmaLinux の `/etc/bashrc`）のとき。starship → zoxide → シェル統合の並びは、文字列の `PROMPT_COMMAND`（Git Bash と同じ）でも `D;1` で、警告は出なかった（setup-notes の starship.md の付録）
+- 上の 3 つの `false` の後の `D;1` は、`PROMPT_COMMAND` が配列（AlmaLinux の `/etc/bashrc`）のとき。starship → zoxide → シェル統合の並びは、文字列の `PROMPT_COMMAND`（Git Bash と同じ）でも `D;1` で、警告は出なかった（Starship の検証記録）
 - 前の版の並び（シェル統合 → starship）は、同じ方法で `D` がいつも `D;0` だった（公式の統合が無いとき）。上流の公式の `wezterm.sh` を `/etc/profile.d` に置いた模擬では、`D;1` だった
 
-手順 7 の `sed` を `zoxide init` で探す形に、setup-notes の starship.md の手順 5 を `brew shellenv` の行も動かす形に直した後、同じコンテナで、抜き出し直したブロックを流した（2026-09-30 の夜）。
+手順 7 の `sed` を `zoxide init` で探す形に、Starship 初期化の記録の手順 5 を `brew shellenv` の行も動かす形に直した後、同じコンテナで、抜き出し直したブロックを流した（2026-09-30 の夜）。
 
 | ユーザー（実施前の `~/.bashrc` の末尾） | 流した手順 | 結果 |
 |---|---|---|
 | wa（`brew shellenv` → starship → `zoxide init --cmd cd bash`） | 手順 5・7 | 手順 5 は starship と zoxide の 2 行。手順 7 の後は starship（27 行目）→ シェル統合（28 行目）→ zoxide（29 行目）。`false` の後は `D;1`、警告は出ない |
-| wb（`brew shellenv` → シェル統合 → starship） | 手順 5、starship.md の手順 5 | 手順 5 はシェル統合と starship の 2 行（starship が後ろ）。starship.md の手順 5 の後は `brew shellenv`（26 行目）→ starship → シェル統合。`false` の後は `D;1` |
+| wb（`brew shellenv` → シェル統合 → starship） | 手順 5、Starship 初期化の記録の手順 5 | 手順 5 はシェル統合と starship の 2 行（starship が後ろ）。Starship 初期化の手順 5 の後は `brew shellenv`（26 行目）→ starship → シェル統合。`false` の後は `D;1` |
 
 - wa と wb も、`script` の擬似端末で開き直した `bash -il` を上と同じ方法で見た。`false` の後だけ `D;1` で、zoxide の警告は出なかった。`z` の無い 2 つ（wa は `--cmd cd`、wb は zoxide の行が無い）では `z share` が `command not found` で、その後は `D;127` だった
 - 手順の後に `su -` で開いた新しいログインシェルは、どちらも何も出さなかった
@@ -245,7 +235,7 @@ x86_64 のクラウドホストで `dockerd` を動かし、`docker run -d --pri
 ### 付録: Windows 11 のホストでの動作検証（2026-10-06）
 
 既にこの設定を使っている Windows ホストで、設定の読み込みとシェルの実動作を調べた。
-導入・更新・ロールバックの全ブロックを貼る検証とは別の記録で、上の 2026-09-30 の記録は当時の結果のまま残している。
+導入・更新・ロールバックの全ブロックを貼る検証とは別に、実ホストの動作を確かめた。
 
 | 項目 | 検証環境 |
 |---|---|
@@ -298,7 +288,7 @@ Lua のロジック検証 47 ケース、bash 構文、PowerShell パーサー�
 ### 付録: OS 通知と外部 SSH の追加検証（2026-10-06）
 
 上のホスト検証の後、同じ Windows ホストで通知の実表示と、既存の SSH 設定にある
-`abiko-pi`・`kawasaki-pi` を追加検証した。上の記録の未確認事項は、その時点の結果のまま残した。
+`abiko-pi`・`kawasaki-pi` を追加検証した。
 
 入力操作ツールは、WezTerm が操作対象一覧に現れず、明示的な起動も
 `product policy blocks this app` として拒否した。
@@ -339,7 +329,7 @@ PowerShell 5.1 / 7 の StrictMode・10 回読み込み・prompt / ReadLine の�
 
 ## 2026-10-06 の Starship 共存修正に伴う追加記録
 
-以下は upstream `6474a968ad06844d078828468f762272f751a4b0` の導入文書から移した原記録。この文書分離の作業では実行していない。修正前の付録も当時の結果として保持する。
+記録の手順番号は [当時の手順書](https://github.com/ryo-aoki-pc/wezterm/blob/6474a968ad06844d078828468f762272f751a4b0/docs/install.md) の番号。
 
 ### 修正後の状態（2026-10-06）
 
@@ -361,7 +351,7 @@ PowerShell 5.1 / 7 の StrictMode・10 回読み込み・prompt / ReadLine の�
 |---|---|
 | 実施日 | 2026-09-30 |
 | OS | AlmaLinux 10.2 (Lavender Lion) / x86_64（`quay.io/almalinuxorg/10-init:10.2`、Docker 29.3.1、`--privileged`。systemd が PID 1） |
-| WezTerm | `wezterm-20260929_043349_cab25161-0.x86_64`（COPR の `rhel-9-x86_64`。setup-notes の wezterm-nightly.md の手順で導入） |
+| WezTerm | `wezterm-20260929_043349_cab25161-0.x86_64`（COPR の `rhel-9-x86_64`。setup-notes の WezTerm の手順で導入） |
 | git / bash | `git-2.52.0-1.el10` / `bash-5.2.26-6.el10` |
 | この設定 | `main` の `e06db70` |
 | sshd | `openssh-server-9.9p1-27.el10_2.alma.1` |
@@ -371,7 +361,7 @@ PowerShell 5.1 / 7 の StrictMode・10 回読み込み・prompt / ReadLine の�
 > 出力例の値は `<USER>` / `<WIN_USER>` / `<HOST>` / `<TIME>` などのプレースホルダで書いてある。WezTerm の版（`20260929_043349_cab25161`）とこの設定のコミット（`e06db70`）は、実行日によって変わる。
 
 
-### 実施手順にあった検証範囲の追記（2026-10-06）
+### 導入・更新・ロールバックの検証範囲（2026-10-06）
 
 > [!WARNING]
 > **導入・更新・ロールバックの全分岐は AlmaLinux 10 の x86_64 コンテナで検証した**。新規 x86_64 VM では、共通 bash 設定を使う分岐の導入、実 GUI、日本語入力、公式シェル統合、更新・ロールバックを確認した（2026-10-06。[新規 VM の記録](#付録-現行版の新規-vm-での再検証2026-10-06)）。Windows 11 の実ホストの画面・分割・OS 通知と、外部 SSH の統合の制限は以前の検証記録にある。同日に Git Bash + Starship と SSH 先の公式 Bash 統合との共存を修正し、配置後の通常 SSH でコピー・パイプ状態・独自通知を確認した。aarch64 の Linux GUI、物理キー・マウス、この VM での WSL・SSH 任意節は未実施。各環境の範囲は[対象と検証環境](#修正後の状態2026-10-06)を参照。
@@ -379,11 +369,11 @@ PowerShell 5.1 / 7 の StrictMode・10 回読み込み・prompt / ReadLine の�
 - 2026-09-30 の検証は修正前の統合を使った記録なので、当時の結果は[付録](#付録-並びを直した版の検証2026-09-30)に残している
 - 2026-10-06 の実 GUI の結果は[ホストでの検証記録](#付録-windows-11-のホストでの動作検証2026-10-06)と、[Git Bash の追加検証](#付録-git-bash-と-starship-の修正後の検証2026-10-06)に分けている
 
-### 手順 9 の補足にあった修正前の出力の説明
+### 手順 9: 共存修正前の出力の確認方法
 
 以下は公式との共存を修正する前の検証記録。WezTerm の画面の代わりに、`wezterm-mux-server` を起動し直して開いたペインに打ち込み、`wezterm cli get-text` で画面の文字を読んだ:
 
-### SSH 節にあった修正前後の案内
+### SSH のシェル統合の検証範囲
 
 - この設定の統合が動けば、タブ名が `<HOST>:<ディレクトリ名>` になり、ssh 先でもプロンプトへのジャンプ・出力のコピー・完了通知が使える。公式 Bash 統合が先に読まれる場合も、修正版は Starship 後に入力範囲の印と独自完了通知を補う。修正前の制限は[追加検証](#付録-os-通知と外部-ssh-の追加検証2026-10-06)、修正後の結果は[共存修正後の検証](#付録-ssh-の公式-bash-統合と-starship-の共存修正後の検証2026-10-06)に分けている
 
@@ -397,23 +387,18 @@ Windows の Git Bash `5.3.15(2)-release`、Starship `1.26.0`、WezTerm `20260905
 - 実 WezTerm の隔離ペインでは、23 snapshots の 19 件の確認がすべて成立した。Starship 起動時と後付け後のどちらも Prompt / Input / Output の範囲が生成され、直前の出力だけをコピーできた。プロンプトジャンプ後の可視範囲、cwd の分割先への引継ぎ、リサイズ・コピーモード・ズーム、Bash の失敗通知データ、PowerShell 2 種の回帰確認 8 件を含む
 - 統合 → starship の推奨外の並びでは、統合をもう一度読むまで A / B の一部が欠ける。追加読込後の復旧は確認したが、導入時は[手順 5](https://github.com/ryo-aoki-pc/wezterm/blob/f7fe6b33b36e806e99148d9551f16f0ee01e4949/docs/install.md#実施手順)の並びに直して新しいタブを開く
 
-詳しい修正内容、再実行方法、生の出力と未検証範囲は [Git Bash の修正後の検証記録](starship/FIX-REPORT.md)に保存した。修正前の結果は [Starship 適用時の検証記録](starship/REPORT.md)と上の 2026-09-30 の付録をそのまま残している。
+詳しい修正内容、再実行方法、生の出力と未検証範囲は [Git Bash の修正後の検証記録](starship/FIX-REPORT.md)に保存した。修正前の結果は [Starship 適用時の検証記録](starship/REPORT.md)と上の 2026-09-30 の付録を参照。
 
 ### 付録: SSH 先の Starship の検証（2026-10-06）
 
 Windows の WezTerm `20260905-153129-092dcf70` から、既存の AlmaLinux 10.2 / aarch64 ホストへ OpenSSH で接続した。Starship `1.26.0` が導入済みの `kawasaki-pi` で、通常のログインと隔離した対話 Bash `5.2.26(1)-release` を比較した。
 
 - 既存 SSH 設定と、一時的な `SendEnv=TERM_PROGRAM` の両方で、接続先の `TERM_PROGRAM` は未設定だった。`abiko-pi` も同じ結果だったが、Starship は導入されていなかった
-- `kawasaki-pi` は `/etc/profile.d/wezterm.sh` の公式統合 → Starship → この設定の統合 → zoxide の順で読まれた。公式統合は `TERM_PROGRAM` を条件にせず動き、この設定の独自統合はマウス報告よけの後で終了した
-- 実 WezTerm の通常ログインでは、Starship が作り直すプロンプトから入力開始の OSC 133 B が消えた。出力コピーは直前の試験出力を選ばず、ログイン時の出力を選び続けた。独自の完了通知データも送られなかった
-- SSH の実 PTY では 12 条件の必須 220 評価のうち 210 件が成立し、10 件は不成立だった。公式統合を外した修正版の 7 条件は 129 件すべて成立した。公式経路の入力開始の印・一部コマンドの実行開始の印、修正版を公式経路で読み直した際のマウス解除の重複、公式を外して配置済み旧版だけ読む比較条件のパイプ状態が不成立だった
-- 実ペインの通常ログインでは `false | true` の Starship / bash-preexec の保存値は `1 0` を保った。公式統合を外した修正版の隔離ペインでもパイプ状態を保持し、試験出力だけのコピーと失敗の独自完了通知データを確認した
-- 実 WezTerm では 53 snapshots を記録し、成立する機能 46 件と既知不具合の再現 10 件を分けて確認した。公式を外した修正版は Git Bash 経由 / Windows OpenSSH 直接の両方で各 11 件が成立。公式経路の cwd・タブのホスト表示・プロンプトジャンプは正常だったが、入力範囲・出力コピー・独自通知には問題があった
 - 本番 Lua 関数をモデル化した確認では、SSH 判定・コピー・タブ・通知の必須 36 件が成立し、エイリアスと短縮ホスト名衝突の制限 3 件も確認した。実際の通信や OSC 解釈の結果とは分けて記録した
 - この検証では本番のシェル統合、プロファイル、Starship 設定、SSH / sshd の設定を変更していない。履歴は `HISTFILE=/dev/null` または `unset HISTFILE` で保存を避けた
 - 試験用 GUI / ペインを終了し、リモートの専用一時ディレクトリも削除後の不存在を確認した。既存のユーザーの WezTerm プロセスは維持した
 
-隔離した修正版の条件別集計、実ペインの証拠、再実行方法と制限は [SSH 先の Starship 検証記録](starship/SSH-REPORT.md)に保存した。過去の付録と導入コマンドは変更していない。
+隔離した修正版の条件別集計、実ペインの証拠、再実行方法と制限は [SSH 先の Starship 検証記録](starship/SSH-REPORT.md)に保存した。
 
 ### 付録: SSH の公式 Bash 統合と Starship の共存修正後の検証（2026-10-06）
 
@@ -424,10 +409,10 @@ Windows の WezTerm `20260905-153129-092dcf70` から、既存の AlmaLinux 10.2
 - 公式へ委譲する条件は 5 条件の限定モデルで 90 / 90。実 tmux / ble.sh の起動は未実施、zsh は手元と両 SSH ホストにコマンドが無く、構文・実行は未確認
 - 配置前の内容 `8ed8a09c...` を控えへ保存し、SHA を照合して Windows と `kawasaki-pi` の `shell/wezterm.sh` だけへ反映した。配置後の通常 SSH は、パス上書きなし・Git Bash 経由 / Windows OpenSSH 直接で、28 snapshots の機能 37 / 37 が成立した
 - 比較・補助で残る制限を分けた。公式経路で starship だけを直接再初期化したときの登録重複は、統合の再読込で単独化する。通常の個人 Bash 設定では再初期化をガードしている
-- 個人 Bash README の「読む順番」に今回の実測を追記した。初期化の 1 行・配置先は不変なので、個人 Bash の `bashrc` / `migrate` は変更していない
+- 初期化の 1 行・配置先は不変なので、個人 Bash の `bashrc` / `migrate` は変更していない
 - 試験用 GUI / ペインとリモートの専用一時ディレクトリを終了・除去し、既存のユーザーの WezTerm プロセスを維持した
 
-条件別の集計、ソースハッシュ、配置前の控えと反映後の確認、制限は [SSH の修正後の検証記録](starship/SSH-FIX-REPORT.md)に保存した。修正前の記録は上の付録と [SSH-REPORT.md](starship/SSH-REPORT.md)にそのまま残している。
+条件別の集計、ソースハッシュ、配置前の控えと反映後の確認、制限は [SSH の修正後の検証記録](starship/SSH-FIX-REPORT.md)に保存した。修正前の記録は上の付録と [SSH-REPORT.md](starship/SSH-REPORT.md)を参照。
 
 
 ## 2026-10-11 の PowerShell 貼り付け修正に伴う追加記録
@@ -497,30 +482,17 @@ SSH・WSL・Neovim・PSReadLine なしなどの切り替えは Lua の模擬 API
 
 ## 共存修正前の説明
 
-以下は元の固定コミット `92f799a6ee6f45d1648db622760ffeea2ed5ad98` の説明。現行の実装は[参照情報](../reference/install.md)を参照。
-
-### 実施手順 — 手順 5: starship の行より後ろ、zoxide の行より前に置く理由
-
-- starship は、既にある `PROMPT_COMMAND` を `STARSHIP_PROMPT_COMMAND` に退避して、自分の中から呼ぶ。シェル統合が starship より前にあると、統合の関数がその退避先に入り、呼ばれるときの `$?` がいつも 0 になる
-- starship より後ろなら、統合は `$?` を保つ関数を `starship_precmd` の前に足すので、OSC 133 の `D` に正しい終了コードが入る
-- zoxide は `~/.bashrc` のいちばん最後に置く（当時の setup-notes の zoxide.md 手順 6。今は [AlmaLinux 10 の初期設定](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/almalinux-setup.md)）。統合は `PROMPT_COMMAND` の先頭に足す
-- 前の版のこの文書は、この 1 行を starship の行の前に差し込んでいた。そのホストは、setup-notes の starship.md の手順 3〜6 で starship の行を前へ移す（この 1 行は動かさなくてよい）
-
+説明の対象版: [92f799a6ee6f45d1648db622760ffeea2ed5ad98](https://github.com/ryo-aoki-pc/wezterm/blob/92f799a6ee6f45d1648db622760ffeea2ed5ad98/docs/install.md)。現行の実装は[参照情報](../reference/install.md)を参照。
 
 ### 注意点
 
-- **AlmaLinux 10（COPR の WezTerm）では、この設定のシェル統合の大半が働かない**
-  - `wezterm-common` の `/etc/profile.d/wezterm.sh` は、`TERM_PROGRAM` を見ずに、すべての対話シェルで読まれる（ログインシェルは `/etc/profile`、そうでないシェルは `/etc/bashrc` から）
-  - `shell/wezterm.sh` は、公式の統合の関数（`__wezterm_set_user_var`）を見つけると、マウス報告よけだけを残して抜ける（同じ名前の `__wezterm_osc7` を上書きして、公式のフックを壊さないため）
-  - 今のディレクトリ（OSC 7）とプロンプトの位置（OSC 133）は、公式の統合が送る。長いコマンドの完了通知（`__wezterm_notify_done`）は動かない
-  - 公式の統合は `WEZTERM_SHELL_SKIP_ALL=1` で止まる。この設定の `lua/shells.lua` は、まだこの値を渡していない
+- `wezterm-common` の `/etc/profile.d/wezterm.sh` は、`TERM_PROGRAM` を見ずに、すべての対話シェルで読まれる（ログインシェルは `/etc/profile`、そうでないシェルは `/etc/bashrc` から）
+- 公式の統合は `WEZTERM_SHELL_SKIP_ALL=1` で止まる。この設定の `lua/shells.lua` は、まだこの値を渡していない
 - **WezTerm は nightly が要る**
   - stable では、nightly だけの設定（README の「使用している nightly 限定機能」）が `ERROR  wezterm_gui >` になり、組み込みの既定の設定で開く見込み
 - **`~/.wezterm.lua` があると、`~/.config/wezterm` は読まれない**
   - Windows では、`wezterm.exe` と同じフォルダーの `wezterm.lua` も探される（公式の [Configuration Files](https://wezterm.org/config/files.html)）
 - **starship と一緒に使うとき**: シェル統合の行は、starship の行より後ろに置く
-  - starship より前に置くと（前の版のこの文書の手順 7 の並び）、公式の統合が無いとき（この設定の統合が働く Windows の Git Bash など）は、コマンドの終了コード（OSC 133 の `D`）がいつも 0 で送られる
-  - AlmaLinux 10（COPR の WezTerm）では `D` は公式の統合が送るので、どちらの並びでも失敗したコマンドは `D;1` になる
 - **Git Bash の `~/.bash_profile`**
   - WezTerm は Git Bash をログインシェル（`-l`）で起動するので、`~/.bashrc` は `~/.bash_profile` から読まれる必要がある
   - Git for Windows は、`~/.bashrc` があって `~/.bash_profile` などが無いと、`~/.bashrc` を読む `~/.bash_profile` を作り、`WARNING: Found ~/.bashrc but no ~/.bash_profile` と表示する
@@ -538,14 +510,7 @@ SSH・WSL・Neovim・PSReadLine なしなどの切り替えは Lua の模擬 API
 
 | 検証 | 結果 | 実施範囲 |
 | --- | --- | --- |
-| Linux の実 WezTerm → SSH → Windows | 最終 12/12、起動診断付き追加 3/3 | 5.1 / 7 × 管理者 / 非管理者、共有操作・右クリック・Ctrl+Shift+V。入力バッファ一致、Enter 前の未実行、Enter 後の一度だけの実行 |
 | Windows の実 WezTerm → ローカル ConPTY に SSH 環境を再現 | 期限確認追加前の 48/48 と 6/6 | 実クリップボードと共有操作の 3 経路。`real_ssh=false`、Windows からの実 SSH 接続とは区別 |
-| Linux の実 SSH / ConPTY で受信を直接検証 | 最終 76/76 | 5.1 / 7 × 管理者 / 非管理者、正常・不正・取消・無応答・再読み込み・親 PowerShell / Git Bash へ戻る経路 |
-| 64 KiB の上限付近 | 74/74 | `unavailable` の追加前の受信処理で 65,536 バイトを保持し、65,537 バイトを拒否。両 PowerShell と両権限 |
-| Lua の API stub による状態検証 | 78/78 | 取得失敗・不正・大きさ・無応答・古い / 偽 / 重複 READY・ペイン切替・状態失効・`unavailable`・既存経路 |
-| SSH の入力関数・マーカーの単体検証 | 各版 16/16 | 解除・戻り値・例外・再読み込み・EditMode の再設定・キー登録失敗・StrictMode・PSReadLine 無効化 |
-| 既存ローカル PowerShell の単体検証 | 各版 21/21 | PR #39 のキー登録・待機マーカー・失敗経路を維持 |
-| 既存 PowerShell / Starship の標準回帰 | 74 プロセスケース、34 callback、494/494 | 既知失敗 4 件（両版の `integration-first` / `threshold-large`）、予期しない失敗 0 |
 | Git Bash / Starship の回帰検証 | control 26/26、nounset 34/34、array-before 35/35、最終単独 37/37 | 終了コード・プロンプト・フック・通知と新しいマーカー解除の共存 |
 
 UI の処理が止まり、期限の timer より古い READY が先に処理される競合を見つけた。Lua の待機状態に開始時刻と 3 秒の期限を保存し、READY 処理でも期限の到達・超過・時計の後戻りを確認するように修正した。timer 未処理の期限境界・5.5 秒遅延・時計の後戻りを拒否し、期限直前の正常応答は一度だけ送る回帰を追加した。実 WezTerm の時刻 API は Linux / Windows で検証し、Lua は両環境で 78/78 が成功した。 修正後の Lua SHA-256 は `613b50588dd3bfd43a346b130a6892cf6e366b22bc8790bebac0b7245e3f9e44`。Linux の実 SSH GUI は修正後も 12/12 が成功した。
@@ -575,12 +540,6 @@ V2 は最初の READY の後に `WZP2:<nonce>:` ヘッダーだけを送り、�
 
 対象の SHA-256 は PowerShell `334beaa83d8f87f816c8446bc9aed6ee5304f3125b16e758fb14a1f06e672787`、Lua `8de4a8e5a4f43da4b47d33aab036ec53171e05a65354c8f41a423285a543a225`。Bash は V1 試験時から変更していない。
 
-| 検証 | 結果 | 実施範囲 |
-| --- | --- | --- |
-| Linux の実 WezTerm → SSH → Windows | 12/12 | 5.1 / 7 × 管理者 / 非管理者、共有操作・右クリック・Ctrl+Shift+V。バッファ一致、Enter 前の未実行、Enter 後一度だけの実行 |
-| Linux の実 SSH / ConPTY で受信を直接検証 | 108/108 | 5.1 / 7 × 管理者 / 非管理者の各 26 ケース、通常プロファイルの子から管理者親へ復帰 2 件、PowerShell から専用 Git Bash へ復帰 2 件 |
-| SSH マーカーと既存ローカル貼り付けの単体検証 | 各版 16/16 と 21/21 | PS5 / PS7 の専用 NoProfile プロセス。パーサーのエラーも両版 0 |
-| Lua の状態検証 | Linux / Windows 各 100/100 | 実 WezTerm の時刻 API と stub。二段 READY、古い / 偽 / 重複 BODYREADY、準備期限・時計の後戻り、取消、同じ epoch の再送抑止、RESULT 後の終端非送信、旧版混在、既存経路 |
 
 Linux GUI の結果は `tests/paste/results/linux-gui-ssh-20261012-032011-ce8e32e7/summary.json`、Windows Lua は当初 `tests/paste/results/windows-lua-v2/lua.json` に採取した。このファイルは後の 102 件の追試で上書きされ、最終結果を別のファイルへ退避した。Windows の実 SSH GUI は未検証で、V1 のローカル ConPTY 48/48 と 6/6 は V2 の GUI 試験とは区別する。
 
@@ -595,10 +554,6 @@ Grok Build（`grok-4.7`）の V2 再レビューで、送信完了の記録が `
 
 最終ソースの SHA-256 は PowerShell `b79886ec05c756f5c6ef01acde5ac996170f107351d030c862c19d43f0d4dfa4`、Lua `e08ef96636a3d1eab0c6371e49ed3995550612f272a8765086aebc2d626144ac`。
 
-| 検証 | 結果 | 実施範囲 |
-| --- | --- | --- |
-| Lua の状態検証 | Linux / Windows 各 102/102 | 100 件に完全送信失敗・部分送信失敗を追加。終端だけで取消し、本文再送と同じ epoch の再発火をしない |
-| Linux の実 WezTerm → SSH → Windows | 代表 3/3 | 最終両ソースの PowerShell 7 管理者で共有操作・右クリック・Ctrl+Shift+V。バッファ一致、Enter 前未実行、Enter 後一度だけの実行 |
 
 結果は `tests/paste/results/windows-lua-v2-body-failure/lua.json` と `linux-gui-ssh-20261012-033356-d523a110/summary.json`。初回 V2 の上限・型キャッシュ追加試験は `ssh-20261012-032350-f7469421/summary.json` の 112/112。PowerShell `334beaa…` で 65,536 バイトを保持し、65,537 バイトは両版・両権限で拒否した。正常受信は PS5 管理者 34.287 秒・非管理者 53.101 秒、PS7 管理者 37.009 秒・非管理者 56.204 秒。旧 V1 型を試験用プロセスに先に作ってから V2 の初回読み込みと再読み込みも確認した。同名 V2 型を更新する試験ではなく、更新時には新しいプロセスを使う。
 

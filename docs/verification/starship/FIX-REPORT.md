@@ -76,7 +76,7 @@ python -X utf8 tests/starship/live-check.py --fix
 
 ## 制限と未検証範囲
 
-- 統合 → Starship の推奨外の初期化順では、統合をもう一度読むまで A / B が欠ける。通常の導入では [docs/install.md の手順 5](https://github.com/ryo-aoki-pc/wezterm/blob/6e80f5c013b1e4b2423627705180c364ce70955c/docs/install.md#実施手順)に従って並びを直し、新しいタブを開く。
+- 統合 → Starship の推奨外の初期化順では、統合をもう一度読むまで A / B が欠ける。導入時は [WezTerm の設定を導入する](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#wezterm-の設定を導入する)に従い、共通 bash 設定の読む順番で新しいタブを開く。検証時に使った並びは [当時の手順書](https://github.com/ryo-aoki-pc/wezterm/blob/6e80f5c013b1e4b2423627705180c364ce70955c/docs/install.md#実施手順)の手順 5 のもの。
 - OS 通知センターへのトースト表示と、物理キーを押しての操作は未確認。実ペインでは WezTerm の action と通知データを確認した。
 - WSL、Linux / macOS、MSYS2 / QMK MSYS、zsh、古い Bash の実行は今回の修正後テストの対象外。Starship の表示は専用の短い TOML を使い、全モジュールや外部サービスは検証していない。
 - PowerShell の統合は今回変更していない。前回記録した Starship 再初期化後の問題は今回の Git Bash 修正の対象外。
