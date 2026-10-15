@@ -2,7 +2,7 @@
 
 この記録は SSH 不具合の調査結果で、最終修正前に採取したもの。修正と配置後の確認は [SSH-FIX-REPORT.md](SSH-FIX-REPORT.md) を参照する。
 
-公開用の集計は [verification-summary.json](verification-summary.json) にまとめた。生出力、実ペイン本文、環境の状態、cache、準備ファイルと配置前の控えはローカル保存の生成物で、Git の管理対象には含めない。再実行の前提は [README.md](README.md) を参照する。
+公開用の集計は [verification-summary.json](../../../tests/starship/verification-summary.json) にまとめた。生出力、実ペイン本文、環境の状態、cache、準備ファイルと配置前の控えはローカル保存の生成物で、Git の管理対象には含めない。再実行の前提は [README.md](../../../tests/starship/README.md) を参照する。
 
 検証日: 2026-10-06（Asia/Tokyo）
 
@@ -109,7 +109,7 @@ Git Bash 経由と OpenSSH 直接の SSH 判定、リモートから `WEZTERM_PR
 
 ## 記録
 
-[SSH 調査時の公開集計](verification-summary.json)に、実 PTY の必須 220 評価、失敗した 10 評価、実 WezTerm の機能確認 46 件と不具合再現 10 件、Lua モデルの確認件数をまとめた。環境・読み込み順・履歴設定・転送条件のプローブ、準備 manifest、生出力、実ペイン本文、後片付け記録は、`ssh-results/` のローカル生成物として保持した。
+[SSH 調査時の公開集計](../../../tests/starship/verification-summary.json)に、実 PTY の必須 220 評価、失敗した 10 評価、実 WezTerm の機能確認 46 件と不具合再現 10 件、Lua モデルの確認件数をまとめた。環境・読み込み順・履歴設定・転送条件のプローブ、準備 manifest、生出力、実ペイン本文、後片付け記録は、`ssh-results/` のローカル生成物として保持した。
 
 bash-preexec の単独補助プローブは、状態保存より前にフックを呼ぶ最小 stub の診断。公式の `__bp_install` と DEBUG trap を再現していないため、通常 SSH のパイプ状態の判定根拠には用いていない。
 

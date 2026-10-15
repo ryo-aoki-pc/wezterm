@@ -6,35 +6,20 @@
 
 ## 導入手順の正本
 
-Windows 11・AlmaLinux 10 の導入・利用・更新・任意操作は、setup-notes の [windows-setup.md](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/windows-setup.md) と [almalinux-setup.md](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/almalinux-setup.md) を正本にする。WezTerm の導入・設定・更新は、シェルと端末のセットアップ（[shell-terminal.md](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md) の [Windows 11](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#windows-11-で使う) と [AlmaLinux 10](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#almalinux-10-で使う)）を正本にする。SSH 先の PowerShell は、setup-notes の「Windows 11 の初期設定」の [SSH で管理者・非管理者の PowerShell を使う](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/windows-setup.md#ssh-で管理者非管理者の-powershell-を使う)を正本にする。既存の手順も対象とする。
-
-- 固有の仕様・他 OS の手順・開発者検査・理由・注意・検証記録・ロールバックが残る文書は保持する
-- 案内だけになった旧文書は削除する。README から上の手順書と[集約対応表](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/dev/consolidation-map.md)へ案内する
-
-文書規則は、Windows・AlmaLinux の実行手順には上の正本へ適用する。操作や移動先を変えたら正本・README・集約対応表・参照情報を同期し、過去の検証本文は保持する。共通 bash 設定が読むツールの初期化を `~/.bashrc` に直接追記しない。
+導入・設定・更新の手順は、setup-notes の [shell-terminal.md](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md) の「WezTerm」とその子の項（AlmaLinux 10）、「Windows 11 で WezTerm を入れる」「Git Bash と WezTerm の設定」とその子の項（Windows 11）にある。SSH 先の PowerShell は、windows-setup.md の [SSH で管理者・非管理者の PowerShell を使う](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/windows-setup.md#ssh-で管理者非管理者の-powershell-を使う)にある。このリポジトリには置かない。共通 bash 設定が読むツールの初期化を、手順書で `~/.bashrc` に直接追記させない。
 
 ## このリポジトリは何か
 
 [WezTerm](https://wezterm.org/) の nightly 向けの個人設定。Windows 11（既定のシェルは Git Bash）が主で、Linux（GNOME Wayland）と macOS でも同じ設定が動くように書いてある。`~/.config/wezterm`（Windows は `%USERPROFILE%\.config\wezterm`）に clone して使う。
 
-- 機能・キー操作・シェル統合の仕組みの説明は `README.md`（参照用）
-- 導入の手順は上の正本。`docs/install.md` は案内と他 OS の操作
-- 過去の検証環境・実施日・対象コミット・実出力・結果・未確認事項は `docs/verification/install.md`、選定理由と技術的説明は `docs/reference/install.md`
+- README は、冒頭の「導入」の表（正本の項への案内）と、機能・キー操作・シェル統合の仕組みの説明（参照用）
+- MSYS2・QMK MSYS・zsh でシェル統合を読む 1 行は、README の「bash（Git Bash / MSYS2 / QMK MSYS / Linux）と zsh」にある
 
-ビルド・テストフレームワークは無い。ドキュメント・コードのコメント・コミットメッセージは日本語で書く。検証していないことを「動く」と書かない。
+ビルド・テストフレームワークは無い（`tests/` は手で動かす検証の道具）。ドキュメント・コードのコメント・コミットメッセージは日本語で書く。検証していないことを「動く」と書かない。
 
 ## よく使うコマンド
 
-```bash
-# 設定の読み込みの確認。`ERROR  wezterm_gui >` の行が出なければ読めている（終了コードは誤りがあっても 0）
-wezterm --config-file "$PWD/wezterm.lua" ls-fonts --text 'aあ'
-
-# キー割り当ての一覧。設定を読めなくても黙って既定の一覧を出すので、読み込みの確認には使わない
-wezterm --config-file "$PWD/wezterm.lua" show-keys
-
-# シェル統合の構文の確認
-bash -n shell/wezterm.sh && zsh -n shell/wezterm.sh
-```
+設定の読み込み（`ls-fonts`）・キー割り当て（`show-keys`）・シェル統合の構文（`bash -n` / `zsh -n`）の確かめ方は、README の「動作確認」にある。`show-keys` は設定を読めなくても黙って既定の一覧を出すので、読み込みの確認には `ls-fonts` を使う。
 
 - 画面の無い環境でシェル統合を試すときは、`wezterm-mux-server --daemonize` を起動し、`wezterm cli spawn` / `send-text --no-paste` / `get-text` / `list` を使う（`docs/verification/install.md` のコンテナ記録と同じ方法。設定の `set_environment_variables` が効き、シェルはログインシェルで起動する）
 - AlmaLinux 10 のコンテナで WezTerm を入れるときは、setup-notes のシェルと端末のセットアップ（`docs/shell-terminal.md`）の「WezTerm」の手順 1〜4（COPR の `rhel-9-<arch>` を明示。もとは `docs/wezterm-nightly.md`）
@@ -48,7 +33,9 @@ bash -n shell/wezterm.sh && zsh -n shell/wezterm.sh
   - `shells.lua` はシェル・WSL・SSH ホストを探して `launch_menu` / `default_prog` を組み立て、bash 系に環境変数 `WEZTERM_SHELL_INTEGRATION`（`shell/wezterm.sh` のパス）を渡し、PowerShell には `-NoExit -Command` で `shell/wezterm.ps1` を読ませる
 - `shell/wezterm.sh` — bash / zsh のシェル統合（OSC 7・OSC 133・完了通知のユーザー変数・実行中のコマンドのユーザー変数 `WEZTERM_PROG`・迷子のマウス報告よけ）。`~/.bashrc` の 1 行で読む
 - `shell/wezterm.ps1` — PowerShell のシェル統合。**UTF-8 の BOM 付き**で保存する（Windows PowerShell 5.1 は BOM の無い `.ps1` を ANSI として読み、日本語のコメントで構文エラーになる）
-- `docs/install.md` — 正本への案内と他 OS の操作
+- `docs/extra/install.md` — 設定のロールバックと注意点。`docs/reference/install.md` — 正本の手順の背景と選定理由、Windows の SSH 先への貼り付けの実装
+- `docs/verification/` — 検証記録（`install.md` は導入とシェル統合、`readme.md` は README にあった実機の記録、`starship/` は Starship との共存の報告書）
+- `tests/` — 手で動かす検証の道具（`paste/` は貼り付け、`starship/` は Starship との共存。`starship/verification-summary.json` は公開用の集計）
 
 ## 変えたら合わせて直すもの
 
@@ -56,8 +43,8 @@ bash -n shell/wezterm.sh && zsh -n shell/wezterm.sh
 - コマンドパレットの項目（`lua/palette.lua` の `ENTRIES`）→ README の「コマンドパレットの独自項目」
 - nightly だけの設定を使ったとき → README の「使用している nightly 限定機能」の表
 - よく変える値の場所を動かしたとき → README の「カスタマイズの勘所」、ファイルを足したとき → README の「ファイル構成」
-- 導入のしかたが変わる変更（配置先、シェル統合の読み込み方・環境変数、`lua/shells.lua` の `set_environment_variables`）→ 正本の手順と `docs/reference/install.md` の注意点。検証を行ったら `docs/verification/install.md` に対象版と結果を追加する
-  - AlmaLinux 10 の COPR 版は `/etc/profile.d/wezterm.sh`（公式の統合）が先に読まれる。Bash では公式の cwd・ユーザー変数・bash-preexec を保ち、semantic の 2 callback だけを独自処理へ移して完了通知を補う。`WEZTERM_SHELL_SKIP_ALL=1` は渡さない。公式との担当や確かめ用の関数が変わったら、正本の「WezTerm の設定を導入する」の手順 6 と `docs/reference/install.md` の注意点を合わせる
+- 導入のしかたが変わる変更（配置先、シェル統合の読み込み方・環境変数、`lua/shells.lua` の `set_environment_variables`）→ 正本の手順・README の「導入」の表・`docs/extra/install.md` の注意点。検証を行ったら `docs/verification/install.md` に対象版と結果を追加する
+  - AlmaLinux 10 の COPR 版は `/etc/profile.d/wezterm.sh`（公式の統合）が先に読まれる。Bash では公式の cwd・ユーザー変数・bash-preexec を保ち、semantic の 2 callback だけを独自処理へ移して完了通知を補う。`WEZTERM_SHELL_SKIP_ALL=1` は渡さない。公式との担当や確かめ用の関数が変わったら、正本の「WezTerm の設定を導入する」の手順 6 と `docs/extra/install.md` の注意点を合わせる
   - シェル統合を読む 1 行や置き場所を変えたら、自分用の bash の設定（`ryo-aoki-pc/bash`）の `bashrc`・`migrate/old-lines.txt` も直す。その設定は、starship → この統合 → zoxide の順に読む（`PROMPT_COMMAND`・`PS0` の扱いを変えたら、bash リポジトリの検証記録にある「読む順番」の実測を取り直す）
 
 ## コードの注意
@@ -83,10 +70,13 @@ bash -n shell/wezterm.sh && zsh -n shell/wezterm.sh
 - Git Bash（MSYS2）から起動したプログラム（`vim`・`ssh` など）は、Windows 上で親プロセスが消えるので WezTerm から見えない（フォアグラウンドは常に `bash.exe`）。プロセス名に頼る判定は Git Bash では効かないので、シェル統合の印（OSC 133 の範囲・`WEZTERM_PROG`）を使う。`skip_close_confirmation_for_processes_named` に `bash.exe` を足さない（vim の編集中でも確認なしで閉じる）
 - Git Bash では `$(…)` のサブシェル 1 回に約 10ms、外部コマンド（`cygpath`・`base64` など）1 回に 40〜55ms かかる。プロンプトごと・コマンドごとに動く処理では避ける（bash 5.3 の `${ …; }`、結果の使い回し）
 
-## docs/install.md の書き方
+## 文書の置き場所
 
-
-Windows・AlmaLinux の操作は setup-notes の2冊を、WezTerm の導入・設定・更新は「シェルと端末のセットアップ」を正本にする。SSH 先の PowerShell は、setup-notes の「Windows 11 の初期設定」の [SSH で管理者・非管理者の PowerShell を使う](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/windows-setup.md#ssh-で管理者非管理者の-powershell-を使う)を正本にする。執筆規則は setup-notes の `docs/dev/writing-rules.md` に従う。文書の保持・削除と README の案内は[導入手順の正本](#導入手順の正本)に従う。操作を変えたら正本と参照情報を同期する。検証記録の既存本文は実施時点のまま保持し、新しい対象版・環境・範囲を追記する。
+- 導入・利用・更新の手順は正本に置き、README の「導入」の表から正本の項へ直接リンクする（手順書の先頭やカテゴリの見出しへはリンクしない）。執筆規則は setup-notes の `docs/dev/writing-rules.md`
+- `docs/extra/` はロールバックと注意点、`docs/reference/` は背景、`docs/verification/` は検証記録（環境・日付・対象コミット・実出力・未確認事項）。検証の報告書も `docs/verification/` に置き、`tests/` には道具だけを置く
+- 案内だけになった文書・節は消し、旧パスと移動先を setup-notes の集約対応表に足す。消すときは参照元のリンクを付け替える（検証記録は、削除前の固定コミットの URL にする）
+- 検証記録の既存の本文・手順番号・出力は変えない。新しい対象版・環境・範囲は追記する
+- 操作を変えたら、正本・README の「導入」の表・参考資料を合わせて直す
 
 ## 共同作業の規則
 

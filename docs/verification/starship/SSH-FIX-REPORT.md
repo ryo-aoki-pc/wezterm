@@ -1,6 +1,6 @@
 # SSH 先の Starship と公式 Bash 統合の修正後の検証
 
-公開用の集計は [verification-summary.json](verification-summary.json) にまとめた。生出力、実ペイン本文、環境の状態、cache、準備ファイルと配置前の控えはローカル保存の生成物で、Git の管理対象には含めない。再実行の前提は [README.md](README.md) を参照する。
+公開用の集計は [verification-summary.json](../../../tests/starship/verification-summary.json) にまとめた。生出力、実ペイン本文、環境の状態、cache、準備ファイルと配置前の控えはローカル保存の生成物で、Git の管理対象には含めない。再実行の前提は [README.md](../../../tests/starship/README.md) を参照する。
 
 検証日: 2026-10-06（Asia/Tokyo）
 
@@ -67,7 +67,7 @@
 - Windows: `$env:USERPROFILE/.config/wezterm/shell/wezterm.sh`
 - `kawasaki-pi`: `$HOME/.config/wezterm/shell/wezterm.sh`
 
-更新後は両方が検証済みの SHA-256 と一致した。反映後の通常 SSH を専用 GUI で確認し、37 件すべて成立した。戻す場合は、この控えが対象の配置前ファイルであることと現在の内容を照合し、`shell/wezterm.sh` だけを戻す。配置と控えの詳細記録はローカル生成物として保持した。公開用の検証件数と対象ソースハッシュは [verification-summary.json](verification-summary.json) にある。
+更新後は両方が検証済みの SHA-256 と一致した。反映後の通常 SSH を専用 GUI で確認し、37 件すべて成立した。戻す場合は、この控えが対象の配置前ファイルであることと現在の内容を照合し、`shell/wezterm.sh` だけを戻す。配置と控えの詳細記録はローカル生成物として保持した。公開用の検証件数と対象ソースハッシュは [verification-summary.json](../../../tests/starship/verification-summary.json) にある。
 
 ## 読む順番の記録
 
@@ -75,7 +75,7 @@
 
 ## 記録と再実行
 
-[修正後の公開集計](verification-summary.json)に、実 SSH、Git Bash 回帰、実 WezTerm 比較、配置後の通常接続、委譲ガードの確認件数・条件・成立状況とソースハッシュをまとめた。`ssh-fix-results/` の生出力、専用 rc、実ペイン本文と状態、配置・README 更新・後片付けの記録はローカル生成物として保持した。
+[修正後の公開集計](../../../tests/starship/verification-summary.json)に、実 SSH、Git Bash 回帰、実 WezTerm 比較、配置後の通常接続、委譲ガードの確認件数・条件・成立状況とソースハッシュをまとめた。`ssh-fix-results/` の生出力、専用 rc、実ペイン本文と状態、配置・README 更新・後片付けの記録はローカル生成物として保持した。
 
 リモートの試験ディレクトリは除去し、別 SSH の `test ! -e` と `TEMP_REMOVED` で確認した。再準備の補助確認では、リモート内で現在配置を比較用に複製し、SHA 一致・22 rc の参照先・試験ディレクトリの除去を確認した。
 

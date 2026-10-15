@@ -1,8 +1,8 @@
 # Starship と WezTerm の検証
 
-Git Bash と SSH 先の Starship が、このリポジトリのシェル統合・出力コピー・完了通知と共存するかを確かめる手動検証用の harness。最終修正と配置後の確認は [SSH-FIX-REPORT.md](SSH-FIX-REPORT.md)、公開用の集計は [verification-summary.json](verification-summary.json) にある。
+Git Bash と SSH 先の Starship が、このリポジトリのシェル統合・出力コピー・完了通知と共存するかを確かめる手動検証用の harness。最終修正と配置後の確認は [SSH-FIX-REPORT.md](../../docs/verification/starship/SSH-FIX-REPORT.md)、公開用の集計は [verification-summary.json](verification-summary.json) にある。
 
-修正前の調査は [REPORT.md](REPORT.md)・[bash-report.md](bash-report.md)・[SSH-REPORT.md](SSH-REPORT.md)、Git Bash 修正直後の中間結果は [FIX-REPORT.md](FIX-REPORT.md) に残している。過去の不成立を現在の結果として扱わないこと。
+修正前の調査は [REPORT.md](../../docs/verification/starship/REPORT.md)・[bash-report.md](../../docs/verification/starship/bash-report.md)・[SSH-REPORT.md](../../docs/verification/starship/SSH-REPORT.md)、Git Bash 修正直後の中間結果は [FIX-REPORT.md](../../docs/verification/starship/FIX-REPORT.md) に残している。過去の不成立を現在の結果として扱わないこと。
 
 ## 前提
 
@@ -22,7 +22,7 @@ python -X utf8 tests/starship/live-run.py --fix
 python -X utf8 tests/starship/live-check.py --fix
 ```
 
-SSH の準備・実 PTY・実 WezTerm・後片付けを含む順序は [SSH-FIX-REPORT.md の再実行例](SSH-FIX-REPORT.md#記録と再実行) にある。`ssh-check.py` の準備を先に行うと、リモートに一時ディレクトリと専用 rc を作り、手元へ `prepared.json` を生成する。実 WezTerm 用の runner はこの manifest を読む。試験終了時は `ssh-check.py` の cleanup を実行する。
+SSH の準備・実 PTY・実 WezTerm・後片付けを含む順序は [SSH-FIX-REPORT.md の再実行例](../../docs/verification/starship/SSH-FIX-REPORT.md#記録と再実行) にある。`ssh-check.py` の準備を先に行うと、リモートに一時ディレクトリと専用 rc を作り、手元へ `prepared.json` を生成する。実 WezTerm 用の runner はこの manifest を読む。試験終了時は `ssh-check.py` の cleanup を実行する。
 
 `live-check.py`・`ssh-live-check.py`・`ssh-fix-live-check.py` は対応する runner の記録を入力にするため、runner を先に実行する。Lua 単独の SSH モデルを実行するときも、結果を書き出す `ssh-results/` を準備する。
 
