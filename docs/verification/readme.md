@@ -15,22 +15,6 @@ WezTerm からは `bash.exe` しか見えず、vim の編集中でも確認な�
 
 Linux / ssh の説明の対象版: [92f799a6ee6f45d1648db622760ffeea2ed5ad98](https://github.com/ryo-aoki-pc/wezterm/blob/92f799a6ee6f45d1648db622760ffeea2ed5ad98/README.md)。現在の動作は [README](../../README.md#シェル統合)を参照。
 
-## Linux の公式シェル統合
-
-Linux 版 WezTerm のパッケージは公式のシェル統合を `/etc/profile.d/wezterm.sh` に置きます。
-それが読み込まれている環境では OSC 7 / OSC 133 は公式側に任せ、`shell/wezterm.sh` は
-マウス報告よけだけを残して抜けます（同名の `__wezterm_osc7` を上書きして公式側のフックを
-壊さないため）。この場合、完了通知は動きません。AlmaLinux 10 の COPR 版では、公式側が
-すべての対話シェルで先に読まれ、この形になることをコンテナで確かめました
-（[設定の注意点](../extra/install.md#注意点)）。
-
-## ssh 先の公式シェル統合
-
-ssh 先でパッケージ付属の公式統合が先に読まれる場合は、上の 3 条件だけでは完了通知は使えません。
-この設定の統合はマウス報告よけだけになり、Starship との併用では出力の区切りも失われることがあります。
-外部の AlmaLinux 10 / aarch64 の 2 台で通常接続と、公式統合を止めた一時セッションを比較した結果は
-[追加検証の記録](install.md#付録-os-通知と外部-ssh-の追加検証2026-10-06)にあります。
-
 ## SSH のシェル統合の検証（2026-10-06）
 
 記録を確認した版: [6474a968ad06844d078828468f762272f751a4b0](https://github.com/ryo-aoki-pc/wezterm/blob/6474a968ad06844d078828468f762272f751a4b0/README.md)。
