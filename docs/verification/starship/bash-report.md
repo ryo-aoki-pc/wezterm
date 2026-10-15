@@ -2,7 +2,7 @@
 
 この記録は Git Bash 修正前の調査結果。最終修正後の回帰確認は [SSH-FIX-REPORT.md](SSH-FIX-REPORT.md) を参照する。
 
-公開用の集計は [verification-summary.json](verification-summary.json) にまとめた。生出力、実ペイン本文、環境の状態、cache、準備ファイルと配置前の控えはローカル保存の生成物で、Git の管理対象には含めない。再実行の前提は [README.md](README.md) を参照する。
+公開用の集計は [verification-summary.json](../../../tests/starship/verification-summary.json) にまとめた。生出力、実ペイン本文、環境の状態、cache、準備ファイルと配置前の控えはローカル保存の生成物で、Git の管理対象には含めない。再実行の前提は [README.md](../../../tests/starship/README.md) を参照する。
 
 Git Bash 5.3.15(2)-release（`OSTYPE=cygwin`）とインストール済み Starship 1.26.0 を使った。`bash --noprofile --rcfile <テスト専用ファイル> -i` の標準入力へコマンドを送り、stdout と stderr の生バイトを一緒に保存した。18 種類の条件を比較した。本番の `.bashrc`、Starship 設定、WezTerm 設定は変更していない。
 
@@ -60,6 +60,6 @@ python tests/starship/bash-helpers.py
 python tests/starship/bash-summarize.py
 ```
 
-[修正前の公開集計](verification-summary.json)に、条件別の確認件数と成立・不成立をまとめた。`bash-results.json`、代表的な生の OSC と読みやすい表示、パイプ状態の可視差、helper の詳細はローカル生成物として保持した。
+[修正前の公開集計](../../../tests/starship/verification-summary.json)に、条件別の確認件数と成立・不成立をまとめた。`bash-results.json`、代表的な生の OSC と読みやすい表示、パイプ状態の可視差、helper の詳細はローカル生成物として保持した。
 
 このテストの外にある zsh、WSL、Linux / macOS は未検証。root の Starship 設定を読まない最小の表示設定で試した。Starship のモジュール全体や外部サービスは対象にしていない。

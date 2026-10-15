@@ -2,7 +2,7 @@
 
 この記録は Git Bash 修正直後の中間結果。続く SSH 対応を含む最終コードと配置後の確認は [SSH-FIX-REPORT.md](SSH-FIX-REPORT.md) を参照する。
 
-公開用の集計は [verification-summary.json](verification-summary.json) にまとめた。生出力、実ペイン本文、環境の状態、cache、準備ファイルと配置前の控えはローカル保存の生成物で、Git の管理対象には含めない。再実行の前提は [README.md](README.md) を参照する。
+公開用の集計は [verification-summary.json](../../../tests/starship/verification-summary.json) にまとめた。生出力、実ペイン本文、環境の状態、cache、準備ファイルと配置前の控えはローカル保存の生成物で、Git の管理対象には含めない。再実行の前提は [README.md](../../../tests/starship/README.md) を参照する。
 
 検証日: 2026-10-06（Asia/Tokyo）
 
@@ -64,7 +64,7 @@ Bash の全 393 評価には、推奨外の逆順を比較する 26 評価が含
 
 実ペイン検証の GUI stderr には、CLI 接続終了時の `PDU write` / `os10054` が 4 件記録された。各 CLI は成功し、19 件の確認が成立した。Lua 設定の読込エラーはなかった。
 
-[Git Bash 修正直後の公開集計](verification-summary.json)に、条件別の確認件数、推奨外の制限、検証時のソースハッシュをまとめた。再初期化単独の補助確認は 10 / 10、実ペインの確認は 19 / 19 成立した。専用 rc、生出力、読みやすい出力、cache、zoxide のデータと実ペインの詳細は、`fix-results/` のローカル生成物として保持した。
+[Git Bash 修正直後の公開集計](../../../tests/starship/verification-summary.json)に、条件別の確認件数、推奨外の制限、検証時のソースハッシュをまとめた。再初期化単独の補助確認は 10 / 10、実ペインの確認は 19 / 19 成立した。専用 rc、生出力、読みやすい出力、cache、zoxide のデータと実ペインの詳細は、`fix-results/` のローカル生成物として保持した。
 
 この環境で再実行するときは、PowerShell から以下を実行する。Git Bash、Starship、zoxide、WezTerm が導入された環境を使う。`--fix` は結果を `fix-results/live/` に保存する。
 
@@ -76,7 +76,7 @@ python -X utf8 tests/starship/live-check.py --fix
 
 ## 制限と未検証範囲
 
-- 統合 → Starship の推奨外の初期化順では、統合をもう一度読むまで A / B が欠ける。通常の導入では [docs/install.md の手順 5](../../docs/install.md#実施手順)に従って並びを直し、新しいタブを開く。
+- 統合 → Starship の推奨外の初期化順では、統合をもう一度読むまで A / B が欠ける。通常の導入では [docs/install.md の手順 5](https://github.com/ryo-aoki-pc/wezterm/blob/6e80f5c013b1e4b2423627705180c364ce70955c/docs/install.md#実施手順)に従って並びを直し、新しいタブを開く。
 - OS 通知センターへのトースト表示と、物理キーを押しての操作は未確認。実ペインでは WezTerm の action と通知データを確認した。
 - WSL、Linux / macOS、MSYS2 / QMK MSYS、zsh、古い Bash の実行は今回の修正後テストの対象外。Starship の表示は専用の短い TOML を使い、全モジュールや外部サービスは検証していない。
 - PowerShell の統合は今回変更していない。前回記録した Starship 再初期化後の問題は今回の Git Bash 修正の対象外。

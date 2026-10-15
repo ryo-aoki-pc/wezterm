@@ -1,6 +1,6 @@
 # WezTerm 設定導入の検証記録
 
-[手順書](../install.md) に記載していた検証結果を移動した記録。各記録の実施時点・対象版・未確認事項を保持し、この文書の移動による再検証は行っていない。
+[手順書](https://github.com/ryo-aoki-pc/wezterm/blob/6e80f5c013b1e4b2423627705180c364ce70955c/docs/install.md) に記載していた検証結果を移動した記録。各記録の実施時点・対象版・未確認事項を保持し、この文書の移動による再検証は行っていない。
 
 以下の既存記録は公式 Bash 統合との共存修正前の説明を含む。2026-10-06 の追加検証と修正後の範囲は[修正後の状態](#修正後の状態2026-10-06)を参照。
 
@@ -397,7 +397,7 @@ Windows の Git Bash `5.3.15(2)-release`、Starship `1.26.0`、WezTerm `20260905
 - 実 WezTerm の隔離ペインでは、23 snapshots の 19 件の確認がすべて成立した。Starship 起動時と後付け後のどちらも Prompt / Input / Output の範囲が生成され、直前の出力だけをコピーできた。プロンプトジャンプ後の可視範囲、cwd の分割先への引継ぎ、リサイズ・コピーモード・ズーム、Bash の失敗通知データ、PowerShell 2 種の回帰確認 8 件を含む
 - 統合 → starship の推奨外の並びでは、統合をもう一度読むまで A / B の一部が欠ける。追加読込後の復旧は確認したが、導入時は[手順 5](https://github.com/ryo-aoki-pc/wezterm/blob/f7fe6b33b36e806e99148d9551f16f0ee01e4949/docs/install.md#実施手順)の並びに直して新しいタブを開く
 
-詳しい修正内容、再実行方法、生の出力と未検証範囲は [Git Bash の修正後の検証記録](../../tests/starship/FIX-REPORT.md)に保存した。修正前の結果は [Starship 適用時の検証記録](../../tests/starship/REPORT.md)と上の 2026-09-30 の付録をそのまま残している。
+詳しい修正内容、再実行方法、生の出力と未検証範囲は [Git Bash の修正後の検証記録](starship/FIX-REPORT.md)に保存した。修正前の結果は [Starship 適用時の検証記録](starship/REPORT.md)と上の 2026-09-30 の付録をそのまま残している。
 
 ### 付録: SSH 先の Starship の検証（2026-10-06）
 
@@ -413,7 +413,7 @@ Windows の WezTerm `20260905-153129-092dcf70` から、既存の AlmaLinux 10.2
 - この検証では本番のシェル統合、プロファイル、Starship 設定、SSH / sshd の設定を変更していない。履歴は `HISTFILE=/dev/null` または `unset HISTFILE` で保存を避けた
 - 試験用 GUI / ペインを終了し、リモートの専用一時ディレクトリも削除後の不存在を確認した。既存のユーザーの WezTerm プロセスは維持した
 
-隔離した修正版の条件別集計、実ペインの証拠、再実行方法と制限は [SSH 先の Starship 検証記録](../../tests/starship/SSH-REPORT.md)に保存した。過去の付録と導入コマンドは変更していない。
+隔離した修正版の条件別集計、実ペインの証拠、再実行方法と制限は [SSH 先の Starship 検証記録](starship/SSH-REPORT.md)に保存した。過去の付録と導入コマンドは変更していない。
 
 ### 付録: SSH の公式 Bash 統合と Starship の共存修正後の検証（2026-10-06）
 
@@ -427,7 +427,7 @@ Windows の WezTerm `20260905-153129-092dcf70` から、既存の AlmaLinux 10.2
 - 個人 Bash README の「読む順番」に今回の実測を追記した。初期化の 1 行・配置先は不変なので、個人 Bash の `bashrc` / `migrate` は変更していない
 - 試験用 GUI / ペインとリモートの専用一時ディレクトリを終了・除去し、既存のユーザーの WezTerm プロセスを維持した
 
-条件別の集計、ソースハッシュ、配置前の控えと反映後の確認、制限は [SSH の修正後の検証記録](../../tests/starship/SSH-FIX-REPORT.md)に保存した。修正前の記録は上の付録と [SSH-REPORT.md](../../tests/starship/SSH-REPORT.md)にそのまま残している。
+条件別の集計、ソースハッシュ、配置前の控えと反映後の確認、制限は [SSH の修正後の検証記録](starship/SSH-FIX-REPORT.md)に保存した。修正前の記録は上の付録と [SSH-REPORT.md](starship/SSH-REPORT.md)にそのまま残している。
 
 
 ## 2026-10-11 の PowerShell 貼り付け修正に伴う追加記録

@@ -2,7 +2,7 @@
 
 この記録は修正前の調査結果であり、本文の失敗や行番号は当時のコードに対するもの。最終修正と配置後の確認は [SSH-FIX-REPORT.md](SSH-FIX-REPORT.md) を参照する。
 
-公開用の集計は [verification-summary.json](verification-summary.json) にまとめた。生出力、実ペイン本文、環境の状態、cache、準備ファイルと配置前の控えはローカル保存の生成物で、Git の管理対象には含めない。再実行の前提は [README.md](README.md) を参照する。
+公開用の集計は [verification-summary.json](../../../tests/starship/verification-summary.json) にまとめた。生出力、実ペイン本文、環境の状態、cache、準備ファイルと配置前の控えはローカル保存の生成物で、Git の管理対象には含めない。再実行の前提は [README.md](../../../tests/starship/README.md) を参照する。
 
 検証日: 2026-10-06（Asia/Tokyo）
 
@@ -155,7 +155,7 @@ Codex の filesystem sandbox 内では WezTerm が HOME 解決に失敗したた
 
 公開記録:
 
-- [修正前の確認集計と検証環境](verification-summary.json)
+- [修正前の確認集計と検証環境](../../../tests/starship/verification-summary.json)
 - [Bash の調査詳細](bash-report.md)
 
 元の条件集計、helper 結果、PowerShell 計測、実ペイン本文、バージョンと対象ファイルの詳細記録は、ローカル生成物として保持した。
