@@ -1,21 +1,44 @@
 # wezterm
 
-導入・利用・更新は、シェルと端末のセットアップの [AlmaLinux 10](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#almalinux-10-で使う) / [Windows 11](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#windows-11-で使う) に集約している。設定仕様・開発者向け操作・過去の検証・ロールバックはこのリポジトリで管理する。
-
-移動先は[集約対応表](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/dev/consolidation-map.md)で確認する。
-
-
 [WezTerm](https://wezterm.org/) の個人設定です。Tokyo Night 系の配色に、ピル型タブ・
 ステータスバー・シェル選択ランチャーを組み合わせ、シェル統合でカレントディレクトリ・
 プロンプト・コマンド出力の位置を WezTerm に伝えて操作を便利にしています。
 
-Windows 11（既定シェルは Git Bash）を主に、Linux（GNOME Wayland）と macOS でも同じ設定が
-動くように書いてあります。
+Windows 11（既定シェルは Git Bash）を主に、Linux（GNOME Wayland）でも同じ設定が
+動くように書いてあります。macOS の分岐もありますが、導入の手順は無く、検証もしていません。
+
+## 導入
+
+- 対象: Windows 11 の Git Bash と、AlmaLinux 10 の GNOME の自分のユーザー
+- WezTerm は **nightly 必須**（stable では未知オプションで設定エラーになります）。フォントは
+  [HackGen Console NF](https://github.com/yuru7/HackGen)（未導入でも `Symbols Nerd Font Mono` /
+  `Noto Sans Mono CJK JP` へフォールバックします）
+- 置き場所は `~/.config/wezterm`（Windows は `%USERPROFILE%\.config\wezterm`）。既にある
+  `~/.wezterm.lua`・`~/.config/wezterm` は `.bak` に退避してから clone します
+- シェル統合は、共通の bash 設定（[ryo-aoki-pc/bash](https://github.com/ryo-aoki-pc/bash)）が読みます。
+  PowerShell は起動引数で読むので、足すものはありません
+- 手順は setup-notes の[シェルと端末のセットアップ](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md)にあり、上から順に通します
+
+| | AlmaLinux 10 | Windows 11 |
+| --- | --- | --- |
+| フォント | [HackGen Console NF](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#hackgen-console-nf) | [Windows 11 で HackGen Console NF を入れる](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#windows-11-で-hackgen-console-nf-を入れる) |
+| 共通の bash 設定 | [共通の bash 設定](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#共通の-bash-設定) | [Git Bash と WezTerm の設定](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#git-bash-と-wezterm-の設定)の手順 1〜6 |
+| 本体（nightly） | [WezTerm](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#wezterm) | [Windows 11 で WezTerm を入れる](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#windows-11-で-wezterm-を入れる) |
+| この設定 | [WezTerm の設定を導入する](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#wezterm-の設定を導入する) | [Windows 11 で WezTerm の設定を導入する](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#windows-11-で-wezterm-の設定を導入する) |
+| ssh 先・WSL でもシェル統合を使う | [WezTerm のシェル統合を SSH 先で使う](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#wezterm-のシェル統合を-ssh-先で使う) | [WezTerm のシェル統合を WSL で使う](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#wezterm-のシェル統合を-wsl-で使う) |
+| Windows の SSH 先の PowerShell に貼り付ける | [WezTerm: Windows の SSH 先で PowerShell に貼り付ける](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#wezterm-windows-の-ssh-先で-powershell-に貼り付ける) | [SSH で管理者・非管理者の PowerShell を使う](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/windows-setup.md#ssh-で管理者非管理者の-powershell-を使う) |
+| 設定の更新 | [WezTerm の設定を更新する](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#wezterm-の設定を更新する) | [Windows 11 で WezTerm の設定を更新する](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#windows-11-で-wezterm-の設定を更新する) |
+| 本体の更新 | [OS とファームウェアの更新](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/almalinux-setup.md#os-とファームウェアの更新)（COPR の nightly も OS の更新で上がる） | [Git for Windows・Firefox・WezTerm を上げる](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/windows-setup.md#git-for-windowsfirefoxwezterm-を上げる) |
+| 戻す | [WezTerm の設定のロールバック](docs/extra/install.md#ロールバック) | 同じ（Git Bash に貼る） |
+
+- 設定ファイルは保存すると自動で再読み込みされます（手動なら `Ctrl+Shift+R`）。
+  ただしウィンドウ装飾（`window_decorations`）の変更だけは WezTerm の再起動が必要です
+- 導入の後に、必要なら: `~/.ssh/config` に `Host` を書くと、起動メニューに「ssh ホスト名」が並びます
+  （→ [SSH ホスト](#ssh-ホスト)）。完了通知を使うなら、OS の通知設定で WezTerm を許可しておきます
 
 ## 目次
 
-- [必須要件](#必須要件)
-- [配置と初回セットアップ](#配置と初回セットアップ)
+- [導入](#導入)
 - [機能早見表](#機能早見表)
 - [キーバインド](#キーバインド)
 - [機能の詳細](#機能の詳細)
@@ -37,43 +60,7 @@ Windows 11（既定シェルは Git Bash）を主に、Linux（GNOME Wayland）�
 - [動作確認](#動作確認)
 - [トラブルシューティング](#トラブルシューティング)
 - [検討して見送った設定](#検討して見送った設定)
-
-## 必須要件
-
-| | |
-| --- | --- |
-| WezTerm | **nightly 必須**（stable では未知オプションで設定エラーになります） |
-| フォント | [HackGen Console NF](https://github.com/yuru7/HackGen)（日本語 + Nerd Font + Powerline） |
-
-フォントが未導入でも `wezterm.font_with_fallback` により
-`Symbols Nerd Font Mono` / `Noto Sans Mono CJK JP` へフォールバックしますが、
-見た目を揃えるには HackGen Console NF の導入を推奨します。
-
-導入の手順（前提の入れ方を含む）は [docs/install.md](docs/install.md) にあります。
-
-## 配置と初回セットアップ
-
-| OS | 配置先 |
-| --- | --- |
-| Linux / macOS | `~/.config/wezterm` |
-| Windows | `%USERPROFILE%\.config\wezterm` |
-
-導入は [docs/install.md](docs/install.md) の案内から、シェルと端末のセットアップの手順へ進みます。
-AlmaLinux 10 と Windows 11 の Git Bash に同じコマンドを貼り、次のことをします。
-
-- 既にある設定（`~/.wezterm.lua`・`~/.config/wezterm`）を `.bak` に退避する
-- このリポジトリを `~/.config/wezterm` に clone する
-- 共通 bash 設定からシェル統合を読む（→ [シェル統合](#シェル統合)。PowerShell は起動引数で読む）
-- 任意で、WSL と ssh 先でもシェル統合を使えるようにする
-
-設定ファイルは保存すると自動で再読み込みされます（手動なら `Ctrl+Shift+R`）。
-ただしウィンドウ装飾（`window_decorations`）の変更だけは WezTerm の再起動が必要です。
-
-導入の後に、必要ならやること:
-
-- **SSH 接続先**: `~/.ssh/config` に `Host` を書いておくと、起動メニューに
-  「ssh ホスト名」が並ぶ（→ [SSH ホスト](#ssh-ホスト)）
-- **通知の許可**: 完了通知を使うなら、OS の通知設定で WezTerm を許可しておく
+- [文書](#文書)
 
 ## 機能早見表
 
@@ -724,19 +711,25 @@ PSReadLine の `Insert` または選択範囲の `Replace` で入力欄へ挿入
 ### bash（Git Bash / MSYS2 / QMK MSYS / Linux）と zsh
 
 `lua/shells.lua` が環境変数 `WEZTERM_SHELL_INTEGRATION` にパスを渡すので、
-`~/.bashrc`（zsh は `~/.zshrc`）に、このパスのスクリプトを読み込む 1 行を足します。
-AlmaLinux 10・Git Bash は [setup-notes の導入案内](docs/install.md#実施手順)で共通 bash 設定を入れます。MSYS2・QMK MSYS・zsh の直接読み込みは [対象外シェルの案内](docs/install.md#almalinux-10git-bash-以外のシェル) にあります
-（starship の初期化より後ろ、zoxide の初期化より前に置きます）。
-自分用の bash の設定（`ryo-aoki-pc/bash`）を入れたホストでは、この 1 行は要りません
-（その設定が、starship・zoxide と合わせた順番でこのスクリプトを読みます）。
+`~/.bashrc`（zsh は `~/.zshrc`）から、このパスのスクリプトを読み込みます。
+AlmaLinux 10・Git Bash では、共通の bash 設定（`ryo-aoki-pc/bash`。[導入](#導入)）が、
+starship・zoxide と合わせた順番でこのスクリプトを読むので、足すものはありません。
+
+共通の bash 設定を入れないシェル（MSYS2・QMK MSYS・zsh）は、そのシェルのホームの `~/.bashrc`
+（zsh は `~/.zshrc`）に次の 1 行を足します。starship の初期化より後ろ、zoxide の初期化より前に置き、
+保存して新しい WezTerm のタブを開くと読み込みます。
+
+```bash
+[ -r "${WEZTERM_SHELL_INTEGRATION:=$HOME/.config/wezterm/shell/wezterm.sh}" ] && . "$WEZTERM_SHELL_INTEGRATION"
+```
 
 環境変数が無いときのフォールバックを付けてあるのは、tmux や ssh を挟むとこの変数が
 届かないためです（tmux サーバは起動時の環境を子プロセスへ配るので、WezTerm が渡した
-変数は後から作ったペインに入りません）。パスは「[配置と初回セットアップ](#配置と初回セットアップ)」の表どおり全 OS で
+変数は後から作ったペインに入りません）。パスは「[導入](#導入)」の置き場所どおり全 OS で
 `$HOME/.config/wezterm` なので、フォールバックだけでも読み込めます。
 
-ログインシェル（`bash -i -l`）では `--rcfile` が無視されるため、この 1 行だけは
-手で入れる必要があります。ホームディレクトリはシェルごとに異なる点に注意してください。
+WezTerm は bash をログインシェル（`bash -i -l`）で起動し、`--rcfile` は無視されるため、
+起動引数では読ませられず、`~/.bashrc` から読みます。ホームディレクトリはシェルごとに異なる点に注意してください。
 
 | シェル | `~/.bashrc` の場所 |
 | --- | --- |
@@ -761,7 +754,7 @@ AlmaLinux 10・Git Bash は [setup-notes の導入案内](docs/install.md#実施
   bash 5.3 以降（Git Bash の現行版）はサブシェルを作らずに送るので、コマンドごとの待ち時間はほぼありません
   （古い bash はサブシェルを 1〜2 回作る）。Linux / macOS では WezTerm が自分でプロセスを調べられるので送りません
 
-Git Bash + Starship の修正後の検証範囲と結果は [tests/starship/FIX-REPORT.md](tests/starship/FIX-REPORT.md) にあります。
+Git Bash + Starship の修正後の検証範囲と結果は [FIX-REPORT.md](docs/verification/starship/FIX-REPORT.md)、SSH 先を含む最終の結果は [SSH-FIX-REPORT.md](docs/verification/starship/SSH-FIX-REPORT.md) にあります。
 
 Linux 版 WezTerm のパッケージは公式のシェル統合を `/etc/profile.d/wezterm.sh` に置きます。
 公式の Bash 統合が有効なら、`shell/wezterm.sh` は公式の OSC 7・ユーザー変数・`bash-preexec` を
@@ -772,7 +765,7 @@ Linux 版 WezTerm のパッケージは公式のシェル統合を `/etc/profile
 `bash-preexec` が終了コードとパイプ状態を保存し、Starship がプロンプトを作り直した後に印を付けるため、
 公式の印と独自の印を二重に送らない構成です。zsh・ble.sh・tmux、semantic の明示的な無効化では、
 従来どおり公式へ任せます。初期化の 1 行、Starship → 統合 → zoxide の読む順番、環境変数の設定は変更しません
-（[docs/install.md の注意点](docs/install.md#注意点)）。
+（[注意点](docs/extra/install.md#注意点)）。
 
 公式の bash-preexec 経路で Starship だけを直接再初期化した場合は、この統合も続けて読み直します。
 Starship が重ねた登録を各 1 個へ戻します。通常の個人 Bash 設定は Starship の再初期化をガードしています。
@@ -781,7 +774,7 @@ Starship が重ねた登録を各 1 個へ戻します。通常の個人 Bash �
 
 WSL ドメインは起動引数を渡せないため、WSL 側の `~/.bashrc` に、Windows 側の
 `/mnt/c/Users/<ユーザー名>/.config/wezterm/shell/wezterm.sh` を読み込む行を直接書きます。
-足し方は [docs/install.md の「WSL でもシェル統合を使う（任意）」](docs/install.md#wsl-でもシェル統合を使う任意) にあります。
+足し方は setup-notes の[WezTerm のシェル統合を WSL で使う](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#wezterm-のシェル統合を-wsl-で使う) にあります。
 
 WezTerm が WSL の中へ渡す環境変数は `TERM`・`COLORTERM`・`TERM_PROGRAM`・`TERM_PROGRAM_VERSION` だけです
 （`WSLENV`）。`TERM_PROGRAM` は届くので統合は動きますが、`WEZTERM_SHELL_INTEGRATION` や
@@ -799,7 +792,7 @@ ssh は `$TERM_PROGRAM` を既定では接続先へ渡しません。公式統�
 プロンプトジャンプ・出力のコピーは、接続先の別の統合が OSC 133 の区切りを正しく送る場合に限り使えます。
 
 公式統合が無い ssh 先では、次の 3 つを設定します（自分で管理しているホスト向け）。
-手順は [docs/install.md の「ssh 先でもシェル統合を使う（任意）」](docs/install.md#ssh-先でもシェル統合を使う任意) にあります。
+手順は setup-notes の[WezTerm のシェル統合を SSH 先で使う](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#wezterm-のシェル統合を-ssh-先で使う) にあります。
 
 - **手元の `~/.ssh/config`**（Windows は `%USERPROFILE%\.ssh\config`）の `Host` に `SendEnv TERM_PROGRAM` を足し、
   `TERM_PROGRAM` を送る。公式統合が無い場合、この値が `WezTerm` のときだけ独自統合を動かす
@@ -908,10 +901,13 @@ gui:
 | `lua/procs.lua` | 実行中のプログラムの判定（ssh 中か・タブのアイコン。`WEZTERM_PROG` も使う）。`apply` は持たない |
 | `shell/wezterm.sh` | シェル統合（bash / zsh）。OSC 7 / OSC 133 / 完了通知 / 実行中のコマンド（`WEZTERM_PROG`）/ 迷子のマウス報告よけ |
 | `shell/wezterm.ps1` | シェル統合（PowerShell）。OSC 7 / OSC 133 / 完了通知 |
-| `docs/install.md` | 導入の手順書（操作・前提・期待結果） |
-| `docs/verification/install.md` | 導入・GUI・シェル統合の検証記録 |
+| `docs/extra/install.md` | 設定のロールバックと注意点 |
 | `docs/reference/install.md` | 導入の選定理由と技術的説明 |
-| `AGENTS.md` | コーディングエージェント（Claude Code・Codex・Grok Build）向けの、このリポジトリの構成と書き方の決まり |
+| `docs/verification/install.md` | 導入・GUI・シェル統合の検証記録 |
+| `docs/verification/readme.md` | README にあった実機の記録 |
+| `docs/verification/starship/` | Starship との共存の検証の報告書 |
+| `tests/` | 手で動かす検証の道具（`paste/`・`starship/`） |
+| `AGENTS.md` | コーディングエージェント（Claude Code・Codex・Grok Build・Antigravity CLI）向けの、このリポジトリの構成と書き方の決まり |
 | `CLAUDE.md` | Claude Code に `AGENTS.md` を読ませる 1 行（`@AGENTS.md`） |
 
 ## 使用している nightly 限定機能
@@ -933,9 +929,9 @@ stable ではこれらが未知オプションとして設定エラーになり�
 設定を反映せずに読み込みだけ検証できます。
 
 ```sh
-# 設定エラーの検出。エラー行が出なければ読み込めている
+# 設定エラーの検出。エラー行が出なければ読み込めている（終了コードは誤りがあっても 0）
 # （ついでにフォントがどのファイルで解決されるかも分かる）
-wezterm --config-file "$PWD/wezterm.lua" ls-fonts --text 'あ'
+wezterm --config-file "$PWD/wezterm.lua" ls-fonts --text 'aあ'
 
 # キー割り当てのダンプ
 wezterm --config-file "$PWD/wezterm.lua" show-keys
@@ -998,3 +994,11 @@ bash -n shell/wezterm.sh && zsh -n shell/wezterm.sh
 | ステータスの知らせを面で塗ったピルにする | ステータスは帯の高さいっぱい（1.75 行）で描かれるので、面が上下いっぱいに広がり、端の半円も縦長になってタブのピルと揃わない |
 | 閉じるボタンのホバーを配色の赤にする | WezTerm が純色の赤に固定していて変えられない |
 | 検索のほかの一致を控えめな色にする | 今の一致は WezTerm が選択範囲にするので、選択範囲の色（紺）で描かれる。ほかの一致を控えめにすると、今の一致の方が目立たなくなる |
+
+## 文書
+
+- [設定のロールバックと注意点](docs/extra/install.md)
+- [導入の選定理由と技術的説明](docs/reference/install.md)
+- 検証記録: [導入と動作](docs/verification/install.md)・[README にあった実機の記録](docs/verification/readme.md)・[Starship との共存](docs/verification/starship/)
+- 変更するときの決まり: [AGENTS.md](AGENTS.md)
+- 旧手順書の移動先: setup-notes の[集約対応表](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/dev/consolidation-map.md)
