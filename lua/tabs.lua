@@ -100,7 +100,7 @@ end
 local LOCAL_HOST = short_host(wezterm.hostname())
 
 -- ペインが OSC 7 で報告したカレントディレクトリを短い表示名にする。
--- 例: "C:/Users/foo/dev/myapp" -> "myapp"、ホームそのものなら "~"。
+-- 例: "C:/Users/user/dev/myapp" -> "myapp"、ホームそのものなら "~"。
 -- 報告元が別のホスト（ssh 先のシェルが OSC 7 を送っている）なら "host:myapp" のように
 -- ホスト名を付け、2 つ目の戻り値で true を返す。
 -- 報告が無いシェル（シェル統合を入れていない / WSL など）では nil を返し、
@@ -121,7 +121,7 @@ local function cwd_label(pane)
 	local remote = host ~= "" and host ~= "localhost" and host ~= LOCAL_HOST
 	-- 末尾の区切りを落としてから比較・切り出しする（Windows は \ と / が混在しうる）
 	path = (path:gsub("[/\\]$", ""))
-	-- Windows のパスは URL の形のまま "/C:/Users/foo" と先頭に / が付いてくるので外す
+	-- Windows のパスは URL の形のまま "/C:/Users/user" と先頭に / が付いてくるので外す
 	-- （外さないとホーム（USERPROFILE）と一致せず "~" にならない）
 	path = (path:gsub("^/(%a:)", "%1"))
 	local dir

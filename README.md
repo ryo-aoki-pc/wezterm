@@ -485,7 +485,7 @@ OS の既定のアプリで開きます。長いログを検索・保存した�
   | パターン | 例 |
   | --- | --- |
   | git のコミットハッシュ（7〜40 桁） | `d1fc9b1` |
-  | Windows の絶対パス | `C:\Users\foo\a.txt`、`D:/work/x` |
+  | Windows の絶対パス | `C:\Users\user\a.txt`、`D:/work/x` |
   | `ファイル:行` / `ファイル:行:桁` | `src/main.rs:42:7`、`localhost:3000` |
 
 #### URL を開く
@@ -592,7 +592,7 @@ make build (1分23秒)          cargo test (12秒)
 ```
 Host <ホスト名>
   HostName 192.168.1.20
-  User foo
+  User <ユーザー名>
 ```
 
 - 接続には OpenSSH の `ssh` コマンドを使う（WezTerm 内蔵の SSH クライアントではない）ので、
@@ -809,8 +809,8 @@ lazygit や yazi のような TUI は起動時にマウス報告（DECSET 1003 =
 出してしまった報告は行き場を失い、戻ってきたシェルにこう現れます。
 
 ```
-[foo@host setup-notes]$ lazygit
-^[[<35;33;72M[foo@host setup-notes]$
+[user@host setup-notes]$ lazygit
+^[[<35;33;72M[user@host setup-notes]$
 ```
 
 届くタイミングで見え方が変わります。プロンプト表示前なら端末がそのまま echo するだけ
