@@ -116,7 +116,7 @@ try:
     send(star, 'false')
     snapshot(star, 'starship-failure')
     special = HERE / 'live-results' / '空 白#%'
-    special.mkdir(exist_ok=True)
+    special.mkdir(parents=True, exist_ok=True)
     send(star, "cd '" + special.as_posix() + "'")
     snapshot(star, 'starship-cwd')
     split = int(cli('split-pane', '--pane-id', star, '--right', '--', BASH,
