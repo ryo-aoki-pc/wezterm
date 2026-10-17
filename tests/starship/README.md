@@ -10,7 +10,7 @@ Git Bash と SSH 先の Starship が、このリポジトリのシェル統合�
 - 実測した手元の主要バージョンは Git Bash 5.3.15、Starship 1.26.0、WezTerm `20260905-153129-092dcf70`。SSH 先は Bash 5.2.26、Starship 1.26.0 を使った。別の版や古い Bash は未検証。
 - SSH 試験は既存の SSH alias と鍵認証を使う。対象ホストには Bash、Starship、zoxide、公式 WezTerm Bash 統合が必要。ユーザーの SSH / sshd 設定やプロファイルを、この harness のために変更する必要はない。
 - SSH の接続名は `ssh-check.py`・`ssh-live-run.py`・`ssh-probe.py`・`ssh-history-probe.py` の引数で渡す。`ssh-live-check.py`・`ssh-fix-live-check.py` は runner が結果と同じ場所に保存する `target.json`（接続名・リモートのホスト名・ホーム）から、期待する cwd とタブ名を組み立てる。
-- スクリプトには、この検証環境での実行ファイルパスやリモートの配置パスを含む。再実行前に、各 script の定数を自分の環境に合わせる。
+- スクリプトには、この検証環境での実行ファイルパスやリモートの配置パスを含む。再実行前に、各 script の定数を自分の環境に合わせる。PowerShell 7 は PATH の `pwsh` を使い、`live-run.py` の `--pwsh <パス>` で変えられる。`bash-run.py` のリポジトリのルートはスクリプトの場所から求める。
 - `ssh-guard-check.py` は `tests/starship/cache/official-wezterm.sh` を入力に使う。検証対象ホストの `/etc/profile.d/wezterm.sh` を読み取り専用で取得し、その場所へ保存してから実行する。これは配布用 fixture ではなく、対象環境の公式スクリプトを使うためのローカル入力である。
 
 ## 実行
