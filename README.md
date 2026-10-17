@@ -745,7 +745,7 @@ WezTerm は bash をログインシェル（`bash -i -l`）で起動し、`--rcf
   bash 5.3 以降（Git Bash の現行版）はサブシェルを作らずに送るので、コマンドごとの待ち時間はほぼありません
   （古い bash はサブシェルを 1〜2 回作る）。Linux / macOS では WezTerm が自分でプロセスを調べられるので送りません
 
-Git Bash + Starship の検証範囲と結果は [FIX-REPORT.md](docs/verification/starship/FIX-REPORT.md)、SSH 先を含む最終の結果は [SSH-FIX-REPORT.md](docs/verification/starship/SSH-FIX-REPORT.md) にあります。
+Git Bash + Starship の検証範囲と結果は [FIX-REPORT.md](https://github.com/ryo-aoki-pc/setup-notes-verification/blob/main/repos/wezterm/docs/verification/starship/FIX-REPORT.md)、SSH 先を含む最終の結果は [SSH-FIX-REPORT.md](https://github.com/ryo-aoki-pc/setup-notes-verification/blob/main/repos/wezterm/docs/verification/starship/SSH-FIX-REPORT.md) にあります。
 
 Linux 版 WezTerm のパッケージは公式のシェル統合を `/etc/profile.d/wezterm.sh` に置きます。
 公式の Bash 統合が有効なら、`shell/wezterm.sh` は公式の OSC 7・ユーザー変数・`bash-preexec` を
@@ -800,7 +800,7 @@ AlmaLinux の COPR 版など、接続先で公式 Bash 統合が既に有効な�
 この設定が公式統合を補完します。接続先の `~/.bashrc` が `shell/wezterm.sh` を読む必要があります。
 公式の cwd・ユーザー変数を残し、Starship 後に入力範囲の印を付け直す構成です。
 
-[SSH のシェル統合の検証記録](docs/verification/readme.md#ssh-のシェル統合の検証2026-10-06)を参照してください。
+[SSH のシェル統合の検証記録](https://github.com/ryo-aoki-pc/setup-notes-verification/blob/main/repos/wezterm/docs/verification/readme.md#ssh-のシェル統合の検証2026-10-06)を参照してください。
 
 ### 迷子のマウス報告よけ
 
@@ -894,9 +894,7 @@ gui:
 | `shell/wezterm.ps1` | シェル統合（PowerShell）。OSC 7 / OSC 133 / 完了通知 |
 | `docs/extra/install.md` | 設定のロールバックと注意点 |
 | `docs/reference/install.md` | 導入の選定理由と技術的説明 |
-| `docs/verification/install.md` | 導入・GUI・シェル統合の検証記録 |
-| `docs/verification/readme.md` | README にあった実機の記録 |
-| `docs/verification/starship/` | Starship との共存の検証の報告書 |
+| 非公開の `ryo-aoki-pc/setup-notes-verification` の `repos/wezterm/docs/verification/` | `install.md` は導入・GUI・シェル統合、`readme.md` は実機の検証記録。`starship/` は Starship との共存の検証の報告書 |
 | `tests/` | 手で動かす検証の道具（`paste/`・`starship/`） |
 | `AGENTS.md` | コーディングエージェント（Claude Code・Codex・Grok Build・Antigravity CLI）向けの、このリポジトリの構成と書き方の決まり |
 | `CLAUDE.md` | Claude Code に `AGENTS.md` を読ませる 1 行（`@AGENTS.md`） |
@@ -940,7 +938,7 @@ wezterm --config-file "$PWD/wezterm.lua" show-keys
 bash -n shell/wezterm.sh && zsh -n shell/wezterm.sh
 ```
 
-実施した環境・対象版・結果・未確認事項は [導入と動作の検証記録](docs/verification/install.md)、README にあった実機の記録は [README の検証記録](docs/verification/readme.md) を参照してください。
+実施した環境・対象版・結果・未確認事項は [導入と動作の検証記録](https://github.com/ryo-aoki-pc/setup-notes-verification/blob/main/repos/wezterm/docs/verification/install.md)、README にあった実機の記録は [README の検証記録](https://github.com/ryo-aoki-pc/setup-notes-verification/blob/main/repos/wezterm/docs/verification/readme.md) を参照してください。
 
 ## トラブルシューティング
 
@@ -990,5 +988,5 @@ bash -n shell/wezterm.sh && zsh -n shell/wezterm.sh
 
 - [設定のロールバックと注意点](docs/extra/install.md)
 - [導入の選定理由と技術的説明](docs/reference/install.md)
-- 検証記録: [導入と動作](docs/verification/install.md)・[実機の記録](docs/verification/readme.md)・[Starship との共存](docs/verification/starship/)
+- 検証記録: [導入と動作](https://github.com/ryo-aoki-pc/setup-notes-verification/blob/main/repos/wezterm/docs/verification/install.md)・[実機の記録](https://github.com/ryo-aoki-pc/setup-notes-verification/blob/main/repos/wezterm/docs/verification/readme.md)・[Starship との共存](https://github.com/ryo-aoki-pc/setup-notes-verification/tree/main/repos/wezterm/docs/verification/starship)
 - 変更するときの決まり: [AGENTS.md](AGENTS.md)

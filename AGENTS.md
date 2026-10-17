@@ -21,7 +21,7 @@
 
 設定の読み込み（`ls-fonts`）・キー割り当て（`show-keys`）・シェル統合の構文（`bash -n` / `zsh -n`）の確かめ方は、README の「動作確認」にある。`show-keys` は設定を読めなくても黙って既定の一覧を出すので、読み込みの確認には `ls-fonts` を使う。
 
-- 画面の無い環境でシェル統合を試すときは、`wezterm-mux-server --daemonize` を起動し、`wezterm cli spawn` / `send-text --no-paste` / `get-text` / `list` を使う（`docs/verification/install.md` のコンテナ記録と同じ方法。設定の `set_environment_variables` が効き、シェルはログインシェルで起動する）
+- 画面の無い環境でシェル統合を試すときは、`wezterm-mux-server --daemonize` を起動し、`wezterm cli spawn` / `send-text --no-paste` / `get-text` / `list` を使う（非公開側の検証記録の `install.md` のコンテナ記録と同じ方法。設定の `set_environment_variables` が効き、シェルはログインシェルで起動する）
 - AlmaLinux 10 のコンテナで WezTerm を入れるときは、setup-notes のシェルと端末のセットアップ（`docs/shell-terminal.md`）の「WezTerm」の手順 1〜4（COPR の `rhel-9-<arch>` を明示）
 
 ## 構成
@@ -34,7 +34,7 @@
 - `shell/wezterm.sh` — bash / zsh のシェル統合（OSC 7・OSC 133・完了通知のユーザー変数・実行中のコマンドのユーザー変数 `WEZTERM_PROG`・迷子のマウス報告よけ）。`~/.bashrc` の 1 行で読む
 - `shell/wezterm.ps1` — PowerShell のシェル統合。**UTF-8 の BOM 付き**で保存する（Windows PowerShell 5.1 は BOM の無い `.ps1` を ANSI として読み、日本語のコメントで構文エラーになる）
 - `docs/extra/install.md` — 設定のロールバックと注意点。`docs/reference/install.md` — 正本の手順の背景と選定理由、Windows の SSH 先への貼り付けの実装
-- `docs/verification/` — 検証記録（`install.md` は導入とシェル統合、`readme.md` は実機の記録、`starship/` は Starship との共存の報告書）
+- 非公開側の検証記録 — `install.md` は導入とシェル統合、`readme.md` は実機の記録、`starship/` は Starship との共存の報告書
 - `tests/` — 手で動かす検証の道具（`paste/` は貼り付け、`starship/` は Starship との共存。`starship/verification-summary.json` は公開用の集計）
 
 ## 変えたら合わせて直すもの
@@ -43,7 +43,7 @@
 - コマンドパレットの項目（`lua/palette.lua` の `ENTRIES`）→ README の「コマンドパレットの独自項目」
 - nightly だけの設定を使ったとき → README の「使用している nightly 限定機能」の表
 - よく変える値の場所を動かしたとき → README の「カスタマイズの勘所」、ファイルを足したとき → README の「ファイル構成」
-- 導入のしかたが変わる変更（配置先、シェル統合の読み込み方・環境変数、`lua/shells.lua` の `set_environment_variables`）→ 正本の手順・README の「導入」の表・`docs/extra/install.md` の注意点。検証を行ったら `docs/verification/install.md` に対象版と結果を追加する
+- 導入のしかたが変わる変更（配置先、シェル統合の読み込み方・環境変数、`lua/shells.lua` の `set_environment_variables`）→ 正本の手順・README の「導入」の表・`docs/extra/install.md` の注意点。検証を行ったら非公開側の検証記録の `install.md` に対象版と結果を追加する
   - AlmaLinux 10 の COPR 版は `/etc/profile.d/wezterm.sh`（公式の統合）が先に読まれる。Bash では公式の cwd・ユーザー変数・bash-preexec を保ち、semantic の 2 callback だけを独自処理へ移して完了通知を補う。`WEZTERM_SHELL_SKIP_ALL=1` は渡さない。公式との担当や確かめ用の関数が変わったら、正本の「WezTerm の設定を導入する」の手順 6 と `docs/extra/install.md` の注意点を合わせる
   - シェル統合を読む 1 行や置き場所を変えたら、自分用の bash の設定（`ryo-aoki-pc/bash`）の `bashrc` も直す。その設定は、starship → この統合 → zoxide の順に読む（`PROMPT_COMMAND`・`PS0` の扱いを変えたら、bash リポジトリの検証記録にある「読む順番」の実測を取り直す）
 
@@ -73,7 +73,8 @@
 ## 文書の置き場所
 
 - 導入・利用・更新の手順は正本に置き、README の「導入」の表から正本の項へ直接リンクする（手順書の先頭やカテゴリの見出しへはリンクしない）。執筆規則は setup-notes の `docs/dev/writing-rules.md`
-- `docs/extra/` はロールバックと注意点、`docs/reference/` は背景、`docs/verification/` は検証記録（環境・日付・対象コミット・実出力・未確認事項）。検証の報告書も `docs/verification/` に置き、`tests/` には道具だけを置く
+- `docs/extra/` はロールバックと注意点、`docs/reference/` は背景。検証記録（環境・日付・対象コミット・実出力・未確認事項）は、非公開の `ryo-aoki-pc/setup-notes-verification` の `repos/wezterm/docs/verification/` に置く。検証の報告書も非公開側の検証記録に置き、`tests/` には道具だけを置く
+- 検証記録を書く・直すときは、`setup-notes-verification` を clone し、そちらへ Pull Request を作る
 - 文書を移す・分ける・まとめるときは、移した経緯と、旧ファイル名・旧見出しとの対応を文書に書かない（経緯は git の履歴と Pull Request の本文に残す）。リンクを今の場所へ直す。中身が新しい場所への案内だけになったファイルは消す
 - 残す検証記録の実施日・対象版・環境・出力・成功と失敗・未実施の範囲・記録したときの手順番号は書き換えない。再検証せずに検証範囲を広げない。記録の手順番号が今の手順と違い、本文を読むのに要るときだけ「記録の手順 | 今の手順」の表で結ぶ
 - 操作を変えたら、正本・README の「導入」の表・参考資料を合わせて直す
