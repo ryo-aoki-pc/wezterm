@@ -91,5 +91,5 @@
 - 本文の送信完了を記録するのは `send_text` が成功した後。完全・部分送信の例外では、本文を再送せず、同じ epoch を確認して同じ nonce の終端だけを送る。受信側の Console 入出力例外も不正データとして扱い、ヘッダー前は期限で終了し、ヘッダー後は終端まで読み捨てる
 - C# の型は PowerShell のプロセス内に残り、同じ型名を再定義できない。統合ファイルを更新した後は、新しい SSH / PowerShell プロセスを起動する。同じ版の再読み込みでは既存の型を使う
 - OSC の識別子は古い配送や別ペインの応答を区別する。SSH 先が出力する OSC 自体を信頼する端末統合であり、接続先の悪意あるプログラムを認証する仕組みではない
-- Git Bash の既定シェルでは、対話 SSH の後に PowerShell を起動する。[Windows OpenSSH の PTY 起動実装](https://github.com/PowerShell/openssh-portable/blob/latestw_all/contrib/win32/win32compat/w32-doexec.c)が `bash -c` のコマンド引数を組み立てるため、`ssh -tt surface 'powershell.exe ...'` の形では引数の引用が失われることがある
+- Git Bash の既定シェルでは、対話 SSH の後に PowerShell を起動する。[Windows OpenSSH の PTY 起動実装](https://github.com/PowerShell/openssh-portable/blob/latestw_all/contrib/win32/win32compat/w32-doexec.c)が `bash -c` のコマンド引数を組み立てるため、`ssh -tt <ホスト名> 'powershell.exe ...'` の形では引数の引用が失われることがある
 - ローカル Windows は `Ctrl+V` と PSReadLine `Paste` を使う。専用経路は Windows の SSH セッションで PSReadLine 入力待機の能力が通知された場合に使う。Neovim の alternate screen・実行中のコマンド・統合なしは通常の端末貼り付けを使う。tmux の既定設定では、PowerShell 7 管理者・右クリックの 1 条件で通常貼り付けを確認した。tmux の専用配送と入れ子 SSH の実セッションは未検証
