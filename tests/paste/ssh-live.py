@@ -477,7 +477,7 @@ def run_cases(session: Session, large: bool, large_size: int):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--host", default="surface")
+    parser.add_argument("--host", required=True, help="SSH の接続名")
     parser.add_argument("--shell", choices=("powershell", "pwsh", "both"), default="both")
     parser.add_argument("--include-drop", action="store_true", help="導入済み busybox drop の子シェルも検証")
     parser.add_argument("--large", action="store_true", help="64 KiB を超える不正入力も排出する")
@@ -486,6 +486,8 @@ def main():
     parser.add_argument("--drop-return", action="store_true", help="親管理者シェルから通常プロファイルの drop 子へ入り復帰も確認")
     parser.add_argument("--bash-return", action="store_true", help="専用 Git Bash から通常プロファイルの PowerShell を開き親への復帰も確認")
     args = parser.parse_args()
+    if not args.host.strip():
+        parser.error("--host に SSH の接続名を指定してください")
     if args.include_drop or args.drop_return:
         busybox_hash = remote_powershell(args.host, '[Console]::Write((Get-FileHash -Algorithm SHA256 -LiteralPath "$env:LOCALAPPDATA\\setup-notes\\bin\\busybox.exe" -ErrorAction Stop).Hash.ToLowerInvariant())')
         if busybox_hash != "07bb1e5b095b00d68a695481f9240879f33c5724b40aa2308f999d54ed78f075":

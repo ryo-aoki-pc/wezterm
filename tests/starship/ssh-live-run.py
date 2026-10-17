@@ -1,36 +1,67 @@
 """SSH 先の Starship を実 WezTerm ペインで比較する。既存設定は変更しない。
 
-ssh-check.py --prepare-only --keep-temp の後、python -X utf8 tests/starship/ssh-live-run.py。
-リモートの一時配置は ssh-check.py --cleanup で除去する。
+ssh-check.py <接続名> --prepare-only の後、
+python -X utf8 tests/starship/ssh-live-run.py <接続名>。
+リモートの一時配置は ssh-check.py <接続名> --cleanup で除去する。
 """
+import argparse
 import json
 import os
 from pathlib import Path
 import re
 import shlex
 import subprocess
-import sys
 import time
+
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument('host', help='SSH の接続名（ssh-check.py の準備と同じもの）')
+parser.add_argument('--fix', action='store_true', help='修正後の結果を ssh-fix-results/ に保存する')
+parser.add_argument('--deployed', action='store_true', help='配置後の通常の SSH を確かめる（--fix を含む）')
+opts = parser.parse_args()
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent.parent
-DEPLOYED = '--deployed' in sys.argv[1:]
-FIX = '--fix' in sys.argv[1:] or DEPLOYED
+DEPLOYED = opts.deployed
+FIX = opts.fix or opts.deployed
 OUT = HERE / ('ssh-fix-results' if FIX else 'ssh-results') / ('deployed-live' if DEPLOYED else 'live')
 WEZTERM = Path(r'C:\Program Files\WezTerm\wezterm.exe')
 BASH = r'C:\Program Files\Git\bin\bash.exe'
 SSH = r'C:\Windows\System32\OpenSSH\ssh.exe'
 ANSI = re.compile(r'\x1b\[[0-?]*[ -/]*[@-~]')
-OUT.mkdir(parents=True, exist_ok=True)
-(OUT / 'cache').mkdir(exist_ok=True)
-prepared = json.loads((OUT.parent / 'prepared.json').read_text(encoding='utf-8'))
+prepare_command = f'ssh-check.py {opts.host} --prepare-only' + (' --fix' if FIX else '')
+missing_preparation = f'prepared.json に {opts.host} の準備が無い。先に {prepare_command} を実行する。'
+try:
+    prepared = json.loads((OUT.parent / 'prepared.json').read_text(encoding='utf-8'))
+except FileNotFoundError:
+    raise SystemExit(missing_preparation)
 print(json.dumps({'prepared_type': type(prepared).__name__}), flush=True)
 if isinstance(prepared, list):
-    prepared = next(p for p in prepared if p['host'] == 'kawasaki-pi')
-if 'hosts' in prepared:
-    prepared = prepared['hosts']['kawasaki-pi']
-host = prepared.get('host', 'kawasaki-pi')
+    prepared = next((p for p in prepared if p.get('host') == opts.host), None)
+elif 'hosts' in prepared:
+    prepared = prepared['hosts'].get(opts.host)
+if not prepared or prepared.get('host', opts.host) != opts.host:
+    raise SystemExit(missing_preparation)
+host = opts.host
 remote_dir = prepared['remote_tempdir']
+options = ['-tt', '-o', 'BatchMode=yes', '-o', 'StrictHostKeyChecking=yes',
+    '-o', 'ConnectTimeout=8', host]
+target_command = 'printf \'__SSH_TARGET__%s\\t%s\\n\' "$(uname -n)" "$HOME"'
+try:
+    target_result = subprocess.run([SSH, '-T', *options[1:], target_command],
+        capture_output=True, text=True, encoding='utf-8', errors='replace', timeout=20)
+except (OSError, subprocess.TimeoutExpired) as error:
+    stderr = getattr(error, 'stderr', '') or ''
+    if isinstance(stderr, bytes): stderr = stderr.decode('utf-8', 'replace')
+    raise SystemExit(f'リモートのホスト名とホームを取得できない: {error}\nSSH 標準エラー:\n{stderr}')
+target_match = re.search(r'__SSH_TARGET__([^\t\r\n]+)\t([^\r\n]+)', target_result.stdout)
+if target_result.returncode or not target_match:
+    raise SystemExit('リモートのホスト名とホームを取得できない。\nSSH 標準出力:\n' + target_result.stdout
+        + '\nSSH 標準エラー:\n' + target_result.stderr)
+OUT.mkdir(parents=True, exist_ok=True)
+(OUT / 'cache').mkdir(exist_ok=True)
+(OUT / 'target.json').write_text(json.dumps({
+    'host': host, 'remote_hostname': target_match[1], 'remote_home': target_match[2],
+}, ensure_ascii=False, indent=2), encoding='utf-8')
 startup = subprocess.STARTUPINFO()
 startup.dwFlags |= subprocess.STARTF_USESHOWWINDOW
 startup.wShowWindow = 0
@@ -86,8 +117,6 @@ def snapshot(pane, name, action=None):
     if action: time.sleep(0.5)
     return result
 
-options = ['-tt', '-o', 'BatchMode=yes', '-o', 'StrictHostKeyChecking=yes',
-    '-o', 'ConnectTimeout=8', host]
 rc_command = lambda name: 'bash --noprofile --rcfile ' + shlex.quote(remote_dir + '/' + name + '/test.rc') + ' -i'
 cases = [
     ('login-bash', None, False),

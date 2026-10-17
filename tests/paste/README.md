@@ -31,13 +31,13 @@ python tests/paste/live-run.py --shared-clipboard --double-cr
 
 `--double-cr` はコピー元に二重 CR がある場合を制御した block で比較する追加試験で、利用者がコピーした実データではない。試験ペインの履歴と採取結果は git 管理から除外した `results/<日時>/` に保存する。`summary.json` に環境・対象ソースの SHA-256・各ケースの入力と Enter 前後の結果・クリップボードの扱いを記録する。非表示 desktop は終了時に閉じる。
 
-Linux から Windows の SSH 受信側だけを検証するときは `ssh-live.py` を使う。SSH ホストの既定シェルは Git Bash とし、Windows PowerShell 5.1 と PowerShell 7 が PATH から起動できることを前提にする。統合と `ssh-probe.ps1` を SSH 先の `%TEMP%` の専用ディレクトリへ SCP し、終了時にそのディレクトリだけを削除する。通常の設定・プロファイル・履歴・接続元のクリップボードは変更しない。
+Linux から Windows の SSH 受信側だけを検証するときは `ssh-live.py` を使い、`--host` に SSH の接続名を渡す。SSH ホストの既定シェルは Git Bash とし、Windows PowerShell 5.1 と PowerShell 7 が PATH から起動できることを前提にする。統合と `ssh-probe.ps1` を SSH 先の `%TEMP%` の専用ディレクトリへ SCP し、終了時にそのディレクトリだけを削除する。通常の設定・プロファイル・履歴・接続元のクリップボードは変更しない。
 
 ```bash
-python3 tests/paste/ssh-live.py --host surface
-python3 tests/paste/ssh-live.py --host surface --include-drop
-python3 tests/paste/ssh-live.py --host surface --include-drop --large-size 65536 --large
-python3 tests/paste/ssh-live.py --host surface --drop-return --bash-return
+python3 tests/paste/ssh-live.py --host <接続名>
+python3 tests/paste/ssh-live.py --host <接続名> --include-drop
+python3 tests/paste/ssh-live.py --host <接続名> --include-drop --large-size 65536 --large
+python3 tests/paste/ssh-live.py --host <接続名> --drop-return --bash-return
 ```
 
 `--include-drop` は手順書の固定版 busybox が `%LOCALAPPDATA%\setup-notes\bin\busybox.exe` に配置済みのときだけ使う。起動前に SHA-256 を照合し、`drop --` で同じユーザーの非管理者子シェルも試す。`--large-size` は正常入力の文字数、`--large` は復号後 64 KiB を超える不正入力の試験を追加する。PowerShell の公開 API によるバッファ採取を F11、選択範囲を残した採取を F10 の専用 handler で行う。
@@ -62,14 +62,14 @@ pwsh -NoProfile -File tests/paste/check-ssh-state.ps1 -IntegrationPath "$PWD/she
 pwsh -NoProfile -File tests/paste/check-ssh-reader.ps1 -IntegrationPath "$PWD/shell/wezterm.ps1" -ResultPath "$PWD/tests/paste/results/ssh-reader-ps7.json"
 ```
 
-接続元の実クリップボードと共有操作を合わせて試すときは `ssh-gui-run.py` を使う。Linux は利用者の画面から隔離した Wayland / X11 セッションを用意し、`wl-paste` / `xclip` と clipboard の書き込み用コマンドがあることを確認してから実行する。headless Mutter に入力デバイスが無い場合は、専用の `/tmp/codex-ssh-paste-*` runtime 内で仮想入力を用意し、その試験用 D-Bus アドレスを `CODEX_TEST_MUTTER_DBUS` に指定する。
+接続元の実クリップボードと共有操作を合わせて試すときは `ssh-gui-run.py` を使う。Linux は `--host` に SSH の接続名を渡す。利用者の画面から隔離した Wayland / X11 セッションを用意し、`wl-paste` / `xclip` と clipboard の書き込み用コマンドがあることを確認してから実行する。headless Mutter に入力デバイスが無い場合は、専用の `/tmp/codex-ssh-paste-*` runtime 内で仮想入力を用意し、その試験用 D-Bus アドレスを `CODEX_TEST_MUTTER_DBUS` に指定する。
 
 ```bash
-python3 tests/paste/ssh-gui-run.py --host surface --include-drop --quick
-python3 tests/paste/ssh-gui-run.py --host surface --include-drop
+python3 tests/paste/ssh-gui-run.py --host <接続名> --include-drop --quick
+python3 tests/paste/ssh-gui-run.py --host <接続名> --include-drop
 ```
 
-Windows は専用 desktop でローカル ConPTY に SSH 環境だけを再現する。次の指定が必須で、Windows からの実 SSH 接続は試さない。
+Windows は専用 desktop でローカル ConPTY に SSH 環境だけを再現する。次の指定が必須で、`--host` は要らない。Windows からの実 SSH 接続は試さない。
 
 ```powershell
 python tests/paste/ssh-gui-run.py --local-ssh-receiver --include-drop

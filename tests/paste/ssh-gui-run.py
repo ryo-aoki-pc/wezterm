@@ -55,7 +55,7 @@ def read_json(path, timeout=15):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--host", default="surface")
+    parser.add_argument("--host", help="SSH の接続名。Linux の実 SSH で使う")
     parser.add_argument("--include-drop", action="store_true")
     parser.add_argument("--shell", choices=("powershell", "pwsh", "both"), default="both")
     parser.add_argument("--only-drop", action="store_true")
@@ -67,6 +67,8 @@ def main():
         parser.error("Windows は --local-ssh-receiver を明示し、実 SSH と区別してください")
     if not windows and args.local_ssh_receiver:
         parser.error("Linux は実 SSH の検証に使います")
+    if not windows and not (args.host and args.host.strip()):
+        parser.error("--host に SSH の接続名を指定してください")
     if not windows and not (os.getenv("WAYLAND_DISPLAY") or os.getenv("DISPLAY")):
         parser.error("利用者の画面から隔離した Wayland/X11 で実行してください")
     stamp = time.strftime("%Y%m%d-%H%M%S") + "-" + uuid.uuid4().hex[:8]
