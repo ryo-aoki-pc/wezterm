@@ -4,6 +4,7 @@ import json
 import os
 from pathlib import Path
 import re
+import shutil
 import subprocess
 import time
 
@@ -13,12 +14,16 @@ OUT = HERE / 'live-results'
 WEZTERM = Path(r'C:\Program Files\WezTerm\wezterm.exe')
 GUI = WEZTERM.with_name('wezterm-gui.exe')
 BASH = r'C:\Program Files\Git\bin\bash.exe'
-PWSH = r'C:\Users\r-aoki\.cache\codex-runtimes\codex-primary-runtime\dependencies\native\powershell\pwsh.exe'
 ANSI = re.compile(r'\x1b\[[0-?]*[ -/]*[@-~]')
 parser = argparse.ArgumentParser()
 parser.add_argument('--pid', type=int)
 parser.add_argument('--fix', action='store_true', help='修正後の結果を別ディレクトリへ保存')
+parser.add_argument('--pwsh', metavar='<パス>', default=None,
+                    help='PowerShell 7 の実行ファイル。既定は PATH の pwsh')
 args = parser.parse_args()
+pwsh = shutil.which(args.pwsh or 'pwsh')
+if not pwsh:
+    parser.error('PowerShell 7 の実行ファイルが見つかりません。PATH に pwsh を置くか、--pwsh で渡してください')
 if args.fix:
     OUT = HERE / 'fix-results' / 'live'
 OUT.mkdir(parents=True, exist_ok=True)
@@ -111,7 +116,7 @@ try:
     send(star, 'false')
     snapshot(star, 'starship-failure')
     special = HERE / 'live-results' / '空 白#%'
-    special.mkdir(exist_ok=True)
+    special.mkdir(parents=True, exist_ok=True)
     send(star, "cd '" + special.as_posix() + "'")
     snapshot(star, 'starship-cwd')
     split = int(cli('split-pane', '--pane-id', star, '--right', '--', BASH,
@@ -138,7 +143,7 @@ try:
     time.sleep(0.8)
     send(base2, "printf 'LINE_%s\\n' {1..70}")
     snapshot(base2, 'baseline-prompt-jump', 'prompt')
-    for label, shell in [('pwsh', PWSH), ('windows-powershell', r'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe')]:
+    for label, shell in [('pwsh', pwsh), ('windows-powershell', r'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe')]:
         pane = int(cli('spawn', '--window-id', listing[0]['window_id'], '--cwd', ROOT, '--',
             shell, '-NoLogo', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-NoExit', '-File', HERE / 'live-powershell.ps1').strip())
         panes.append(pane)

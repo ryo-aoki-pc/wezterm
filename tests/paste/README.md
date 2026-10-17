@@ -15,7 +15,7 @@ pwsh -NoProfile -File tests/paste/check-powershell.ps1 -ResultPath "$PWD/tests/p
 
 Lua は設定エラーでも終了コードが 0 になり得るため、`lua.json` の `passed` と各チェック結果を確認する。PowerShell は失敗したチェックがあれば終了コード 1 を返す。
 
-実ペイン検証の `WEZTERM`・`PS7` を検証機のインストール先に合わせる。Windows PowerShell 5.1 は PSReadLine 2.0.0、PowerShell 7 はインストール済みの PSReadLine を Emacs モードで読み込む。通常プロファイルで確認された `Ctrl+Enter = AddLine` を専用スクリプト内で再現し、元のプロファイルは読み込まない。
+実ペイン検証の `WEZTERM` は検証機のインストール先に合わせる。PowerShell 7 は PATH の `pwsh` を使い、別の実行ファイルは `--pwsh <パス>` で渡す。Windows PowerShell 5.1 は PSReadLine 2.0.0、PowerShell 7 はインストール済みの PSReadLine を Emacs モードで読み込む。通常プロファイルで確認された `Ctrl+Enter = AddLine` を専用スクリプト内で再現し、元のプロファイルは読み込まない。
 
 Emacs の既定割り当てだけの初期比較では block の余分な空行を再現しなかったため、`Ctrl+Enter = AddLine` も再現条件に含める。端末の `allow_win32_input_mode` と `canonicalize_pasted_newlines` は上書きせず Windows の既定を使い、各 action の結果に effective config を記録する。実際にアプリが要求した Win32 input の内部状態までは採取しない。
 

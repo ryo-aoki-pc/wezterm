@@ -6,6 +6,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import shutil
 import subprocess
 import time
 
@@ -14,7 +15,6 @@ ROOT = HERE.parent.parent
 WEZTERM = Path(r'C:\Program Files\WezTerm\wezterm.exe')
 GUI = WEZTERM.with_name('wezterm-gui.exe')
 PS5 = Path(os.environ['SystemRoot']) / 'System32/WindowsPowerShell/v1.0/powershell.exe'
-PS7 = Path(r'C:\Users\r-aoki\.cache\codex-runtimes\codex-primary-runtime\dependencies\native\powershell\pwsh.exe')
 
 
 class TestDesktop:
@@ -79,11 +79,17 @@ def main():
     parser.add_argument('--shared-clipboard', action='store_true',
                         help='標準クリップボードを試験コードで置換する。元データは読まないため復元しない')
     parser.add_argument('--double-cr', action='store_true', help='block の CRCRLF を追加比較する')
+    parser.add_argument('--pwsh', metavar='<パス>', default=None,
+                        help='PowerShell 7 の実行ファイル。既定は PATH の pwsh')
     args = parser.parse_args()
     if os.name != 'nt':
         parser.error('Windows の GUI/ConPTY 検証専用です')
     if not args.shared_clipboard:
         parser.error('試験コードでクリップボードを置換するには --shared-clipboard を明示してください')
+    pwsh = shutil.which(args.pwsh or 'pwsh')
+    if not pwsh:
+        parser.error('PowerShell 7 の実行ファイルが見つかりません。PATH に pwsh を置くか、--pwsh で渡してください')
+    pwsh = Path(pwsh)
     out = HERE / 'results' / time.strftime('%Y%m%d-%H%M%S')
     out.mkdir(parents=True)
     desktop = TestDesktop()
@@ -172,7 +178,7 @@ def main():
             'trailing': (base + '\n', 'alpha'),
         }
         routes = ['baseline', 'shared', 'right', 'right-reporting', 'key']
-        for label, executable in [('ps5', PS5), ('ps7', PS7)]:
+        for label, executable in [('ps5', PS5), ('ps7', pwsh)]:
             if label == 'ps5':
                 pane = panes[0]
             else:

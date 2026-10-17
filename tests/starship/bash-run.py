@@ -11,7 +11,7 @@ import subprocess
 ROOT = Path(__file__).resolve().parents[2]
 OUT = ROOT / "tests" / "starship"
 BASH = r"C:\Program Files\Git\bin\bash.exe"
-POSIX_ROOT = "/c/Users/r-aoki/.codex/worktrees/9955/wezterm"
+POSIX_ROOT = f"/{ROOT.drive[0].lower()}{ROOT.as_posix()[2:]}" if ROOT.drive.endswith(":") else ROOT.as_posix()
 OSC = re.compile(rb"\x1b\]([^\x07\x1b]*)(?:\x07|\x1b\\)")
 
 INIT = {
