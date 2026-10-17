@@ -1,6 +1,6 @@
 # WezTerm の設定のロールバックと注意点
 
-setup-notes の[WezTerm の設定を導入する](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#wezterm-の設定を導入する)・[Windows 11 で WezTerm の設定を導入する](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#windows-11-で-wezterm-の設定を導入する)などで入れたものを戻す。背景は[参考資料](../reference/install.md)、検証は[検証記録](../verification/install.md#修正後の状態2026-10-06)。「この節の手順 N」はこの文書の手順、リンクの付いた「手順 N」は正本の項の手順を指す。
+setup-notes の[WezTerm の設定を導入する](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#wezterm-の設定を導入する)・[Windows 11 で WezTerm の設定を導入する](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#windows-11-で-wezterm-の設定を導入する)などで入れたものを戻す。背景は[参考資料](../reference/install.md)、検証は[検証記録](https://github.com/ryo-aoki-pc/setup-notes-verification/blob/main/repos/wezterm/docs/verification/install.md#修正後の状態2026-10-06)。「この節の手順 N」はこの文書の手順、リンクの付いた「手順 N」は正本の項の手順を指す。
 
 ## ロールバック
 

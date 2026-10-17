@@ -1,6 +1,6 @@
 # WezTerm 設定導入の参照情報
 
-手順は setup-notes の[WezTerm の設定を導入する](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#wezterm-の設定を導入する)（AlmaLinux 10）と[Windows 11 で WezTerm の設定を導入する](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#windows-11-で-wezterm-の設定を導入する)にある。見出しの手順番号は AlmaLinux 10 の項の番号で、Windows 11 の項は窓を開く手順が先頭にあるので 1 つ後ろになる。ロールバックと注意点は [extra](../extra/install.md)、検証は[検証記録](../verification/install.md)、機能とキー操作は [README](../../README.md)。
+手順は setup-notes の[WezTerm の設定を導入する](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#wezterm-の設定を導入する)（AlmaLinux 10）と[Windows 11 で WezTerm の設定を導入する](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#windows-11-で-wezterm-の設定を導入する)にある。見出しの手順番号は AlmaLinux 10 の項の番号で、Windows 11 の項は窓を開く手順が先頭にあるので 1 つ後ろになる。ロールバックと注意点は [extra](../extra/install.md)、検証は[検証記録](https://github.com/ryo-aoki-pc/setup-notes-verification/blob/main/repos/wezterm/docs/verification/install.md)、機能とキー操作は [README](../../README.md)。
 
 ## 手順の背景と実装の説明
 
