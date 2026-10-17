@@ -1,7 +1,7 @@
 # 状態保存より前にフックを置いた場合の影響を、最小の bash-preexec 風 stub で診断する。
 # Starship は実体を使うが、公式 bash-preexec の __bp_install・DEBUG trap・初回の
 # PROMPT_COMMAND 再構成は再現しない。SSH 通信も行わない。実機の障害再現ではない。
-# 実機 kawasaki-pi の公式統合は初回 __bp_install が既存フックを状態保存の後ろへ移す。
+# SSH 先の実機の公式統合は初回 __bp_install が既存フックを状態保存の後ろへ移す。
 # その通常ログインでは STARSHIP_PIPE_STATUS / BP_PIPESTATUS が 1 0 を保持していた。
 export PATH="/usr/bin:/bin:$PATH"
 export TERM_PROGRAM=WezTerm TERM=xterm-256color COLUMNS=80

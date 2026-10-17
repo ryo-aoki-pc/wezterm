@@ -1,10 +1,23 @@
 """SSH 修正後の実ペインを判定する。配置snapshotの比較は別集計にする。"""
+import argparse
 import json
-from pathlib import Path
-import sys
+from pathlib import Path, PurePosixPath
 
-DEPLOYED = '--deployed' in sys.argv[1:]
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument('--deployed', action='store_true', help='配置後の結果を判定する')
+args = parser.parse_args()
+
+DEPLOYED = args.deployed
 OUT = Path(__file__).resolve().parent / 'ssh-fix-results' / ('deployed-live' if DEPLOYED else 'live')
+try:
+    target = json.loads((OUT / 'target.json').read_text(encoding='utf-8'))
+except FileNotFoundError:
+    mode = '--deployed' if DEPLOYED else '--fix'
+    raise SystemExit(f'target.json が無い。先に ssh-live-run.py <接続名> {mode} を実行する。')
+expected_cwd = 'file://' + target['remote_hostname'].lower() + '/'
+# lua/tabs.lua の short_host・cwd_label と、タイトルの 24 桁の上限に合わせる（ASCII の名前を前提にする）。
+expected_tab = (target['remote_hostname'].lower().split('.')[0] + ':'
+    + (PurePosixPath(target['remote_home']).name or '/'))[:24]
 records = json.loads((OUT / 'summary.json').read_text(encoding='utf-8'))
 by_id = {r['id']: r for r in records}
 checks, controls = [], []
@@ -31,14 +44,14 @@ for label in labels:
     marker = 'REMOTE_' + label.upper().replace('-', '_') + '_OUTPUT'
     check(label + ': 直前のリモート出力だけをコピー', output['copied'] == marker)
     check(label + ': 入力範囲の印', input_contains(output, marker))
-    check(label + ': リモート cwd', output['cwd'].startswith('file://kawasaki-pi/'))
-    check(label + ': 本番のタブ名', 'kawasaki-pi:almalinux' in output['formatted_tab'])
+    check(label + ': リモート cwd', output['cwd'].startswith(expected_cwd))
+    check(label + ': 本番のタブ名', expected_tab in output['formatted_tab'])
     running = by_id[label + '-running']
     if label.startswith('fixed-') and not label.endswith('native'):
         # 公式 user-vars は remote のプログラム名を送る。その処理は温存する。
         check(label + ': 実行中の遠隔プログラム/ホスト表示', running['running_program'] == 'sleep'
             and running['vars'].get('WEZTERM_PROG') == 'sleep 2.2; false'
-            and 'kawasaki-pi:almalinux' in running['formatted_tab'])
+            and expected_tab in running['formatted_tab'])
     else:
         check(label + ': 実行中の SSH 判定', running['running_program'] == 'ssh')
     check(label + ': false の終了コード1', '__SSH_STATE__ status=1 pipeline=1' in by_id[label + '-failure-state']['pane_text'])

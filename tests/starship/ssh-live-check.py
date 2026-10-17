@@ -1,8 +1,20 @@
 """SSH の実ペインで、成立する機能と再現した問題を別々に集計する。"""
+import argparse
 import json
-from pathlib import Path
+from pathlib import Path, PurePosixPath
+
+parser = argparse.ArgumentParser(description=__doc__)
+args = parser.parse_args()
 
 OUT = Path(__file__).resolve().parent / 'ssh-results' / 'live'
+try:
+    target = json.loads((OUT / 'target.json').read_text(encoding='utf-8'))
+except FileNotFoundError:
+    raise SystemExit('target.json が無い。先に ssh-live-run.py <接続名> を実行する。')
+expected_cwd = 'file://' + target['remote_hostname'].lower() + '/'
+# lua/tabs.lua の short_host・cwd_label と、タイトルの 24 桁の上限に合わせる（ASCII の名前を前提にする）。
+expected_tab = (target['remote_hostname'].lower().split('.')[0] + ':'
+    + (PurePosixPath(target['remote_home']).name or '/'))[:24]
 records = json.loads((OUT / 'summary.json').read_text(encoding='utf-8'))
 by_id = {r['id']: r for r in records}
 checks, defects = [], []
@@ -27,8 +39,8 @@ for label in ['worktree-bash', 'worktree-native']:
     marker = 'REMOTE_' + label.upper().replace('-', '_') + '_OUTPUT'
     check(label + ': remote の出力だけをコピー', output['copied'] == marker)
     check(label + ': remote の入力範囲', input_contains(output, marker))
-    check(label + ': remote のホスト付き cwd', output['cwd'].startswith('file://kawasaki-pi/'))
-    check(label + ': 本番タブ関数のホスト表示', 'kawasaki-pi:almalinux' in output['formatted_tab'])
+    check(label + ': remote のホスト付き cwd', output['cwd'].startswith(expected_cwd))
+    check(label + ': 本番タブ関数のホスト表示', expected_tab in output['formatted_tab'])
     check(label + ': 実行中も ssh と判定', by_id[label + '-running']['running_program'] == 'ssh')
     check(label + ': false の保存コード1', '__SSH_STATE__ status=1 pipeline=1' in by_id[label + '-failure-state']['pane_text'])
     check(label + ': パイプ個別 status 1 0', '__SSH_STATE__ status=0 pipeline=1 0' in by_id[label + '-pipeline-state']['pane_text'])
@@ -49,7 +61,7 @@ for label in ['login-bash', 'official-bash', 'worktree-bash', 'starship-only-bas
 for label in ['login-bash', 'official-bash', 'login-native']:
     r = by_id[label + '-output']
     marker = 'REMOTE_' + label.upper().replace('-', '_') + '_OUTPUT'
-    check(label + ': 現設定の cwd/タブ名', r['cwd'].startswith('file://kawasaki-pi/') and 'kawasaki-pi:almalinux' in r['formatted_tab'])
+    check(label + ': 現設定の cwd/タブ名', r['cwd'].startswith(expected_cwd) and expected_tab in r['formatted_tab'])
     check(label + ': 現設定のパイプは1 0を保持', '__SSH_STATE__ status=0 pipeline=1 0' in by_id[label + '-pipeline-state']['pane_text'])
     check(label + ': A によるジャンプは機能', probe_ok(by_id[label + '-jump']))
     defect(label + ': 入力範囲の印Bが消失', not input_contains(r, marker), label + '-output.json')

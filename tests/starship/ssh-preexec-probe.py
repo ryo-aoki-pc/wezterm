@@ -2,7 +2,7 @@
 
 Starship は実体を利用するが、公式 bash-preexec の __bp_install・DEBUG trap・
 初回の PROMPT_COMMAND 再構成を模擬しない。公式統合の通常ログインを代替できない。
-実機 kawasaki-pi の通常 / TERM_PROGRAM 強制ログインでは、パイプ状態は保持された。
+SSH 先の実機の通常 / TERM_PROGRAM 強制ログインでは、パイプ状態は保持された。
 """
 from pathlib import Path
 import argparse

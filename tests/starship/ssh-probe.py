@@ -1,8 +1,13 @@
 """既存 SSH ホストの Starship とシェル統合を読み取り専用で確認する。"""
 from pathlib import Path
+import argparse
 import json
 import os
 import subprocess
+
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument("hosts", nargs="+", help="SSH の接続名（1 つ以上）")
+args = parser.parse_args()
 
 HERE = Path(__file__).resolve().parent
 OUT = HERE / "ssh-results"
@@ -33,7 +38,7 @@ printf '__OFFICIAL_INTEGRATION_HEADER__\n'
 if test -f /etc/profile.d/wezterm.sh; then sed -n '1,170p' /etc/profile.d/wezterm.sh; fi
 '''
 results = []
-for host in ("kawasaki-pi", "abiko-pi"):
+for host in args.hosts:
     command = "TERM=xterm-256color TERM_PROGRAM=WezTerm bash -lic " + "'" + SCRIPT.replace("'", "'\\''") + "'"
     run = subprocess.run(["ssh", "-o", "BatchMode=yes", "-o", "StrictHostKeyChecking=yes", "-o", "ConnectTimeout=8", host, command], capture_output=True, timeout=35)
     record = {"host": host, "exit_code": run.returncode, "stdout": run.stdout.decode("utf-8", "replace"), "stderr": run.stderr.decode("utf-8", "replace")}
@@ -44,7 +49,7 @@ for host in ("kawasaki-pi", "abiko-pi"):
     print(record["stderr"])
 (OUT / "probe.json").write_text(json.dumps(results, ensure_ascii=False, indent=2), encoding="utf-8")
 forwarding = []
-for host in ("kawasaki-pi", "abiko-pi"):
+for host in args.hosts:
     for explicit in (False, True):
         options = ["-o", "SendEnv=TERM_PROGRAM"] if explicit else []
         run = subprocess.run(["ssh", "-o", "BatchMode=yes", "-o", "StrictHostKeyChecking=yes", "-o", "ConnectTimeout=8", *options, host, r'''printf 'TERM_PROGRAM=%s\n' "${TERM_PROGRAM-unset}"'''], capture_output=True, env={**os.environ, "TERM_PROGRAM": "WezTerm"}, timeout=20)

@@ -1,10 +1,10 @@
 """SSH 先の Bash + Starship を一時 rc と実 PTY で検査する。
 
-python tests/starship/ssh-check.py kawasaki-pi --prepare-only
-python tests/starship/ssh-check.py kawasaki-pi --reuse --keep-temp
-python tests/starship/ssh-check.py kawasaki-pi --cleanup
-python tests/starship/ssh-check.py kawasaki-pi --fix --prepare-only
-python tests/starship/ssh-check.py kawasaki-pi --fix --reuse --keep-temp
+python tests/starship/ssh-check.py <接続名> --prepare-only
+python tests/starship/ssh-check.py <接続名> --reuse --keep-temp
+python tests/starship/ssh-check.py <接続名> --cleanup
+python tests/starship/ssh-check.py <接続名> --fix --prepare-only
+python tests/starship/ssh-check.py <接続名> --fix --reuse --keep-temp
 
 準備した rc 一覧は ssh-results/prepared.json に保存し、実 WezTerm ペインでも
 使える。既存プロファイルは変更しない。接続・一時配置は実行時だけ行う。
