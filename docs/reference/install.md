@@ -1,6 +1,6 @@
 # WezTerm 設定導入の参照情報
 
-手順は setup-notes の[WezTerm の設定を導入する](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#wezterm-の設定を導入する)（AlmaLinux 10）と[Windows 11 で WezTerm の設定を導入する](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#windows-11-で-wezterm-の設定を導入する)にある。見出しの手順番号は AlmaLinux 10 の項の番号で、Windows 11 の項は窓を開く手順が先頭にあるので 1 つ後ろになる。ロールバックと注意点は [extra](../extra/install.md)、検証は[検証記録](https://github.com/ryo-aoki-pc/setup-notes-verification/blob/main/repos/wezterm/docs/verification/install.md)、機能とキー操作は [README](../../README.md)。
+手順は setup-notes の[WezTerm の設定を導入する](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#wezterm-の設定を導入する)（AlmaLinux 10）と[Windows 11 で WezTerm の設定を導入する](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#windows-11-で-wezterm-の設定を導入する)にある。見出しの手順番号は AlmaLinux 10 の項の番号で、Windows 11 の項は窓を開く手順が先頭にあるので 1 つ後ろになる。注意点は [extra](../extra/install.md)、検証は[検証記録](https://github.com/ryo-aoki-pc/setup-notes-verification/blob/main/repos/wezterm/docs/verification/install.md)、機能とキー操作は [README](../../README.md)。
 
 ## 手順の背景と実装の説明
 
@@ -51,7 +51,6 @@
   - tmux・ssh を挟むと環境変数が届かないので、既定の置き場所をフォールバックにした
 - **既にある設定は、消さずに `.bak` に退避する**
   - `~/.wezterm.lua` が残るとこの設定が読まれないので、`~/.config/wezterm` と合わせて退避する
-  - [ロールバック](../extra/install.md#ロールバック)の手順 3 で戻せる
 - **AlmaLinux 10 の公式のシェル統合は止めない**
   - 公式 Bash 統合の cwd・ユーザー変数・bash-preexec を保ち、semantic の 2 フックだけを独自処理へ移す。`WEZTERM_SHELL_SKIP_ALL=1` を渡す設定は加えない（[注意点](../extra/install.md#注意点)）
 - **Windows は、Git Bash に同じ bash のブロックを貼る**（setup-notes の初期設定の「Git」と同じ）
@@ -80,7 +79,7 @@
 
 ## Windows SSH の PowerShell 貼り付け
 
-- 操作は [AlmaLinux 10 の接続元](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#wezterm-windows-の-ssh-先で-powershell-に貼り付ける) / [Windows 11 の接続元](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/windows-setup.md#ssh-で管理者非管理者の-powershell-を使う)を参照する。SSH 先の PSReadLine `Paste` は接続先のクリップボードを読むため、接続元のクリップボードを使う専用経路が必要になる
+- SSH 先の PSReadLine `Paste` は接続先のクリップボードを読むため、接続元のクリップボードを使う専用経路が必要になる
 - 接続元 Windows は標準 PowerShell の `-NoProfile -NonInteractive -STA` で `Get-Clipboard -Raw` を読み、UTF-8 の Base64 として取得する。接続元 Linux は Wayland の `wl-paste --no-newline --type text` または X11 の `xclip -selection clipboard -out -target UTF8_STRING` を使う。本文をコマンド引数・ファイル・ログへ書かない
 - 受信は SSH 用キーのハンドラー内で `Console.ReadKey` を呼ぶ。初回だけメモリー内の C# 補助型を `Add-Type` で読み、文字ごとの PowerShell 解釈を避ける。受信本文は補助型にもコマンドとして渡さない
 - PSReadLine 入力中の epoch、準備応答の nonce、ペイン、待機状態、取得前の応答を照合する。無応答・古い応答・識別子不一致では本文を送らない。クリップボード取得を先に済ませ、専用キーの受信開始後に準備応答を待ってヘッダーだけを送る。受信側がヘッダーを読み終えた確認を返してから Base64 本文を送る。版番号は `2`、ヘッダーは `WZP2:<nonce>:`、本文は `<Base64長>:<Base64>~WZE2:<nonce>~`。旧版との混在では通知して停止する
