@@ -590,7 +590,7 @@ make build (1分23秒)          cargo test (12秒)
 
 ```
 Host <ホスト名>
-  HostName 192.168.1.20
+  HostName 192.0.2.20
   User <ユーザー名>
 ```
 
