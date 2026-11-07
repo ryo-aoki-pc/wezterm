@@ -1,12 +1,12 @@
 # WezTerm 設定導入の参照情報
 
-手順は setup-notes の[WezTerm の設定を導入する](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#wezterm-の設定を導入する)（AlmaLinux 10）と[Windows 11 で WezTerm の設定を導入する](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#windows-11-で-wezterm-の設定を導入する)にある。見出しの手順番号は AlmaLinux 10 の項の番号で、Windows 11 の項は窓を開く手順が先頭にあるので 1 つ後ろになる。注意点は [extra](../extra/install.md)、検証は[検証記録](https://github.com/ryo-aoki-pc/setup-notes-verification/blob/main/repos/wezterm/docs/verification/install.md)、機能とキー操作は [README](../../README.md)。
+手順は setup-notes の[WezTerm の設定を導入する](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#wezterm-の設定を導入する)（AlmaLinux 10）と[Windows 11 で WezTerm の設定を導入する](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#windows-11-で-wezterm-の設定を導入する)にある。見出しの手順番号は AlmaLinux 10 の項の番号で、Windows 11 の項は窓を開く手順が先頭にあるので 1 つ後ろになる。注意点は [extra](../extra/install.md)、検証は検証記録、機能とキー操作は [README](../../README.md)。
 
 ## 手順の背景と実装の説明
 
 ### WezTerm の設定を導入する / 手順 1: 補足: 2 つの置き場所
 
-- WezTerm は `~/.wezterm.lua` を `~/.config/wezterm/wezterm.lua` より先に探し、見つけた 1 つだけを読む（setup-notes-verification（非公開）の [WezTerm の記録の「設定ファイルの探索順序（実測）」](https://github.com/ryo-aoki-pc/setup-notes-verification/blob/main/docs/verification/shell-terminal.md#wezterm-設定ファイルの探索順序実測)）
+- WezTerm は `~/.wezterm.lua` を `~/.config/wezterm/wezterm.lua` より先に探し、見つけた 1 つだけを読む（検証記録: `docs/verification/shell-terminal.md` の「WezTerm: 設定ファイルの探索順序（実測）」）
 - `~/.wezterm.lua` が残っていると、この設定は読まれない
 
 ### WezTerm の設定を導入する / 手順 3: 補足: `~/.config/wezterm` に置く理由

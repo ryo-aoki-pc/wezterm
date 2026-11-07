@@ -1,8 +1,8 @@
 # Starship と WezTerm の検証
 
-Git Bash と SSH 先の Starship が、このリポジトリのシェル統合・出力コピー・完了通知と共存するかを確かめる手動検証用の harness。最終修正と配置後の確認は [SSH-FIX-REPORT.md](https://github.com/ryo-aoki-pc/setup-notes-verification/blob/main/repos/wezterm/docs/verification/starship/SSH-FIX-REPORT.md)、公開用の集計は [verification-summary.json](verification-summary.json) にある。
+Git Bash と SSH 先の Starship が、このリポジトリのシェル統合・出力コピー・完了通知と共存するかを確かめる手動検証用の harness。最終修正と配置後の確認は `repos/wezterm/docs/verification/starship/SSH-FIX-REPORT.md`、公開用の集計は [verification-summary.json](verification-summary.json) にある。
 
-修正前の調査は [REPORT.md](https://github.com/ryo-aoki-pc/setup-notes-verification/blob/main/repos/wezterm/docs/verification/starship/REPORT.md)・[bash-report.md](https://github.com/ryo-aoki-pc/setup-notes-verification/blob/main/repos/wezterm/docs/verification/starship/bash-report.md)・[SSH-REPORT.md](https://github.com/ryo-aoki-pc/setup-notes-verification/blob/main/repos/wezterm/docs/verification/starship/SSH-REPORT.md)、Git Bash 修正直後の中間結果は [FIX-REPORT.md](https://github.com/ryo-aoki-pc/setup-notes-verification/blob/main/repos/wezterm/docs/verification/starship/FIX-REPORT.md) に残している。過去の不成立を現在の結果として扱わないこと。
+修正前の調査は `repos/wezterm/docs/verification/starship/REPORT.md`・`repos/wezterm/docs/verification/starship/bash-report.md`・`repos/wezterm/docs/verification/starship/SSH-REPORT.md`、Git Bash 修正直後の中間結果は `repos/wezterm/docs/verification/starship/FIX-REPORT.md` に残している。過去の不成立を現在の結果として扱わないこと。
 
 ## 前提
 
@@ -23,7 +23,7 @@ python -X utf8 tests/starship/live-run.py --fix
 python -X utf8 tests/starship/live-check.py --fix
 ```
 
-Git Bash の回帰と委譲ガードを含む全体の順序は [SSH-FIX-REPORT.md の再実行例](https://github.com/ryo-aoki-pc/setup-notes-verification/blob/main/repos/wezterm/docs/verification/starship/SSH-FIX-REPORT.md#記録と再実行) にある。`ssh-check.py` の準備を先に行うと、リモートに一時ディレクトリと専用 rc を作り、手元へ `prepared.json` を生成する。実 WezTerm 用の runner はこの manifest を読む。試験終了時は `ssh-check.py` の cleanup を実行する。
+Git Bash の回帰と委譲ガードを含む全体の順序は `repos/wezterm/docs/verification/starship/SSH-FIX-REPORT.md` の「記録と再実行」にある。`ssh-check.py` の準備を先に行うと、リモートに一時ディレクトリと専用 rc を作り、手元へ `prepared.json` を生成する。実 WezTerm 用の runner はこの manifest を読む。試験終了時は `ssh-check.py` の cleanup を実行する。
 
 SSH の試験の主な順序は次のとおり。`<接続名>` は同じ SSH の接続名に置き換える。
 
