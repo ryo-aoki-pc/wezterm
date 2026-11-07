@@ -18,7 +18,7 @@
 
 - starship は、直前の終了コードとパイプ各要素の終了コード（`PIPESTATUS`）を先に保存し、`PS1` を毎回作り直す。統合は `PROMPT_COMMAND` の後ろにフックを足し、starship が保存した終了コードを OSC 133 の `D` と完了通知に使う
 - 統合は `PS1` の OSC 133 の印（`A` / `B`）をプロンプトごとに付け直す。starship のプロンプトとパイプ個別ステータス表示を保ちながら、WezTerm にプロンプト・入力・出力の範囲を伝える
-- zoxide はいちばん最後に初期化する（共通の bash 設定が starship → WezTerm → zoxide の順に読む。setup-notes の [シェルと端末のセットアップの注意点](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/extra/shell-terminal.md#注意点)）
+- zoxide はいちばん最後に初期化する（共通の bash 設定が starship → WezTerm → zoxide の順に読む。setup-notes の [シェルと端末のセットアップの補足と注意点](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#シェルのツール-の補足と注意点)）
 
 ### WezTerm の設定を導入する / 手順 6: 補足: シェル統合を読む仕組み
 
