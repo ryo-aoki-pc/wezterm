@@ -1,6 +1,6 @@
 # WezTerm の設定の注意点
 
-setup-notes の[WezTerm の設定を導入する](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#wezterm-の設定を導入する)・[Windows 11 で WezTerm の設定を導入する](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#windows-11-で-wezterm-の設定を導入する)などで入れるときの注意点。背景は[参考資料](../reference/install.md)、検証は[検証記録](https://github.com/ryo-aoki-pc/setup-notes-verification/blob/main/repos/wezterm/docs/verification/install.md#修正後の状態2026-10-06)。リンクの付いた「手順 N」は正本の項の手順を指す。
+setup-notes の[WezTerm の設定を導入する](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#wezterm-の設定を導入する)・[Windows 11 で WezTerm の設定を導入する](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#windows-11-で-wezterm-の設定を導入する)などで入れるときの注意点。背景は[参考資料](../reference/install.md)、検証は検証記録（`repos/wezterm/docs/verification/install.md` の「修正後の状態（2026-10-06）」）。リンクの付いた「手順 N」は正本の項の手順を指す。
 
 ## 注意点
 
