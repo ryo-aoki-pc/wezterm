@@ -15,11 +15,11 @@ Windows 11（既定シェルは Git Bash）を主に、Linux（GNOME Wayland）�
 
 | | AlmaLinux 10 | Windows 11 |
 | --- | --- | --- |
-| フォント | [HackGen Console NF](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#hackgen-console-nf) | [Windows 11 で HackGen Console NF を入れる](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#windows-11-で-hackgen-console-nf-を入れる) |
-| 共通の bash 設定 | [共通の bash 設定](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#共通の-bash-設定) | 下の行の[Git Bash と WezTerm の設定](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#git-bash-と-wezterm-の設定)の手順 6 で入る |
-| 本体 (nightly) とこの設定 | [WezTerm](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#wezterm) (手順 5 で「WezTerm の設定を導入する」も通す) | [Windows 11 で WezTerm を入れる](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#windows-11-で-wezterm-を入れる)の後、[Git Bash と WezTerm の設定](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#git-bash-と-wezterm-の設定) (手順 6 で共通の bash 設定、手順 7 でこの設定を入れる) |
-| この設定だけ (本体が入っているとき) | [WezTerm の設定を導入する](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#wezterm-の設定を導入する) | [Windows 11 で WezTerm の設定を導入する](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#windows-11-で-wezterm-の設定を導入する) |
-| ssh 先・WSL でもシェル統合を使う (任意) | [WezTerm のシェル統合を SSH 先で使う](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#wezterm-のシェル統合を-ssh-先で使う) | [WezTerm のシェル統合を WSL で使う](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#wezterm-のシェル統合を-wsl-で使う) |
+| フォント | [HackGen Console NF](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#hackgen-console-nf) | [HackGen の公式の案内](https://github.com/yuru7/HackGen) |
+| 共通の bash 設定 | [共通の bash 設定](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#共通の-bash-設定) | 共通の bash 設定が導入済みであること |
+| 本体 (nightly) とこの設定 | [WezTerm](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#wezterm) (手順 5 で「WezTerm の設定を導入する」も通す) | [WezTerm の公式の導入案内](https://wezterm.org/install/windows.html)。この設定が `~/.config/wezterm` にあり、Git Bash と共通の bash 設定が使えること |
+| この設定だけ (本体が入っているとき) | [WezTerm の設定を導入する](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#wezterm-の設定を導入する) | この設定が `~/.config/wezterm` にあり、`wezterm.lua` が読み込まれること |
+| ssh 先・WSL でもシェル統合を使う (任意) | [WezTerm のシェル統合を SSH 先で使う](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#wezterm-のシェル統合を-ssh-先で使う) | WSL の bash が Windows 側の `shell/wezterm.sh` を読む状態であること |
 | Windows の SSH 先の PowerShell に貼り付ける (任意) | WezTerm: Windows の SSH 先で PowerShell に貼り付ける | SSH で管理者・非管理者の PowerShell を使う |
 | 設定の更新 | [WezTerm の設定を更新する](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#wezterm-の設定を更新する) | [Windows 11 で WezTerm の設定を更新する](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#windows-11-で-wezterm-の設定を更新する) |
 | 本体の更新 | [OS とファームウェアの更新](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/almalinux-setup.md#os-とファームウェアの更新) (COPR の nightly も OS の更新で上がる) | [Git for Windows・Firefox・WezTerm を上げる](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/windows-setup.md#git-for-windowsfirefoxwezterm-を上げる) |
@@ -762,9 +762,8 @@ Starship が重ねた登録を各 1 個へ戻します。通常の個人 Bash �
 
 ### WSL
 
-WSL ドメインは起動引数を渡せないため、WSL 側の `~/.bashrc` に、Windows 側の
-`/mnt/c/Users/<ユーザー名>/.config/wezterm/shell/wezterm.sh` を読み込む行を直接書きます。
-足し方は setup-notes の[WezTerm のシェル統合を WSL で使う](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#wezterm-のシェル統合を-wsl-で使う) にあります。
+WSL ドメインは起動引数を渡せないため、WSL 側の `~/.bashrc` が、Windows 側の
+`/mnt/c/Users/<ユーザー名>/.config/wezterm/shell/wezterm.sh` を読み込む設定になっていることを前提にします。
 
 WezTerm が WSL の中へ渡す環境変数は `TERM`・`COLORTERM`・`TERM_PROGRAM`・`TERM_PROGRAM_VERSION` だけです
 （`WSLENV`）。`TERM_PROGRAM` は届くので統合は動きますが、`WEZTERM_SHELL_INTEGRATION` や
@@ -945,7 +944,7 @@ bash -n shell/wezterm.sh && zsh -n shell/wezterm.sh
 | --- | --- |
 | アイコンやタブの丸い端が □ になる | HackGen Console NF（または Symbols Nerd Font Mono）が入っているか。`ls-fonts` でどのフォントが使われているか見る |
 | 設定を変えたのに反映されない / 見た目が素の WezTerm になった | 設定エラー。画面上部のエラー表示か、`ls-fonts` の `ERROR` 行を見る。stable 版で起動していないか（nightly 必須） |
-| 新しいタブが今のディレクトリで開かない / タブ名がディレクトリ名にならない | [シェル統合](#シェル統合)が読み込まれているか。正本の設定導入（[AlmaLinux 10](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#wezterm-の設定を導入する) / [Windows 11](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#windows-11-で-wezterm-の設定を導入する)）の最後で確認する。WSL は[WSL のシェル統合](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#wezterm-のシェル統合を-wsl-で使う)の最後で確認する |
+| 新しいタブが今のディレクトリで開かない / タブ名がディレクトリ名にならない | [シェル統合](#シェル統合)が読み込まれているか。AlmaLinux 10 は[設定導入](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#wezterm-の設定を導入する)の最後で確認する。Windows と WSL は、設定が所定の場所にあり、bash が `shell/wezterm.sh` を読み込む状態か確かめる |
 | 「コピーできません（要シェル統合）」と出る | 同上。コマンドプロンプトは非対応。tmux の中も非対応 |
 | 「コピーできる出力がありません」と出る | 画面に実行したコマンドが無い（開いた直後・`clear`・`Ctrl+Shift+Alt+K` の後）。zsh では、テーマがプロンプトを作り直して入力の開始の印が消えていないか（[bash と zsh](#bashgit-bash--msys2--qmk-msys--linuxと-zsh)） |
 | 「ssh 先の出力は区切れません」と出る | ssh 先でシェル統合が動いていない。[ssh 先でもシェル統合を使う](#ssh-先でもシェル統合を使う) |
