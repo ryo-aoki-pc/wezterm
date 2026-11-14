@@ -1,6 +1,6 @@
 # WezTerm 設定導入の参照情報
 
-手順は setup-notes の[WezTerm の設定を導入する](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#wezterm-の設定を導入する)（AlmaLinux 10）と[Windows 11 で WezTerm の設定を導入する](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#windows-11-で-wezterm-の設定を導入する)にある。見出しの手順番号は AlmaLinux 10 の項の番号で、Windows 11 の項は窓を開く手順が先頭にあるので 1 つ後ろになる。注意点は [extra](../extra/install.md)、検証は検証記録、機能とキー操作は [README](../../README.md)。
+手順は setup-notes の[WezTerm の設定を導入する](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#wezterm-の設定を導入する)（AlmaLinux 10）にある。Windows 11 は、この設定が `~/.config/wezterm` にあり、Git Bash と共通の bash 設定が使えることを前提にする。見出しの手順番号は AlmaLinux 10 の項の番号。注意点は [extra](../extra/install.md)、検証は検証記録、機能とキー操作は [README](../../README.md)。
 
 ## 手順の背景と実装の説明
 
@@ -64,12 +64,12 @@
 | `~/.wezterm.lua.bak` / `~/.config/wezterm.bak` | 手順 2（Windows 11 は手順 3）で退避したときだけ |
 | （ssh 先）`/etc/ssh/sshd_config.d/50-wezterm.conf` | `AcceptEnv TERM_PROGRAM` の 1 行 |
 
-- WezTerm が起動したシェルは、正本の設定導入（[AlmaLinux 10](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#wezterm-の設定を導入する) / [Windows 11](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#windows-11-で-wezterm-の設定を導入する)）の最後で確かめる
+- WezTerm が起動したシェルは、AlmaLinux 10 は[設定導入](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#wezterm-の設定を導入する)の最後で確かめる。Windows 11 は Git Bash が開き、共通の bash 設定とシェル統合を読み込む状態を前提にする
 
 ### 参照
 
 - [README](../../README.md) — この設定の機能・キー操作・シェル統合の仕組み
-- setup-notes の [シェルと端末のセットアップの「WezTerm」](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#wezterm)・[シェルと端末のセットアップの「Windows 11 で WezTerm を入れる」](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#windows-11-で-wezterm-を入れる) — WezTerm nightly の導入（設定ファイルの探索順序の実測は、その検証記録の「WezTerm の記録」）
+- setup-notes の [シェルと端末のセットアップの「WezTerm」](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md#wezterm)・[WezTerm の Windows 向け公式案内](https://wezterm.org/install/windows.html) — WezTerm nightly の導入（設定ファイルの探索順序の実測は、その検証記録の「WezTerm の記録」）
 - setup-notes の [AlmaLinux 10 の初期設定](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/almalinux-setup.md)の「Git」と、[シェルと端末のセットアップ](https://github.com/ryo-aoki-pc/setup-notes/blob/main/docs/shell-terminal.md)の「HackGen Console NF」と starship・zoxide
 - [Configuration Files — WezTerm](https://wezterm.org/config/files.html) — 設定ファイルの置き場所
 - [Shell Integration — WezTerm](https://wezterm.org/shell-integration.html) — 公式のシェル統合と `WEZTERM_SHELL_SKIP_ALL`
